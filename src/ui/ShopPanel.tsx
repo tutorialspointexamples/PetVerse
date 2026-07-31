@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BODY_COLORS, GLASSES, HATS, SCARVES, SHIRTS, SHOES, WEARABLE_COUNT } from '../game/cosmetics'
 import { FURNITURE, FURNITURE_COUNT } from '../game/furniture'
 import { useGameStore } from '../state/gameStore'
+import { useLocale } from '../i18n/useLocale'
 
 type Tab = 'coats' | 'hats' | 'glasses' | 'scarves' | 'shirts' | 'shoes' | 'furniture'
 
@@ -31,6 +32,7 @@ export function ShopPanel() {
   const buyShoes = useGameStore((s) => s.buyShoes)
   const buyFurniture = useGameStore((s) => s.buyFurniture)
   const [tab, setTab] = useState<Tab>('coats')
+  const { t } = useLocale()
 
   if (overlay !== 'shop') return null
 
@@ -38,9 +40,9 @@ export function ShopPanel() {
     <div className="shop-overlay" role="dialog" aria-label="Style shop">
       <div className="shop-panel wide">
         <div className="shop-header">
-          <h2>Style Shop</h2>
+          <h2>{t('shop.title')}</h2>
           <p className="shop-coins">
-            {coins} coins · {WEARABLE_COUNT} looks · {FURNITURE_COUNT} decor
+            {coins} {t('hud.coins')} · {WEARABLE_COUNT} {t('shop.looks')} · {FURNITURE_COUNT} {t('shop.decor')}
           </p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')} aria-label="Close shop">
             ×

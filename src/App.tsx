@@ -15,6 +15,7 @@ import {
   FlightPanel,
   FoodPanel,
   GamesHub,
+  LangPanel,
   RewardedPanel,
   RoomsPanel,
   CardsPanel,
@@ -22,6 +23,7 @@ import {
   TravelPanel,
   WorldVisitPanel,
 } from './ui/HubPanels'
+import { PhotoPanel } from './ui/PhotoPanel'
 import { getActiveEvent } from './game/events'
 
 export default function App() {
@@ -108,6 +110,8 @@ export default function App() {
       <CompanionsPanel />
       <EventPanel />
       <RewardedPanel />
+      <LangPanel />
+      <PhotoPanel />
       {overlay === 'skyDash' ? <SkyDashGame /> : null}
       {overlay === 'dunkToss' ? <DunkTossGame /> : null}
       {overlay === 'spaceTrails' ? <SpaceTrailsGame /> : null}

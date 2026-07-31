@@ -7,16 +7,19 @@ import { CARDS } from '../game/cards'
 import { IAP_PRODUCTS, purchaseIap, showRewardedAd } from '../monetization/stubs'
 import { useGameStore } from '../state/gameStore'
 import { useEffect } from 'react'
+import { LOCALES } from '../i18n/strings'
+import { useLocale } from '../i18n/useLocale'
 
 export function GamesHub() {
   const overlay = useGameStore((s) => s.overlay)
   const setOverlay = useGameStore((s) => s.setOverlay)
+  const { t } = useLocale()
   if (overlay !== 'games') return null
   return (
     <div className="shop-overlay" role="dialog" aria-label="Mini-games">
       <div className="shop-panel">
         <div className="shop-header">
-          <h2>Mini-Games</h2>
+          <h2>{t('games.title')}</h2>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
           </button>
@@ -183,12 +186,13 @@ export function RoomsPanel() {
   const setOverlay = useGameStore((s) => s.setOverlay)
   const room = useGameStore((s) => s.room)
   const setRoom = useGameStore((s) => s.setRoom)
+  const { t } = useLocale()
   if (overlay !== 'rooms') return null
   return (
     <div className="shop-overlay" role="dialog" aria-label="Rooms">
       <div className="shop-panel">
         <div className="shop-header">
-          <h2>Home Rooms</h2>
+          <h2>{t('rooms.title')}</h2>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
           </button>
@@ -211,8 +215,45 @@ export function RoomsPanel() {
                     ? ' · tub=bath, sink=brush'
                     : r.id === 'bedroom'
                       ? ' · tap bed to sleep'
-                      : ''}
+                      : r.id === 'yard'
+                        ? ' · tap pad to play'
+                        : ''}
               </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function LangPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const { locale, setLocale, t } = useLocale()
+  if (overlay !== 'lang') return null
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Language">
+      <div className="shop-panel">
+        <div className="shop-header">
+          <h2>{t('lang.title')}</h2>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        <div className="room-grid">
+          {LOCALES.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              className={`hub-card ${locale === l.id ? 'active' : ''}`}
+              onClick={() => {
+                setLocale(l.id)
+                setOverlay('none')
+              }}
+            >
+              <strong>{l.label}</strong>
+              <span>{l.id.toUpperCase()}</span>
             </button>
           ))}
         </div>

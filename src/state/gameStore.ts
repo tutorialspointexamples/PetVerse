@@ -71,6 +71,8 @@ export type Overlay =
   | 'rooms'
   | 'cards'
   | 'rewarded'
+  | 'lang'
+  | 'photo'
 
 const MINIGAME_OVERLAYS: Overlay[] = ['skyDash', 'dunkToss', 'spaceTrails', 'buildPlane']
 

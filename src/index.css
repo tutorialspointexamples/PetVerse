@@ -1048,6 +1048,114 @@ input {
   }
 }
 
+.photo-panel {
+  max-width: 420px;
+}
+
+.photo-stage {
+  position: relative;
+  margin: 8px 0 12px;
+  min-height: 220px;
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.35), transparent 45%),
+    linear-gradient(160deg, #4a9b82 0%, #2f6f5e 45%, #1a2a22 100%);
+  display: grid;
+  place-items: center;
+}
+
+.photo-stage.flash::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  animation: photo-flash 0.22s ease-out;
+  pointer-events: none;
+}
+
+@keyframes photo-flash {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.photo-pet {
+  width: 110px;
+  height: 140px;
+  border-radius: 55% 55% 48% 48%;
+  background: linear-gradient(180deg, #f4a261, #e76f51);
+  box-shadow: inset -12px -18px 0 rgba(0, 0, 0, 0.08);
+  position: relative;
+  animation: photo-bob 2.4s ease-in-out infinite;
+}
+
+.photo-pet::before,
+.photo-pet::after {
+  content: '';
+  position: absolute;
+  width: 28px;
+  height: 36px;
+  background: #e76f51;
+  border-radius: 50% 50% 40% 40%;
+  top: -18px;
+}
+
+.photo-pet::before {
+  left: 12px;
+  transform: rotate(-18deg);
+}
+
+.photo-pet::after {
+  right: 12px;
+  transform: rotate(18deg);
+}
+
+.photo-caption {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 700;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.photo-frame {
+  position: absolute;
+  inset: 10px;
+  border: 3px solid rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+.photo-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+@keyframes photo-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+html[dir='rtl'] .action-bar,
+html[dir='rtl'] .shop-panel {
+  direction: rtl;
+}
+
 
 
 

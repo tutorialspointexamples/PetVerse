@@ -11,13 +11,14 @@ npm run dev
 ```
 
 ## Features
-- Care: feed menu (6 foods), sleep, bath, play, brush, potty + layered pet reactions
-- Home rooms: Living, Kitchen, Bathroom, Bedroom
+- Care: feed menu (12 foods), sleep, bath, play, brush, potty + layered pet reactions
+- Home rooms: Living, Kitchen, Bathroom, Bedroom, Backyard
 - Talk-back mic (hold to record, pitch-shifted playback)
-- Expanded wardrobe (coats, hats, glasses, scarves, shirts, shoes) + 35 furniture SKUs
-- Mini-games: Space Trails, Sky Race, Dunk-a-Pet, Build Your Plane
+- Large wardrobe (~135 looks) + 60 furniture SKUs
+- Mini-games: Space Trails (swipe/arrows), Sky Race, Dunk-a-Pet, Build Your Plane
 - Plane travel to 8 worlds with flight cutscene
 - Collectible card album from worlds + mini-games
+- Photo booth snaps, multi-language UI (EN/ES/PT/FR/DE/RU/TR/AR)
 - Companions with unique voices, skills (drums / hoop / boxing), seasonal events
 - Optional mock rewarded ad / IAP boosts
 - Capacitor Android packaging notes in `docs/ANDROID.md`
