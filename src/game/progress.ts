@@ -1,4 +1,4 @@
-export type CompanionId = 'none' | 'sprout' | 'nibbles'
+export type CompanionId = 'none' | 'sprout' | 'nibbles' | 'blinky' | 'pebble'
 
 export interface CompanionDef {
   id: CompanionId
@@ -12,6 +12,8 @@ export const COMPANIONS: CompanionDef[] = [
   { id: 'none', name: 'None', unlockCost: 0, fill: 0, accent: 0 },
   { id: 'sprout', name: 'Sprout', unlockCost: 100, fill: 0x7bc9a6, accent: 0xffe066 },
   { id: 'nibbles', name: 'Nibbles', unlockCost: 160, fill: 0xe8a070, accent: 0xff85a1 },
+  { id: 'blinky', name: 'Blinky', unlockCost: 220, fill: 0x80ffdb, accent: 0x5a189a },
+  { id: 'pebble', name: 'Pebble', unlockCost: 180, fill: 0x8b5e3c, accent: 0xf4d35e },
 ]
 
 export function getCompanion(id: CompanionId): CompanionDef {

@@ -17,6 +17,11 @@ export type FurnitureId =
   | 'cushion'
   | 'aquarium'
   | 'jukebox'
+  | 'treasure_chest'
+  | 'coral_reef'
+  | 'neon_console'
+  | 'dragon_egg'
+  | 'alien_pod'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -48,6 +53,11 @@ export const FURNITURE: FurnitureItem[] = [
   { id: 'cushion', name: 'Bean Cushion', price: 60, slot: 'floor', color: 0xff85a1, accent: 0xffe066 },
   { id: 'aquarium', name: 'Aquarium', price: 150, slot: 'side', color: 0x4cc9f0, accent: 0x90e0ef },
   { id: 'jukebox', name: 'Jukebox', price: 200, slot: 'side', color: 0xe63946, accent: 0xf4d35e },
+  { id: 'treasure_chest', name: 'Treasure Chest', price: 140, slot: 'side', color: 0xb56b45, accent: 0xf4d35e },
+  { id: 'coral_reef', name: 'Coral Reef', price: 130, slot: 'floor', color: 0xff85a1, accent: 0x4cc9f0 },
+  { id: 'neon_console', name: 'Neon Console', price: 180, slot: 'side', color: 0x240046, accent: 0x00f5d4 },
+  { id: 'dragon_egg', name: 'Dragon Egg', price: 170, slot: 'floor', color: 0x9b2226, accent: 0xf4d35e },
+  { id: 'alien_pod', name: 'Alien Pod', price: 190, slot: 'side', color: 0x5a189a, accent: 0x80ffdb },
 ]
 
 export function getFurniture(id: FurnitureId): FurnitureItem {

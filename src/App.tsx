@@ -7,11 +7,17 @@ import { ShopPanel } from './ui/ShopPanel'
 import { NameModal } from './ui/NameModal'
 import { SkyDashGame } from './ui/SkyDashGame'
 import { DunkTossGame } from './ui/DunkTossGame'
+import { SpaceTrailsGame } from './ui/SpaceTrailsGame'
+import { BuildPlaneGame } from './ui/BuildPlaneGame'
 import {
   CompanionsPanel,
   EventPanel,
+  FlightPanel,
+  FoodPanel,
   GamesHub,
   RewardedPanel,
+  RoomsPanel,
+  CardsPanel,
   SkillsPanel,
   TravelPanel,
   WorldVisitPanel,
@@ -76,7 +82,11 @@ export default function App() {
     }
   }, [save])
 
-  const inMinigame = overlay === 'skyDash' || overlay === 'dunkToss'
+  const inMinigame =
+    overlay === 'skyDash' ||
+    overlay === 'dunkToss' ||
+    overlay === 'spaceTrails' ||
+    overlay === 'buildPlane'
 
   return (
     <div className="app-shell">
@@ -89,13 +99,19 @@ export default function App() {
       <ShopPanel />
       <GamesHub />
       <TravelPanel />
+      <FlightPanel />
       <WorldVisitPanel />
+      <FoodPanel />
+      <RoomsPanel />
+      <CardsPanel />
       <SkillsPanel />
       <CompanionsPanel />
       <EventPanel />
       <RewardedPanel />
       {overlay === 'skyDash' ? <SkyDashGame /> : null}
       {overlay === 'dunkToss' ? <DunkTossGame /> : null}
+      {overlay === 'spaceTrails' ? <SpaceTrailsGame /> : null}
+      {overlay === 'buildPlane' ? <BuildPlaneGame /> : null}
       <NameModal />
     </div>
   )

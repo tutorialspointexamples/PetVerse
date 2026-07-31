@@ -9,7 +9,7 @@ export interface EventDef {
   shopColorBonus?: string
 }
 
-/** Time-boxed seasonal pack (local clock). */
+/** Time-boxed seasonal packs (local clock), aligned to live MTT2-style cadence. */
 export const EVENTS: EventDef[] = [
   {
     id: 'summer-splash-2026',
@@ -19,6 +19,24 @@ export const EVENTS: EventDef[] = [
     end: '2026-08-31',
     loginBonus: 20,
     shopColorBonus: 'sky',
+  },
+  {
+    id: 'brush-time-2026',
+    name: 'Brush Time',
+    blurb: 'Daily brush bonus — keep those pearly fangs shining.',
+    start: '2026-07-28',
+    end: '2026-08-04',
+    loginBonus: 25,
+    shopColorBonus: 'snow',
+  },
+  {
+    id: 'enter-if-you-dare-2026',
+    name: 'Enter If You Dare',
+    blurb: 'Spooky login coins and a charcoal style unlock.',
+    start: '2026-08-05',
+    end: '2026-08-20',
+    loginBonus: 30,
+    shopColorBonus: 'charcoal',
   },
 ]
 
@@ -31,5 +49,7 @@ function todayKey(d = new Date()): string {
 
 export function getActiveEvent(now = new Date()): EventDef | null {
   const key = todayKey(now)
-  return EVENTS.find((e) => key >= e.start && key <= e.end) ?? null
+  // Prefer the most specific / latest overlapping event
+  const active = EVENTS.filter((e) => key >= e.start && key <= e.end)
+  return active[active.length - 1] ?? null
 }

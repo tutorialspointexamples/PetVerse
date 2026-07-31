@@ -25,6 +25,11 @@ export type HatId =
   | 'bandana'
   | 'wizard'
   | 'sailor'
+  | 'pirate'
+  | 'diver'
+  | 'visor'
+  | 'dragon'
+  | 'antenna'
 
 export type GlassesId = 'none' | 'round' | 'sun' | 'star' | 'pixel' | 'heart'
 
@@ -83,6 +88,11 @@ export const HATS: HatOption[] = [
   { id: 'bandana', name: 'Bandana', price: 48, color: 0x2a9d8f },
   { id: 'wizard', name: 'Wizard', price: 150, color: 0x5a189a },
   { id: 'sailor', name: 'Sailor', price: 80, color: 0x1d3557 },
+  { id: 'pirate', name: 'Pirate', price: 110, color: 0x1a1a1a },
+  { id: 'diver', name: 'Diver', price: 125, color: 0x0077b6 },
+  { id: 'visor', name: 'Cyber Visor', price: 145, color: 0x00f5d4 },
+  { id: 'dragon', name: 'Dragon Crest', price: 160, color: 0x9b2226 },
+  { id: 'antenna', name: 'Alien Antenna', price: 155, color: 0x80ffdb },
 ]
 
 export const GLASSES: SimpleCosmetic<GlassesId>[] = [

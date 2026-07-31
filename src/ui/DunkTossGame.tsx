@@ -68,7 +68,7 @@ export function DunkTossGame() {
     <div className="minigame-overlay">
       <div className="minigame-frame dunk">
         <div className="minigame-top">
-          <h2>Dunk Toss</h2>
+          <h2>Dunk-a-Pet</h2>
           <p>
             {hits}/{throws} hits · 5 throws
           </p>

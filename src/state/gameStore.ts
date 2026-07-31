@@ -28,6 +28,11 @@ import { getWorld } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
 import { getCompanion, getSkill, levelFromXp } from '../game/progress'
 import { getActiveEvent } from '../game/events'
+import type { RoomId } from '../game/rooms'
+import type { FoodId } from '../game/foods'
+import { getFood } from '../game/foods'
+import { clampNeed } from '../game/needs'
+import { MINIGAME_CARDS, WORLD_CARDS, type CardId } from '../game/cards'
 import { defaultSave, loadSave, writeSave, type SaveData } from './save'
 
 export type Reaction =
@@ -36,6 +41,8 @@ export type Reaction =
   | 'annoyed'
   | 'eat'
   | 'bath'
+  | 'brush'
+  | 'potty'
   | 'sleep'
   | 'talk'
   | 'play'
@@ -53,8 +60,16 @@ export type Overlay =
   | 'event'
   | 'skyDash'
   | 'dunkToss'
+  | 'spaceTrails'
+  | 'buildPlane'
   | 'worldVisit'
+  | 'flight'
+  | 'food'
+  | 'rooms'
+  | 'cards'
   | 'rewarded'
+
+const MINIGAME_OVERLAYS: Overlay[] = ['skyDash', 'dunkToss', 'spaceTrails', 'buildPlane']
 
 export interface GameState extends SaveData {
   reaction: Reaction
@@ -86,6 +101,7 @@ export interface GameState extends SaveData {
   addFuel: (n: number) => void
   addXp: (n: number) => void
   travelTo: (id: WorldId) => boolean
+  finishFlight: () => void
   clearWorldVisit: () => void
   unlockCompanion: (id: CompanionId) => boolean
   setCompanion: (id: CompanionId) => void
@@ -93,6 +109,9 @@ export interface GameState extends SaveData {
   claimEventBonus: () => boolean
   grantMinigameReward: (coins: number, fuel?: number) => void
   applyRewardedBoost: () => void
+  setRoom: (id: RoomId) => void
+  feedFood: (id: FoodId) => boolean
+  collectCard: (id: CardId) => boolean
   level: () => number
   mood: () => Mood
   shopOpen: boolean
@@ -127,6 +146,9 @@ function sliceSave(state: GameState): SaveData {
     eventClaimDate,
     claimedEventIds,
     sleeping,
+    room,
+    favoriteFood,
+    ownedCards,
   } = state
   return {
     petName,
@@ -155,6 +177,9 @@ function sliceSave(state: GameState): SaveData {
     eventClaimDate,
     claimedEventIds,
     sleeping,
+    room,
+    favoriteFood,
+    ownedCards,
     lastSavedAt: Date.now(),
   }
 }
@@ -211,7 +236,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   tick: (dtSec) => {
     const { needs, sleeping, cooldowns, overlay } = get()
-    if (overlay === 'skyDash' || overlay === 'dunkToss') return
+    if (MINIGAME_OVERLAYS.includes(overlay)) return
     const nextNeeds = applyDecay(needs, dtSec, sleeping)
     const now = Date.now()
     const nextCooldowns: Partial<Record<CareAction, number>> = {}
@@ -246,6 +271,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       feed: 'eat',
       bath: 'bath',
       play: 'play',
+      brush: 'brush',
+      potty: 'potty',
     }
 
     set({
@@ -281,7 +308,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (get().reaction === 'laugh' || get().reaction === 'annoyed') {
         set({ reaction: get().sleeping ? 'sleep' : 'idle' })
       }
-    }, 900)
+    }, 1600)
   },
 
   pokeCompanion: () => {
@@ -373,6 +400,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (world.unlockHat && !ownedHats.includes(world.unlockHat as HatId)) {
       ownedHats = [...ownedHats, world.unlockHat as HatId]
     }
+    const cardId = WORLD_CARDS[id]
+    const ownedCards =
+      cardId && !state.ownedCards.includes(cardId)
+        ? [...state.ownedCards, cardId]
+        : state.ownedCards
     set({
       fuel: state.fuel - world.fuelCost,
       coins: state.coins + world.rewardCoins,
@@ -381,14 +413,58 @@ export const useGameStore = create<GameState>((set, get) => ({
       visitedWorlds: visited,
       ownedFurniture,
       ownedHats,
+      ownedCards,
       activeWorld: id,
-      overlay: 'worldVisit',
+      overlay: 'flight',
     })
     get().save()
     return true
   },
 
+  finishFlight: () => {
+    if (!get().activeWorld) {
+      set({ overlay: 'none' })
+      return
+    }
+    set({ overlay: 'worldVisit' })
+  },
+
   clearWorldVisit: () => set({ activeWorld: null, overlay: 'none' }),
+
+  setRoom: (id) => {
+    set({ room: id, overlay: 'none' })
+    get().save()
+  },
+
+  feedFood: (id) => {
+    const state = get()
+    if (state.sleeping) return false
+    const now = Date.now()
+    const until = state.cooldowns.feed
+    if (until && until > now) return false
+    const food = getFood(id)
+    if (food.price > 0 && state.coins < food.price) return false
+    const happyBonus = state.favoriteFood === id ? 6 : 0
+    set({
+      coins: state.coins - food.price + food.coins,
+      needs: {
+        ...state.needs,
+        hunger: clampNeed(state.needs.hunger + food.hunger),
+        happiness: clampNeed(state.needs.happiness + food.happiness + happyBonus),
+      },
+      xp: state.xp + 3,
+      reaction: 'eat',
+      favoriteFood: id,
+      cooldowns: { ...state.cooldowns, feed: now + CARE_EFFECTS.feed.cooldownMs },
+      overlay: 'none',
+      sleeping: false,
+    })
+    get().save()
+    window.setTimeout(() => {
+      if (get().reaction === 'eat') set({ reaction: 'idle' })
+    }, 1200)
+    return true
+  },
 
   unlockCompanion: (id) => {
     const state = get()
@@ -471,15 +547,29 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   grantMinigameReward: (coins, fuel = 1) => {
     const state = get()
+    const cardId = MINIGAME_CARDS[state.overlay]
+    const ownedCards =
+      cardId && !state.ownedCards.includes(cardId)
+        ? [...state.ownedCards, cardId]
+        : state.ownedCards
     set({
       coins: state.coins + coins,
       fuel: Math.min(20, state.fuel + fuel),
       stars: state.stars + (coins >= 15 ? 1 : 0),
       xp: state.xp + Math.max(5, Math.floor(coins / 2)),
       lastMinigameReward: coins,
+      ownedCards,
       overlay: 'none',
     })
     get().save()
+  },
+
+  collectCard: (id) => {
+    const state = get()
+    if (state.ownedCards.includes(id)) return false
+    set({ ownedCards: [...state.ownedCards, id] })
+    get().save()
+    return true
   },
 
   applyRewardedBoost: () => {

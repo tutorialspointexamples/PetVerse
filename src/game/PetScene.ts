@@ -15,6 +15,7 @@ import { getFurniture, type FurnitureId } from './furniture'
 import { getCompanion, type CompanionId } from './progress'
 import { deriveMood, type Needs } from './needs'
 import type { Reaction } from '../state/gameStore'
+import { getRoom, type RoomId } from './rooms'
 
 export interface PetSceneProps {
   needs: Needs
@@ -29,6 +30,7 @@ export interface PetSceneProps {
   petName: string
   placedFurniture: FurnitureId[]
   companion: CompanionId
+  room: RoomId
 }
 
 export type PokeZone = 'head' | 'belly' | 'companion'
@@ -157,42 +159,60 @@ export class PetScene {
     const front = this.roomFront
     back.clear()
     front.clear()
+    const room = getRoom(this.props.room)
 
-    // Parallax wall wash
     back.rect(0, 0, w, h * 0.62)
-    back.fill(0x2f6f5e)
+    back.fill(room.wall)
     back.rect(0, 0, w, h * 0.62)
-    back.fill({ color: 0x4a9b82, alpha: 0.28 })
+    back.fill({ color: room.wallAccent, alpha: 0.28 })
 
-    // Window
-    const wx = w * 0.72
-    const wy = h * 0.12
-    const ww = Math.min(160, w * 0.22)
-    const wh = Math.min(120, h * 0.2)
-    back.roundRect(wx, wy, ww, wh, 12)
-    back.fill(0x9fd7ff)
-    back.stroke({ width: 6, color: 0xf2e8d5 })
-    back.moveTo(wx + ww / 2, wy)
-    back.lineTo(wx + ww / 2, wy + wh)
-    back.moveTo(wx, wy + wh / 2)
-    back.lineTo(wx + ww, wy + wh / 2)
-    back.stroke({ width: 4, color: 0xf2e8d5, alpha: 0.9 })
+    if (this.props.room === 'kitchen') {
+      back.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
+      back.fill(0xffffff)
+      back.roundRect(w * 0.1, h * 0.32, w * 0.1, h * 0.08, 4)
+      back.fill(0x4cc9f0)
+      back.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
+      back.fill(0xe76f51)
+    } else if (this.props.room === 'bathroom') {
+      back.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
+      back.fill(0xffffff)
+      back.ellipse(w * 0.2, h * 0.5, 40, 28)
+      back.fill(0x48cae4)
+      back.roundRect(w * 0.12, h * 0.48, 16, 40, 4)
+      back.fill(0x0077b6)
+    } else if (this.props.room === 'bedroom') {
+      back.roundRect(w * 0.08, h * 0.34, w * 0.32, h * 0.24, 10)
+      back.fill(0x4a90a4)
+      back.roundRect(w * 0.1, h * 0.28, w * 0.2, h * 0.1, 8)
+      back.fill(0xffe8c8)
+      back.circle(w * 0.78, h * 0.2, 18)
+      back.fill({ color: 0xffe066, alpha: 0.55 })
+    } else {
+      const wx = w * 0.72
+      const wy = h * 0.12
+      const ww = Math.min(160, w * 0.22)
+      const wh = Math.min(120, h * 0.2)
+      back.roundRect(wx, wy, ww, wh, 12)
+      back.fill(0x9fd7ff)
+      back.stroke({ width: 6, color: 0xf2e8d5 })
+      back.moveTo(wx + ww / 2, wy)
+      back.lineTo(wx + ww / 2, wy + wh)
+      back.moveTo(wx, wy + wh / 2)
+      back.lineTo(wx + ww, wy + wh / 2)
+      back.stroke({ width: 4, color: 0xf2e8d5, alpha: 0.9 })
+      back.moveTo(wx, wy + wh)
+      back.lineTo(wx + ww, wy + wh)
+      back.lineTo(wx + ww + 40, h * 0.62)
+      back.lineTo(wx - 20, h * 0.62)
+      back.closePath()
+      back.fill({ color: 0xfff6d8, alpha: 0.12 })
+    }
 
-    // Soft light shaft
-    back.moveTo(wx, wy + wh)
-    back.lineTo(wx + ww, wy + wh)
-    back.lineTo(wx + ww + 40, h * 0.62)
-    back.lineTo(wx - 20, h * 0.62)
-    back.closePath()
-    back.fill({ color: 0xfff6d8, alpha: 0.12 })
-
-    // Floor
     back.rect(0, h * 0.62, w, h * 0.38)
-    back.fill(0xc4a574)
+    back.fill(room.floor)
     back.rect(0, h * 0.62, w, 14)
-    back.fill(0xa8885a)
+    back.fill(room.trim)
 
-    // Depth board at bottom
     front.rect(0, h * 0.92, w, h * 0.08)
     front.fill({ color: 0x1a2a22, alpha: 0.12 })
   }
@@ -242,6 +262,18 @@ export class PetScene {
           g.ellipse(w * 0.28, floorY + 8, 36, 20)
           g.fill(item.color)
           g.ellipse(w * 0.28, floorY + 4, 24, 12)
+          g.fill(item.accent)
+        } else if (id === 'coral_reef') {
+          g.ellipse(w * 0.7, floorY + 12, 40, 16)
+          g.fill(item.accent)
+          g.ellipse(w * 0.68, floorY - 4, 10, 22)
+          g.fill(item.color)
+          g.ellipse(w * 0.74, floorY, 8, 18)
+          g.fill(0xffc8dd)
+        } else if (id === 'dragon_egg') {
+          g.ellipse(w * 0.34, floorY + 6, 22, 30)
+          g.fill(item.color)
+          g.ellipse(w * 0.34, floorY - 4, 10, 8)
           g.fill(item.accent)
         }
       } else if (item.slot === 'wall') {
@@ -307,6 +339,23 @@ export class PetScene {
           g.fill(item.color)
           g.circle(x, y - 40, 12)
           g.fill(item.accent)
+        } else if (id === 'treasure_chest') {
+          g.roundRect(x - 28, y - 28, 56, 34, 6)
+          g.fill(item.color)
+          g.rect(x - 28, y - 14, 56, 6)
+          g.fill(item.accent)
+          g.circle(x, y - 14, 5)
+          g.fill(0xe9b44c)
+        } else if (id === 'neon_console') {
+          g.roundRect(x - 26, y - 48, 52, 42, 6)
+          g.fill(item.color)
+          g.roundRect(x - 18, y - 40, 36, 18, 4)
+          g.fill(item.accent)
+        } else if (id === 'alien_pod') {
+          g.ellipse(x, y - 36, 28, 36)
+          g.fill({ color: item.color, alpha: 0.85 })
+          g.ellipse(x, y - 36, 14, 18)
+          g.fill({ color: item.accent, alpha: 0.5 })
         }
       }
     }
@@ -347,6 +396,24 @@ export class PetScene {
     if (id === 'sprout') {
       g.ellipse(x, y - 26, 8, 12)
       g.fill(0x3d9a68)
+    } else if (id === 'blinky') {
+      g.circle(x - 10, y - 8, 6)
+      g.fill(0xffffff)
+      g.circle(x + 10, y - 8, 6)
+      g.fill(0xffffff)
+      g.circle(x - 10, y - 8, 2.5)
+      g.fill(def.accent)
+      g.circle(x + 10, y - 8, 2.5)
+      g.fill(def.accent)
+      g.ellipse(x, y - 28, 6, 14)
+      g.fill(def.accent)
+    } else if (id === 'pebble') {
+      g.ellipse(x, y + 4, 26, 18)
+      g.fill(def.fill)
+      g.circle(x - 8, y - 2, 3)
+      g.fill(0x243029)
+      g.circle(x + 8, y - 2, 3)
+      g.fill(0x243029)
     } else {
       g.ellipse(x - 16, y - 10, 8, 5)
       g.fill(def.fill)
@@ -367,7 +434,8 @@ export class PetScene {
 
   private bounce(): number {
     const { reaction } = this.props
-    if (reaction === 'laugh' || reaction === 'play' || reaction.startsWith('skill_')) {
+    if (reaction === 'laugh') return Math.sin(this.time * 20) * 10
+    if (reaction === 'play' || reaction.startsWith('skill_')) {
       return Math.sin(this.time * 16) * 5
     }
     if (reaction === 'eat') return Math.sin(this.time * 12) * 2
@@ -645,6 +713,23 @@ export class PetScene {
       g.fill({ color: 0xffffff, alpha: 0.5 })
     }
 
+    if (reaction === 'brush') {
+      g.roundRect(30, headY - 10, 36, 10, 4)
+      g.fill(0xffffff)
+      g.roundRect(58, headY - 14, 8, 18, 3)
+      g.fill(0x4cc9f0)
+      g.moveTo(-10, mouthY - 4)
+      g.lineTo(10, mouthY - 4)
+      g.stroke({ width: 3, color: 0xffffff, alpha: 0.85 })
+    }
+
+    if (reaction === 'potty') {
+      g.roundRect(-24, 95 + b, 48, 18, 6)
+      g.fill(0x90e0ef)
+      g.ellipse(0, 95 + b, 20, 6)
+      g.fill(0xffffff)
+    }
+
     if (reaction === 'skill_drums') {
       g.roundRect(-30, 70 + b, 60, 28, 6)
       g.fill(0xb56b45)
@@ -789,6 +874,46 @@ export class PetScene {
       g.fill(0xf4d35e)
       g.circle(8, y - 28, 3)
       g.fill(0xf4d35e)
+    } else if (hat === 'pirate') {
+      g.ellipse(0, y + 22, 48, 12)
+      g.fill(col)
+      g.roundRect(-36, y - 6, 72, 28, 10)
+      g.fill(col)
+      g.moveTo(-8, y + 4)
+      g.lineTo(0, y + 18)
+      g.lineTo(8, y + 4)
+      g.closePath()
+      g.fill(0xe63946)
+    } else if (hat === 'diver') {
+      g.circle(0, y + 10, 40)
+      g.stroke({ width: 8, color: col })
+      g.circle(0, y + 10, 28)
+      g.fill({ color: 0x90e0ef, alpha: 0.35 })
+    } else if (hat === 'visor') {
+      g.roundRect(-40, y + 8, 80, 18, 8)
+      g.fill({ color: col, alpha: 0.85 })
+      g.rect(-40, y + 14, 80, 4)
+      g.fill(0xffffff)
+    } else if (hat === 'dragon') {
+      g.moveTo(-36, y + 20)
+      g.lineTo(-20, y - 10)
+      g.lineTo(0, y + 8)
+      g.lineTo(20, y - 10)
+      g.lineTo(36, y + 20)
+      g.closePath()
+      g.fill(col)
+      g.circle(0, y + 4, 5)
+      g.fill(0xf4d35e)
+    } else if (hat === 'antenna') {
+      g.moveTo(-14, y + 18)
+      g.lineTo(-14, y - 18)
+      g.moveTo(14, y + 18)
+      g.lineTo(14, y - 18)
+      g.stroke({ width: 3, color: col })
+      g.circle(-14, y - 22, 6)
+      g.fill(0xff85a1)
+      g.circle(14, y - 22, 6)
+      g.fill(0x80ffdb)
     }
   }
 
