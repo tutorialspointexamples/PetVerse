@@ -45,6 +45,7 @@ export type PokeZone =
   | 'bath_sink'
   | 'bed_sleep'
   | 'yard_play'
+  | 'living_tv'
 
 export class PetScene {
   readonly app: Application
@@ -89,7 +90,10 @@ export class PetScene {
   private time = 0
   private blinkT = 0
   private yawnT = 0
+  private stretchT = 0
+  private sneezeT = 0
   private idleClock = 0
+  private idleCycle = 0
   private lastFxReaction: Reaction = 'idle'
   private particles: Array<{
     x: number
@@ -177,6 +181,7 @@ export class PetScene {
       else if (room === 'bathroom') this.onPoke('bath_tub')
       else if (room === 'bedroom') this.onPoke('bed_sleep')
       else if (room === 'yard') this.onPoke('yard_play')
+      else if (room === 'living') this.onPoke('living_tv')
     })
     this.roomPropHitB.on('pointertap', () => {
       if (this.props.room === 'bathroom') this.onPoke('bath_sink')
@@ -259,10 +264,11 @@ export class PetScene {
       back.ellipse(w * 0.24, h * 0.4, 28, 18)
       back.fill(0xffffff)
     } else {
-      const wx = w * 0.72
+      // Living room: window + TV console
+      const wx = w * 0.08
       const wy = h * 0.12
-      const ww = Math.min(160, w * 0.22)
-      const wh = Math.min(120, h * 0.2)
+      const ww = Math.min(140, w * 0.2)
+      const wh = Math.min(110, h * 0.18)
       back.roundRect(wx, wy, ww, wh, 12)
       back.fill(0x9fd7ff)
       back.stroke({ width: 6, color: 0xf2e8d5 })
@@ -271,12 +277,18 @@ export class PetScene {
       back.moveTo(wx, wy + wh / 2)
       back.lineTo(wx + ww, wy + wh / 2)
       back.stroke({ width: 4, color: 0xf2e8d5, alpha: 0.9 })
-      back.moveTo(wx, wy + wh)
-      back.lineTo(wx + ww, wy + wh)
-      back.lineTo(wx + ww + 40, h * 0.62)
-      back.lineTo(wx - 20, h * 0.62)
-      back.closePath()
-      back.fill({ color: 0xfff6d8, alpha: 0.12 })
+      const tvX = w * 0.68
+      const tvY = h * 0.18
+      const tvW = w * 0.24
+      const tvH = h * 0.22
+      back.roundRect(tvX, tvY, tvW, tvH, 10)
+      back.fill(0x1a1a1a)
+      back.roundRect(tvX + 8, tvY + 8, tvW - 16, tvH - 28, 6)
+      back.fill(0x3a86ff)
+      back.roundRect(tvX + tvW * 0.35, tvY + tvH - 14, tvW * 0.3, 10, 3)
+      back.fill(0x333333)
+      back.ellipse(w * 0.35, h * 0.55, 50, 18)
+      back.fill({ color: 0xe07a5f, alpha: 0.35 })
     }
 
     back.rect(0, h * 0.62, w, h * 0.38)
@@ -339,6 +351,16 @@ export class PetScene {
       hint.stroke({ width: 3, color: 0x4cc9f0, alpha: pulse })
       hint.ellipse(w * 0.5, h * 0.72, 50, 18)
       hint.fill({ color: 0x4cc9f0, alpha: 0.15 })
+    } else if (room === 'living') {
+      // TV → watch / laugh reaction
+      hit.roundRect(w * 0.68, h * 0.18, w * 0.24, h * 0.22, 10)
+      hit.fill({ color: 0xffffff, alpha: 0.001 })
+      hit.eventMode = 'static'
+      hint.roundRect(w * 0.68, h * 0.18, w * 0.24, h * 0.22, 10)
+      hint.stroke({ width: 3, color: 0x9b5de5, alpha: pulse })
+      const flicker = 0.35 + Math.abs(Math.sin(this.time * 6)) * 0.4
+      hint.roundRect(w * 0.7, h * 0.2, w * 0.2, h * 0.16, 6)
+      hint.fill({ color: 0x4cc9f0, alpha: flicker * 0.35 })
     }
   }
 
@@ -682,6 +704,8 @@ export class PetScene {
 
   private bounce(): number {
     const { reaction } = this.props
+    if (this.sneezeT > 0) return Math.sin(this.sneezeT * 40) * 6
+    if (this.stretchT > 0) return -6 + Math.sin(this.stretchT * 4) * 4
     if (reaction === 'laugh') return Math.sin(this.time * 20) * 10
     if (reaction === 'play' || reaction.startsWith('skill_')) {
       return Math.sin(this.time * 16) * 5
@@ -969,6 +993,18 @@ export class PetScene {
   private drawArms(fill: number, reaction: Reaction, b: number) {
     const g = this.arms
     g.clear()
+    if (this.stretchT > 0) {
+      const lift = 28 + Math.sin(this.stretchT * 5) * 6
+      g.ellipse(-70, -10 + b - lift * 0.3, 20, 40)
+      g.fill(fill)
+      g.ellipse(70, -10 + b - lift * 0.3, 20, 40)
+      g.fill(fill)
+      g.circle(-70, -48 + b - lift * 0.2, 12)
+      g.fill(fill)
+      g.circle(70, -48 + b - lift * 0.2, 12)
+      g.fill(fill)
+      return
+    }
     const swing =
       reaction === 'play' || reaction === 'skill_boxing'
         ? Math.sin(this.time * 14) * 14
@@ -1114,12 +1150,25 @@ export class PetScene {
 
     const mouthY = headY + 28
     const yawning = this.yawnT > 0 && !sleeping && reaction === 'idle' && !talking
-    if (yawning) {
+    const sneezing = this.sneezeT > 0 && !sleeping
+    const stretching = this.stretchT > 0 && !sleeping && reaction === 'idle'
+    if (sneezing) {
+      g.ellipse(0, mouthY + 2, 16, 10)
+      g.fill(0x3a1f1a)
+      g.circle(-28, headY + 8, 3 + Math.abs(Math.sin(this.time * 30)) * 2)
+      g.fill({ color: 0xffffff, alpha: 0.55 })
+      g.circle(30, headY + 4, 2.5)
+      g.fill({ color: 0xffffff, alpha: 0.45 })
+    } else if (yawning) {
       const open = 10 + Math.sin(this.yawnT * 8) * 4
       g.ellipse(0, mouthY + 4, 14, open)
       g.fill(0x3a1f1a)
       g.ellipse(0, mouthY + 2, 10, 4)
       g.fill({ color: 0xff8fab, alpha: 0.45 })
+    } else if (stretching) {
+      g.moveTo(-14, mouthY + 2)
+      g.quadraticCurveTo(0, mouthY + 12, 14, mouthY + 2)
+      g.stroke({ width: 3.5, color: 0x243029, cap: 'round' })
     } else if (talking || reaction === 'talk') {
       const open = 6 + Math.abs(Math.sin(this.time * 16)) * 10
       g.ellipse(0, mouthY + 4, 12, open)
@@ -1550,15 +1599,36 @@ export class PetScene {
     if (this.blinkT > 3.4) this.blinkT = 0
 
     if (this.yawnT > 0) this.yawnT = Math.max(0, this.yawnT - dt)
+    if (this.stretchT > 0) this.stretchT = Math.max(0, this.stretchT - dt)
+    if (this.sneezeT > 0) this.sneezeT = Math.max(0, this.sneezeT - dt)
     this.idleClock += dt
     if (
-      this.idleClock > 12 &&
+      this.idleClock > 10 &&
       this.props.reaction === 'idle' &&
       !this.props.sleeping &&
       !this.props.talking
     ) {
       this.idleClock = 0
-      this.yawnT = 1.4
+      this.idleCycle = (this.idleCycle + 1) % 3
+      if (this.idleCycle === 0) this.yawnT = 1.4
+      else if (this.idleCycle === 1) this.stretchT = 1.6
+      else {
+        this.sneezeT = 0.55
+        for (let i = 0; i < 8; i++) {
+          const ang = -Math.PI / 2 + (Math.random() - 0.5)
+          this.particles.push({
+            x: (Math.random() - 0.5) * 20,
+            y: -60,
+            vx: Math.cos(ang) * (40 + Math.random() * 40),
+            vy: Math.sin(ang) * (40 + Math.random() * 30),
+            life: 0,
+            max: 0.5 + Math.random() * 0.4,
+            color: 0xffffff,
+            size: 2 + Math.random() * 3,
+            kind: 'circle',
+          })
+        }
+      }
     }
 
     if (this.props.reaction !== this.lastFxReaction) {

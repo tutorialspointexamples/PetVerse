@@ -79,6 +79,26 @@ export type FurnitureId =
   | 'wind_chime'
   | 'statue_cat'
   | 'vending'
+  | 'rug_stripes'
+  | 'bed_hammock'
+  | 'sofa_retro'
+  | 'lamp_paper'
+  | 'poster_wave'
+  | 'plant_fern'
+  | 'bookshelf_tall'
+  | 'coffee_table'
+  | 'record_player'
+  | 'fish_bowl'
+  | 'wall_clock'
+  | 'beanbag_mint'
+  | 'kite'
+  | 'picnic_blanket'
+  | 'surfboard'
+  | 'rocket_model'
+  | 'candy_jar'
+  | 'yoga_ball'
+  | 'nightstand'
+  | 'curtain_stars'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -172,6 +192,26 @@ export const FURNITURE: FurnitureItem[] = [
   { id: 'wind_chime', name: 'Wind Chime', price: 75, slot: 'wall', color: 0xf4d35e, accent: 0x90e0ef },
   { id: 'statue_cat', name: 'Cat Statue', price: 140, slot: 'side', color: 0x8d99ae, accent: 0xf4d35e },
   { id: 'vending', name: 'Snack Machine', price: 195, slot: 'side', color: 0xe63946, accent: 0x4cc9f0 },
+  { id: 'rug_stripes', name: 'Stripe Rug', price: 100, slot: 'floor', color: 0xff85a1, accent: 0xffffff },
+  { id: 'bed_hammock', name: 'Indoor Hammock', price: 170, slot: 'side', color: 0xffbe0b, accent: 0x2a9d8f },
+  { id: 'sofa_retro', name: 'Retro Sofa', price: 200, slot: 'side', color: 0xe76f51, accent: 0xf4d35e },
+  { id: 'lamp_paper', name: 'Paper Lantern', price: 90, slot: 'side', color: 0xffe8c8, accent: 0xffbe0b },
+  { id: 'poster_wave', name: 'Wave Poster', price: 52, slot: 'wall', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'plant_fern', name: 'Fern Friend', price: 70, slot: 'side', color: 0x4caf7a, accent: 0x2a9d8f },
+  { id: 'bookshelf_tall', name: 'Tall Bookshelf', price: 160, slot: 'wall', color: 0x8b5e3c, accent: 0xe9c46a },
+  { id: 'coffee_table', name: 'Coffee Table', price: 110, slot: 'floor', color: 0xb56b45, accent: 0xf2e8d5 },
+  { id: 'record_player', name: 'Record Player', price: 180, slot: 'side', color: 0x1a1a1a, accent: 0xe63946 },
+  { id: 'fish_bowl', name: 'Fish Bowl', price: 95, slot: 'side', color: 0x90e0ef, accent: 0xff85a1 },
+  { id: 'wall_clock', name: 'Wall Clock', price: 85, slot: 'wall', color: 0xffffff, accent: 0x243029 },
+  { id: 'beanbag_mint', name: 'Mint Beanbag', price: 120, slot: 'floor', color: 0x80ed99, accent: 0xffffff },
+  { id: 'kite', name: 'Wall Kite', price: 75, slot: 'wall', color: 0xff006e, accent: 0xffe066 },
+  { id: 'picnic_blanket', name: 'Picnic Blanket', price: 80, slot: 'floor', color: 0xe63946, accent: 0xffffff },
+  { id: 'surfboard', name: 'Surfboard', price: 140, slot: 'side', color: 0x4cc9f0, accent: 0xffbe0b },
+  { id: 'rocket_model', name: 'Rocket Model', price: 155, slot: 'side', color: 0xe63946, accent: 0xd8e2dc },
+  { id: 'candy_jar', name: 'Candy Jar', price: 65, slot: 'side', color: 0xff85a1, accent: 0xffffff },
+  { id: 'yoga_ball', name: 'Yoga Ball', price: 70, slot: 'floor', color: 0x9b5de5, accent: 0xff85a1 },
+  { id: 'nightstand', name: 'Nightstand', price: 100, slot: 'side', color: 0x8b5e3c, accent: 0xf4d35e },
+  { id: 'curtain_stars', name: 'Star Curtains', price: 125, slot: 'wall', color: 0x240046, accent: 0xf4d35e },
 ]
 
 export function getFurniture(id: FurnitureId): FurnitureItem {

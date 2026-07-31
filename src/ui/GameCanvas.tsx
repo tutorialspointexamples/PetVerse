@@ -40,6 +40,7 @@ export function GameCanvas() {
       else if (zone === 'bath_sink') a.doCare('brush')
       else if (zone === 'bed_sleep') a.doCare('sleep')
       else if (zone === 'yard_play') a.doCare('play')
+      else if (zone === 'living_tv') a.doCare('play')
       else a.poke(zone)
     }
 

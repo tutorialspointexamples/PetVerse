@@ -969,6 +969,36 @@ input {
   padding-bottom: 20px;
 }
 
+.minigame-frame.build-plane.flight {
+  max-width: 520px;
+}
+
+.minigame-canvas.build-flight {
+  height: 260px;
+  margin: 0 12px 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.plane-wing.wings-biplane-top {
+  top: 38%;
+  opacity: 0.9;
+}
+
+.primary-btn {
+  display: inline-flex;
+  margin: 8px auto 4px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffbe0b, #f4a261);
+  color: #1a2a22;
+  font-family: Fredoka, Nunito, system-ui, sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .plane-preview {
   position: relative;
   height: 160px;
