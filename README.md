@@ -14,7 +14,7 @@ npm run dev
 - Care: feed menu (12 foods), sleep, bath, play, brush, potty + layered pet reactions
 - Home rooms: Living, Kitchen, Bathroom, Bedroom, Backyard
 - Talk-back mic (hold to record, pitch-shifted playback)
-- Large wardrobe (~135 looks) + 60 furniture SKUs
+- Large wardrobe (~135 looks) + 58 furniture SKUs
 - Mini-games: Space Trails (swipe/arrows), Sky Race, Dunk-a-Pet, Build Your Plane
 - Plane travel to 8 worlds with flight cutscene
 - Collectible card album from worlds + mini-games
