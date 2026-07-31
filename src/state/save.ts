@@ -9,9 +9,11 @@ import type {
 import type { FurnitureId } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
+import type { RoomId } from '../game/rooms'
+import type { FoodId } from '../game/foods'
 import { DEFAULT_NEEDS } from '../game/needs'
 
-const SAVE_KEY = 'petverse-save-v2'
+const SAVE_KEY = 'petverse-save-v3'
 
 export interface SaveData {
   petName: string
@@ -40,6 +42,8 @@ export interface SaveData {
   eventClaimDate: string | null
   claimedEventIds: string[]
   sleeping: boolean
+  room: RoomId
+  favoriteFood: FoodId
   lastSavedAt: number
 }
 
@@ -71,13 +75,18 @@ export function defaultSave(): SaveData {
     eventClaimDate: null,
     claimedEventIds: [],
     sleeping: false,
+    room: 'living',
+    favoriteFood: 'kibble',
     lastSavedAt: Date.now(),
   }
 }
 
 export function loadSave(): SaveData {
   try {
-    const raw = localStorage.getItem(SAVE_KEY) ?? localStorage.getItem('petverse-save-v1')
+    const raw =
+      localStorage.getItem(SAVE_KEY) ??
+      localStorage.getItem('petverse-save-v2') ??
+      localStorage.getItem('petverse-save-v1')
     if (!raw) return defaultSave()
     const parsed = JSON.parse(raw) as Partial<SaveData>
     const base = defaultSave()
@@ -96,6 +105,8 @@ export function loadSave(): SaveData {
       ownedCompanions: parsed.ownedCompanions?.length ? parsed.ownedCompanions : base.ownedCompanions,
       unlockedSkills: parsed.unlockedSkills?.length ? parsed.unlockedSkills : base.unlockedSkills,
       claimedEventIds: parsed.claimedEventIds ?? base.claimedEventIds,
+      room: parsed.room ?? base.room,
+      favoriteFood: parsed.favoriteFood ?? base.favoriteFood,
     }
   } catch {
     return defaultSave()

@@ -13,12 +13,12 @@ export const NEED_LABELS: Record<NeedKey, string> = {
   cleanliness: 'Clean',
 }
 
-/** Decay per second while awake (tab open). */
+/** Decay per second while awake (tab open). Tuned for longer play sessions. */
 export const DECAY_PER_SEC: Needs = {
-  hunger: 0.35,
-  energy: 0.22,
-  happiness: 0.28,
-  cleanliness: 0.18,
+  hunger: 0.18,
+  energy: 0.12,
+  happiness: 0.15,
+  cleanliness: 0.1,
 }
 
 /** Slower decay while sleeping; energy recovers. */

@@ -1,8 +1,11 @@
 import { WORLDS } from '../game/worlds'
 import { getActiveEvent } from '../game/events'
 import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
+import { FOODS } from '../game/foods'
+import { ROOMS } from '../game/rooms'
 import { IAP_PRODUCTS, purchaseIap, showRewardedAd } from '../monetization/stubs'
 import { useGameStore } from '../state/gameStore'
+import { useEffect } from 'react'
 
 export function GamesHub() {
   const overlay = useGameStore((s) => s.overlay)
@@ -100,6 +103,109 @@ export function WorldVisitPanel() {
         <button type="button" className="name-submit" onClick={clearWorldVisit}>
           Fly home
         </button>
+      </div>
+    </div>
+  )
+}
+
+export function FlightPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const activeWorld = useGameStore((s) => s.activeWorld)
+  const finishFlight = useGameStore((s) => s.finishFlight)
+  const world = WORLDS.find((w) => w.id === activeWorld)
+
+  useEffect(() => {
+    if (overlay !== 'flight') return
+    const t = window.setTimeout(() => finishFlight(), 2200)
+    return () => window.clearTimeout(t)
+  }, [overlay, finishFlight])
+
+  if (overlay !== 'flight' || !world) return null
+  return (
+    <div className="shop-overlay flight-overlay" role="dialog" aria-label="Flying">
+      <div className="flight-scene">
+        <div className="flight-sky" />
+        <div className="flight-plane" aria-hidden />
+        <p className="flight-label">Flying to {world.name}…</p>
+        <button type="button" className="name-submit" onClick={finishFlight}>
+          Skip
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export function FoodPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const coins = useGameStore((s) => s.coins)
+  const feedFood = useGameStore((s) => s.feedFood)
+  const favoriteFood = useGameStore((s) => s.favoriteFood)
+  const cooldowns = useGameStore((s) => s.cooldowns)
+  if (overlay !== 'food') return null
+  const cooling = Boolean(cooldowns.feed && cooldowns.feed > Date.now())
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Food menu">
+      <div className="shop-panel">
+        <div className="shop-header">
+          <h2>Kitchen Menu</h2>
+          <p className="shop-coins">{coins}c</p>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        {FOODS.map((food) => (
+          <button
+            key={food.id}
+            type="button"
+            className={`hub-card ${favoriteFood === food.id ? 'active' : ''}`}
+            disabled={cooling || (food.price > 0 && coins < food.price)}
+            onClick={() => feedFood(food.id)}
+          >
+            <strong>
+              {food.name}
+              {favoriteFood === food.id ? ' · fav' : ''}
+            </strong>
+            <span>
+              +{food.hunger} hunger · +{food.happiness} happy
+              {food.price ? ` · ${food.price}c` : ' · free'}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function RoomsPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const room = useGameStore((s) => s.room)
+  const setRoom = useGameStore((s) => s.setRoom)
+  if (overlay !== 'rooms') return null
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Rooms">
+      <div className="shop-panel">
+        <div className="shop-header">
+          <h2>Home Rooms</h2>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        <div className="room-grid">
+          {ROOMS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              className={`hub-card room-card ${room === r.id ? 'active' : ''}`}
+              style={{ borderLeft: `6px solid #${r.wall.toString(16).padStart(6, '0')}` }}
+              onClick={() => setRoom(r.id)}
+            >
+              <strong>{r.name}</strong>
+              <span>{room === r.id ? 'You are here' : 'Go'}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )

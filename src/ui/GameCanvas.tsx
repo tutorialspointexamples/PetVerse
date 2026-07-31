@@ -18,6 +18,7 @@ export function GameCanvas() {
   const petName = useGameStore((s) => s.petName)
   const placedFurniture = useGameStore((s) => s.placedFurniture)
   const companion = useGameStore((s) => s.companion)
+  const room = useGameStore((s) => s.room)
   const poke = useGameStore((s) => s.poke)
   const pokeCompanion = useGameStore((s) => s.pokeCompanion)
 
@@ -40,6 +41,7 @@ export function GameCanvas() {
         petName,
         placedFurniture,
         companion,
+        room,
       },
       (zone) => {
         if (zone === 'companion') pokeCompanion()
@@ -69,6 +71,7 @@ export function GameCanvas() {
       petName,
       placedFurniture,
       companion,
+      room,
     })
   }, [
     needs,
@@ -83,6 +86,7 @@ export function GameCanvas() {
     petName,
     placedFurniture,
     companion,
+    room,
   ])
 
   return <div className="game-canvas" ref={hostRef} aria-label="Pet room" />

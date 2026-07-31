@@ -12,8 +12,11 @@ import { BuildPlaneGame } from './ui/BuildPlaneGame'
 import {
   CompanionsPanel,
   EventPanel,
+  FlightPanel,
+  FoodPanel,
   GamesHub,
   RewardedPanel,
+  RoomsPanel,
   SkillsPanel,
   TravelPanel,
   WorldVisitPanel,
@@ -95,7 +98,10 @@ export default function App() {
       <ShopPanel />
       <GamesHub />
       <TravelPanel />
+      <FlightPanel />
       <WorldVisitPanel />
+      <FoodPanel />
+      <RoomsPanel />
       <SkillsPanel />
       <CompanionsPanel />
       <EventPanel />

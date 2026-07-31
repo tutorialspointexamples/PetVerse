@@ -28,6 +28,10 @@ import { getWorld } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
 import { getCompanion, getSkill, levelFromXp } from '../game/progress'
 import { getActiveEvent } from '../game/events'
+import type { RoomId } from '../game/rooms'
+import type { FoodId } from '../game/foods'
+import { getFood } from '../game/foods'
+import { clampNeed } from '../game/needs'
 import { defaultSave, loadSave, writeSave, type SaveData } from './save'
 
 export type Reaction =
@@ -58,6 +62,9 @@ export type Overlay =
   | 'spaceTrails'
   | 'buildPlane'
   | 'worldVisit'
+  | 'flight'
+  | 'food'
+  | 'rooms'
   | 'rewarded'
 
 const MINIGAME_OVERLAYS: Overlay[] = ['skyDash', 'dunkToss', 'spaceTrails', 'buildPlane']
@@ -92,6 +99,7 @@ export interface GameState extends SaveData {
   addFuel: (n: number) => void
   addXp: (n: number) => void
   travelTo: (id: WorldId) => boolean
+  finishFlight: () => void
   clearWorldVisit: () => void
   unlockCompanion: (id: CompanionId) => boolean
   setCompanion: (id: CompanionId) => void
@@ -99,6 +107,8 @@ export interface GameState extends SaveData {
   claimEventBonus: () => boolean
   grantMinigameReward: (coins: number, fuel?: number) => void
   applyRewardedBoost: () => void
+  setRoom: (id: RoomId) => void
+  feedFood: (id: FoodId) => boolean
   level: () => number
   mood: () => Mood
   shopOpen: boolean
@@ -133,6 +143,8 @@ function sliceSave(state: GameState): SaveData {
     eventClaimDate,
     claimedEventIds,
     sleeping,
+    room,
+    favoriteFood,
   } = state
   return {
     petName,
@@ -161,6 +173,8 @@ function sliceSave(state: GameState): SaveData {
     eventClaimDate,
     claimedEventIds,
     sleeping,
+    room,
+    favoriteFood,
     lastSavedAt: Date.now(),
   }
 }
@@ -289,7 +303,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (get().reaction === 'laugh' || get().reaction === 'annoyed') {
         set({ reaction: get().sleeping ? 'sleep' : 'idle' })
       }
-    }, 900)
+    }, 1600)
   },
 
   pokeCompanion: () => {
@@ -390,13 +404,56 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedFurniture,
       ownedHats,
       activeWorld: id,
-      overlay: 'worldVisit',
+      overlay: 'flight',
     })
     get().save()
     return true
   },
 
+  finishFlight: () => {
+    if (!get().activeWorld) {
+      set({ overlay: 'none' })
+      return
+    }
+    set({ overlay: 'worldVisit' })
+  },
+
   clearWorldVisit: () => set({ activeWorld: null, overlay: 'none' }),
+
+  setRoom: (id) => {
+    set({ room: id, overlay: 'none' })
+    get().save()
+  },
+
+  feedFood: (id) => {
+    const state = get()
+    if (state.sleeping) return false
+    const now = Date.now()
+    const until = state.cooldowns.feed
+    if (until && until > now) return false
+    const food = getFood(id)
+    if (food.price > 0 && state.coins < food.price) return false
+    const happyBonus = state.favoriteFood === id ? 6 : 0
+    set({
+      coins: state.coins - food.price + food.coins,
+      needs: {
+        ...state.needs,
+        hunger: clampNeed(state.needs.hunger + food.hunger),
+        happiness: clampNeed(state.needs.happiness + food.happiness + happyBonus),
+      },
+      xp: state.xp + 3,
+      reaction: 'eat',
+      favoriteFood: id,
+      cooldowns: { ...state.cooldowns, feed: now + CARE_EFFECTS.feed.cooldownMs },
+      overlay: 'none',
+      sleeping: false,
+    })
+    get().save()
+    window.setTimeout(() => {
+      if (get().reaction === 'eat') set({ reaction: 'idle' })
+    }, 1200)
+    return true
+  },
 
   unlockCompanion: (id) => {
     const state = get()

@@ -46,7 +46,7 @@ export function ActionBar() {
     <footer className="action-bar">
       {micError ? <p className="mic-banner">{micError}</p> : null}
       <div className="action-row">
-        <button type="button" className="action-btn" disabled={cooling('feed') || sleeping} onClick={() => doCare('feed')}>
+        <button type="button" className="action-btn" disabled={cooling('feed') || sleeping} onClick={() => setOverlay('food')}>
           <span className="action-mark feed" aria-hidden />
           Feed
         </button>
@@ -94,6 +94,9 @@ export function ActionBar() {
         </button>
       </div>
       <div className="action-row tertiary">
+        <button type="button" className="action-btn slim" onClick={() => setOverlay('rooms')}>
+          Rooms
+        </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('games')}>
           Games
         </button>

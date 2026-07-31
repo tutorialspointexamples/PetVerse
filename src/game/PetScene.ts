@@ -15,6 +15,7 @@ import { getFurniture, type FurnitureId } from './furniture'
 import { getCompanion, type CompanionId } from './progress'
 import { deriveMood, type Needs } from './needs'
 import type { Reaction } from '../state/gameStore'
+import { getRoom, type RoomId } from './rooms'
 
 export interface PetSceneProps {
   needs: Needs
@@ -29,6 +30,7 @@ export interface PetSceneProps {
   petName: string
   placedFurniture: FurnitureId[]
   companion: CompanionId
+  room: RoomId
 }
 
 export type PokeZone = 'head' | 'belly' | 'companion'
@@ -157,42 +159,60 @@ export class PetScene {
     const front = this.roomFront
     back.clear()
     front.clear()
+    const room = getRoom(this.props.room)
 
-    // Parallax wall wash
     back.rect(0, 0, w, h * 0.62)
-    back.fill(0x2f6f5e)
+    back.fill(room.wall)
     back.rect(0, 0, w, h * 0.62)
-    back.fill({ color: 0x4a9b82, alpha: 0.28 })
+    back.fill({ color: room.wallAccent, alpha: 0.28 })
 
-    // Window
-    const wx = w * 0.72
-    const wy = h * 0.12
-    const ww = Math.min(160, w * 0.22)
-    const wh = Math.min(120, h * 0.2)
-    back.roundRect(wx, wy, ww, wh, 12)
-    back.fill(0x9fd7ff)
-    back.stroke({ width: 6, color: 0xf2e8d5 })
-    back.moveTo(wx + ww / 2, wy)
-    back.lineTo(wx + ww / 2, wy + wh)
-    back.moveTo(wx, wy + wh / 2)
-    back.lineTo(wx + ww, wy + wh / 2)
-    back.stroke({ width: 4, color: 0xf2e8d5, alpha: 0.9 })
+    if (this.props.room === 'kitchen') {
+      back.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
+      back.fill(0xffffff)
+      back.roundRect(w * 0.1, h * 0.32, w * 0.1, h * 0.08, 4)
+      back.fill(0x4cc9f0)
+      back.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
+      back.fill(0xe76f51)
+    } else if (this.props.room === 'bathroom') {
+      back.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
+      back.fill(0xffffff)
+      back.ellipse(w * 0.2, h * 0.5, 40, 28)
+      back.fill(0x48cae4)
+      back.roundRect(w * 0.12, h * 0.48, 16, 40, 4)
+      back.fill(0x0077b6)
+    } else if (this.props.room === 'bedroom') {
+      back.roundRect(w * 0.08, h * 0.34, w * 0.32, h * 0.24, 10)
+      back.fill(0x4a90a4)
+      back.roundRect(w * 0.1, h * 0.28, w * 0.2, h * 0.1, 8)
+      back.fill(0xffe8c8)
+      back.circle(w * 0.78, h * 0.2, 18)
+      back.fill({ color: 0xffe066, alpha: 0.55 })
+    } else {
+      const wx = w * 0.72
+      const wy = h * 0.12
+      const ww = Math.min(160, w * 0.22)
+      const wh = Math.min(120, h * 0.2)
+      back.roundRect(wx, wy, ww, wh, 12)
+      back.fill(0x9fd7ff)
+      back.stroke({ width: 6, color: 0xf2e8d5 })
+      back.moveTo(wx + ww / 2, wy)
+      back.lineTo(wx + ww / 2, wy + wh)
+      back.moveTo(wx, wy + wh / 2)
+      back.lineTo(wx + ww, wy + wh / 2)
+      back.stroke({ width: 4, color: 0xf2e8d5, alpha: 0.9 })
+      back.moveTo(wx, wy + wh)
+      back.lineTo(wx + ww, wy + wh)
+      back.lineTo(wx + ww + 40, h * 0.62)
+      back.lineTo(wx - 20, h * 0.62)
+      back.closePath()
+      back.fill({ color: 0xfff6d8, alpha: 0.12 })
+    }
 
-    // Soft light shaft
-    back.moveTo(wx, wy + wh)
-    back.lineTo(wx + ww, wy + wh)
-    back.lineTo(wx + ww + 40, h * 0.62)
-    back.lineTo(wx - 20, h * 0.62)
-    back.closePath()
-    back.fill({ color: 0xfff6d8, alpha: 0.12 })
-
-    // Floor
     back.rect(0, h * 0.62, w, h * 0.38)
-    back.fill(0xc4a574)
+    back.fill(room.floor)
     back.rect(0, h * 0.62, w, 14)
-    back.fill(0xa8885a)
+    back.fill(room.trim)
 
-    // Depth board at bottom
     front.rect(0, h * 0.92, w, h * 0.08)
     front.fill({ color: 0x1a2a22, alpha: 0.12 })
   }
@@ -414,7 +434,8 @@ export class PetScene {
 
   private bounce(): number {
     const { reaction } = this.props
-    if (reaction === 'laugh' || reaction === 'play' || reaction.startsWith('skill_')) {
+    if (reaction === 'laugh') return Math.sin(this.time * 20) * 10
+    if (reaction === 'play' || reaction.startsWith('skill_')) {
       return Math.sin(this.time * 16) * 5
     }
     if (reaction === 'eat') return Math.sin(this.time * 12) * 2
