@@ -36,11 +36,14 @@ export function GameCanvas() {
       const a = actionsRef.current
       if (zone === 'companion') a.pokeCompanion()
       else if (zone === 'kitchen_food') a.setOverlay('food')
+      else if (zone === 'kitchen_stove') a.doCare('feed')
       else if (zone === 'bath_tub') a.doCare('bath')
       else if (zone === 'bath_sink') a.doCare('brush')
       else if (zone === 'bed_sleep') a.doCare('sleep')
-      else if (zone === 'yard_play') a.doCare('play')
+      else if (zone === 'bedroom_lamp') a.poke('head')
+      else if (zone === 'yard_play' || zone === 'yard_swing') a.doCare('play')
       else if (zone === 'living_tv') a.doCare('play')
+      else if (zone === 'living_sofa') a.poke('belly')
       else a.poke(zone)
     }
 

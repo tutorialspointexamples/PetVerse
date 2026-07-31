@@ -41,11 +41,15 @@ export type PokeZone =
   | 'belly'
   | 'companion'
   | 'kitchen_food'
+  | 'kitchen_stove'
   | 'bath_tub'
   | 'bath_sink'
   | 'bed_sleep'
+  | 'bedroom_lamp'
   | 'yard_play'
+  | 'yard_swing'
   | 'living_tv'
+  | 'living_sofa'
 
 export class PetScene {
   readonly app: Application
@@ -92,6 +96,8 @@ export class PetScene {
   private yawnT = 0
   private stretchT = 0
   private sneezeT = 0
+  private earFlopT = 0
+  private lookTarget = { x: 0, y: 0 }
   private idleClock = 0
   private idleCycle = 0
   private lastFxReaction: Reaction = 'idle'
@@ -110,10 +116,12 @@ export class PetScene {
   private onPoke: (zone: PokeZone) => void
   private disposed = false
   private ready = false
+  private host: HTMLElement | null = null
 
   constructor(canvasParent: HTMLElement, props: PetSceneProps, onPoke: (zone: PokeZone) => void) {
     this.props = props
     this.onPoke = onPoke
+    this.host = canvasParent
     this.app = new Application()
     void this.init(canvasParent)
   }
@@ -184,8 +192,15 @@ export class PetScene {
       else if (room === 'living') this.onPoke('living_tv')
     })
     this.roomPropHitB.on('pointertap', () => {
-      if (this.props.room === 'bathroom') this.onPoke('bath_sink')
+      const room = this.props.room
+      if (room === 'bathroom') this.onPoke('bath_sink')
+      else if (room === 'kitchen') this.onPoke('kitchen_stove')
+      else if (room === 'bedroom') this.onPoke('bedroom_lamp')
+      else if (room === 'yard') this.onPoke('yard_swing')
+      else if (room === 'living') this.onPoke('living_sofa')
     })
+
+    parent.addEventListener('pointermove', this.onPointerMove)
 
     this.zzz.anchor.set(0.5)
     this.nameTag.anchor.set(0.5, 0)
@@ -300,7 +315,20 @@ export class PetScene {
     front.fill({ color: 0x1a2a22, alpha: 0.12 })
   }
 
-  /** Interactive kitchen / bathroom / bedroom props beyond backdrop. */
+  private onPointerMove = (e: PointerEvent) => {
+    if (!this.ready || this.disposed) return
+    const w = this.app.screen.width
+    const h = this.app.screen.height
+    const rect = this.app.canvas.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * w
+    const y = ((e.clientY - rect.top) / rect.height) * h
+    const px = this.pet.position.x
+    const py = this.pet.position.y - 78
+    this.lookTarget.x = Math.max(-4, Math.min(4, (x - px) * 0.02))
+    this.lookTarget.y = Math.max(-3, Math.min(3, (y - py) * 0.015))
+  }
+
+  /** Interactive kitchen / bathroom / bedroom / living / yard props. */
   private drawRoomProps(w: number, h: number) {
     const hit = this.roomPropHit
     const hitB = this.roomPropHitB
@@ -314,15 +342,27 @@ export class PetScene {
     const room = this.props.room
 
     if (room === 'kitchen') {
+      // Fridge → food menu
       hit.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
       hit.fill({ color: 0xffffff, alpha: 0.001 })
       hit.eventMode = 'static'
       hint.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
       hint.stroke({ width: 3, color: 0xffbe0b, alpha: pulse })
+      // Stove → quick snack
+      hitB.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
+      hitB.fill({ color: 0xffffff, alpha: 0.001 })
+      hitB.eventMode = 'static'
+      hint.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
+      hint.stroke({ width: 3, color: 0xe76f51, alpha: pulse })
       hint.circle(w * 0.72, h * 0.42, 5)
       hint.fill({ color: 0x333333, alpha: 0.5 })
       hint.circle(w * 0.78, h * 0.42, 5)
       hint.fill({ color: 0x333333, alpha: 0.5 })
+      const flame = 0.3 + Math.abs(Math.sin(this.time * 10)) * 0.5
+      hint.circle(w * 0.72, h * 0.48, 4)
+      hint.fill({ color: 0xffbe0b, alpha: flame })
+      hint.circle(w * 0.78, h * 0.48, 4)
+      hint.fill({ color: 0xe63946, alpha: flame * 0.85 })
     } else if (room === 'bathroom') {
       // Tub → bath
       hit.ellipse(w * 0.2, h * 0.5, 44, 32)
@@ -337,11 +377,20 @@ export class PetScene {
       hint.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
       hint.stroke({ width: 3, color: 0x4cc9f0, alpha: pulse })
     } else if (room === 'bedroom') {
+      // Bed → sleep
       hit.roundRect(w * 0.08, h * 0.28, w * 0.32, h * 0.3, 10)
       hit.fill({ color: 0xffffff, alpha: 0.001 })
       hit.eventMode = 'static'
       hint.roundRect(w * 0.08, h * 0.28, w * 0.32, h * 0.3, 10)
       hint.stroke({ width: 3, color: 0xffe066, alpha: pulse })
+      // Lamp → playful night light
+      hitB.circle(w * 0.78, h * 0.2, 28)
+      hitB.fill({ color: 0xffffff, alpha: 0.001 })
+      hitB.eventMode = 'static'
+      hint.circle(w * 0.78, h * 0.2, 22)
+      hint.stroke({ width: 3, color: 0xffe066, alpha: pulse })
+      hint.circle(w * 0.78, h * 0.2, 16)
+      hint.fill({ color: 0xffe066, alpha: 0.25 + pulse * 0.35 })
     } else if (room === 'yard') {
       // Trampoline / play spot → play care
       hit.ellipse(w * 0.5, h * 0.72, 70, 28)
@@ -351,8 +400,23 @@ export class PetScene {
       hint.stroke({ width: 3, color: 0x4cc9f0, alpha: pulse })
       hint.ellipse(w * 0.5, h * 0.72, 50, 18)
       hint.fill({ color: 0x4cc9f0, alpha: 0.15 })
+      // Swing → play
+      const sx = w * 0.18
+      const sy = h * 0.38
+      hitB.roundRect(sx - 20, sy, 56, 90, 8)
+      hitB.fill({ color: 0xffffff, alpha: 0.001 })
+      hitB.eventMode = 'static'
+      hint.moveTo(sx, sy)
+      hint.lineTo(sx - 10, sy + 70)
+      hint.moveTo(sx + 30, sy)
+      hint.lineTo(sx + 40, sy + 70)
+      hint.stroke({ width: 3, color: 0xb56b45, alpha: 0.85 })
+      hint.roundRect(sx - 14, sy + 66, 58, 14, 6)
+      hint.fill({ color: 0xe76f51, alpha: 0.85 })
+      hint.roundRect(sx - 14, sy + 66, 58, 14, 6)
+      hint.stroke({ width: 2, color: 0xffbe0b, alpha: pulse })
     } else if (room === 'living') {
-      // TV → watch / laugh reaction
+      // TV → watch / play
       hit.roundRect(w * 0.68, h * 0.18, w * 0.24, h * 0.22, 10)
       hit.fill({ color: 0xffffff, alpha: 0.001 })
       hit.eventMode = 'static'
@@ -361,6 +425,14 @@ export class PetScene {
       const flicker = 0.35 + Math.abs(Math.sin(this.time * 6)) * 0.4
       hint.roundRect(w * 0.7, h * 0.2, w * 0.2, h * 0.16, 6)
       hint.fill({ color: 0x4cc9f0, alpha: flicker * 0.35 })
+      // Sofa → poke / laugh
+      hitB.ellipse(w * 0.35, h * 0.55, 58, 24)
+      hitB.fill({ color: 0xffffff, alpha: 0.001 })
+      hitB.eventMode = 'static'
+      hint.ellipse(w * 0.35, h * 0.55, 58, 24)
+      hint.stroke({ width: 3, color: 0xe07a5f, alpha: pulse })
+      hint.roundRect(w * 0.22, h * 0.48, w * 0.26, h * 0.08, 8)
+      hint.fill({ color: 0xe07a5f, alpha: 0.35 })
     }
   }
 
@@ -703,7 +775,8 @@ export class PetScene {
   }
 
   private bounce(): number {
-    const { reaction } = this.props
+    const { reaction, needs } = this.props
+    const mood = deriveMood(needs)
     if (this.sneezeT > 0) return Math.sin(this.sneezeT * 40) * 6
     if (this.stretchT > 0) return -6 + Math.sin(this.stretchT * 4) * 4
     if (reaction === 'laugh') return Math.sin(this.time * 20) * 10
@@ -711,6 +784,7 @@ export class PetScene {
       return Math.sin(this.time * 16) * 5
     }
     if (reaction === 'eat') return Math.sin(this.time * 12) * 2
+    if (mood === 'happy') return Math.sin(this.time * 3.4) * 5
     return Math.sin(this.time * 2.2) * 3
   }
 
@@ -880,8 +954,10 @@ export class PetScene {
     g.ellipse(40, 24 + b, 8, 20)
     g.fill({ color: ear, alpha: 0.24 })
 
-    // Tail with tip accent
-    const wag = Math.sin(this.time * (mood === 'happy' ? 6 : 2.5)) * 10
+    // Tail with tip accent — happier pets wag harder
+    const wagSpeed = mood === 'happy' ? 9 : mood === 'sad' || mood === 'tired' ? 1.4 : 2.5
+    const wagAmp = mood === 'happy' ? 16 : mood === 'sad' ? 4 : 10
+    const wag = Math.sin(this.time * wagSpeed) * wagAmp
     g.moveTo(70, 50 + b)
     g.quadraticCurveTo(110 + wag, 10 + b, 98 + wag * 0.4, -20 + b)
     g.stroke({ width: 16, color: fill, cap: 'round' })
@@ -1025,7 +1101,8 @@ export class PetScene {
     const g = this.head
     g.clear()
     const headY = -78 + b
-    const earWiggle = Math.sin(this.time * 2.6) * 4
+    const flop = this.earFlopT > 0 ? Math.sin(this.earFlopT * 14) * 14 : 0
+    const earWiggle = Math.sin(this.time * 2.6) * 4 + flop
     const talkBob = this.props.talking ? Math.sin(this.time * 14) * 2 : 0
     // Cheek fluff for rounder talking-pet silhouette
     g.ellipse(-52, headY + 18 + talkBob, 18, 16)
@@ -1105,9 +1182,9 @@ export class PetScene {
       g.stroke({ width: 4, color: 0x243029, cap: 'round' })
     } else {
       const eyeOpen = mood === 'tired' ? 6 : 12
-      const lookX = Math.sin(this.time * 0.7) * 2.5
-      const lookY = Math.cos(this.time * 0.5) * 1.2
-      // Bigger cartoon eyes with iris rings + gentle gaze drift
+      const lookX = Math.sin(this.time * 0.7) * 1.2 + this.lookTarget.x
+      const lookY = Math.cos(this.time * 0.5) * 0.8 + this.lookTarget.y
+      // Bigger cartoon eyes with iris rings + pointer-aware gaze
       g.ellipse(-20, headY - 2, 11, eyeOpen)
       g.fill(0xffffff)
       g.ellipse(20, headY - 2, 11, eyeOpen)
@@ -1601,6 +1678,7 @@ export class PetScene {
     if (this.yawnT > 0) this.yawnT = Math.max(0, this.yawnT - dt)
     if (this.stretchT > 0) this.stretchT = Math.max(0, this.stretchT - dt)
     if (this.sneezeT > 0) this.sneezeT = Math.max(0, this.sneezeT - dt)
+    if (this.earFlopT > 0) this.earFlopT = Math.max(0, this.earFlopT - dt)
     this.idleClock += dt
     if (
       this.idleClock > 10 &&
@@ -1609,10 +1687,10 @@ export class PetScene {
       !this.props.talking
     ) {
       this.idleClock = 0
-      this.idleCycle = (this.idleCycle + 1) % 3
+      this.idleCycle = (this.idleCycle + 1) % 4
       if (this.idleCycle === 0) this.yawnT = 1.4
       else if (this.idleCycle === 1) this.stretchT = 1.6
-      else {
+      else if (this.idleCycle === 2) {
         this.sneezeT = 0.55
         for (let i = 0; i < 8; i++) {
           const ang = -Math.PI / 2 + (Math.random() - 0.5)
@@ -1628,11 +1706,14 @@ export class PetScene {
             kind: 'circle',
           })
         }
+      } else {
+        this.earFlopT = 0.7
       }
     }
 
     if (this.props.reaction !== this.lastFxReaction) {
       this.lastFxReaction = this.props.reaction
+      if (this.props.reaction === 'laugh') this.earFlopT = 0.85
       if (this.props.reaction !== 'idle' && this.props.reaction !== 'sleep') {
         this.spawnReactionFx(this.props.reaction)
       }
@@ -1663,6 +1744,8 @@ export class PetScene {
     this.disposed = true
     this.ready = false
     window.removeEventListener('resize', this.layout)
+    this.host?.removeEventListener('pointermove', this.onPointerMove)
+    this.host = null
     try {
       this.app.destroy(true, { children: true })
     } catch {
