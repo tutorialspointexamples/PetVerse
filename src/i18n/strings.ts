@@ -53,7 +53,7 @@ const en: Dict = {
   'missions.track': 'In progress',
   'food.title': 'Kitchen Menu',
   'lang.title': 'Language',
-  'hint.main': 'Tap head/belly/companion · Room props · Hold mic to talk',
+  'hint.main': 'Drag care tools onto pet · Tap head/belly · Hold mic to talk',
   'name.title': 'Name your pet',
   'name.submit': 'Start caring',
   'photo.title': 'Photo Booth',

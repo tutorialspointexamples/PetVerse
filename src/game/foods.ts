@@ -17,6 +17,10 @@ export type FoodId =
   | 'cookie'
   | 'smoothieBerry'
   | 'steak'
+  | 'waffle'
+  | 'popcorn'
+  | 'curry'
+  | 'apple'
 
 export interface FoodDef {
   id: FoodId
@@ -47,6 +51,10 @@ export const FOODS: FoodDef[] = [
   { id: 'cookie', name: 'Choco Cookie', hunger: 14, happiness: 20, coins: 5, price: 8, color: 0xb56b45 },
   { id: 'smoothieBerry', name: 'Berry Blast', hunger: 18, happiness: 18, coins: 6, price: 10, color: 0xff85a1 },
   { id: 'steak', name: 'Fancy Steak', hunger: 44, happiness: 18, coins: 12, price: 18, color: 0x9b2226 },
+  { id: 'waffle', name: 'Honey Waffle', hunger: 28, happiness: 16, coins: 7, price: 11, color: 0xe9c46a },
+  { id: 'popcorn', name: 'Movie Popcorn', hunger: 16, happiness: 18, coins: 5, price: 8, color: 0xffe066 },
+  { id: 'curry', name: 'Cozy Curry', hunger: 38, happiness: 14, coins: 9, price: 14, color: 0xe76f51 },
+  { id: 'apple', name: 'Crisp Apple', hunger: 20, happiness: 10, coins: 4, price: 5, color: 0xe63946 },
 ]
 
 export function getFood(id: FoodId): FoodDef {

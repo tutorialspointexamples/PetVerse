@@ -11,11 +11,11 @@ npm run dev
 ```
 
 ## Features
-- Care: feed menu (18 foods), sleep, bath, play, brush, potty + layered pet reactions / VFX
+- Care: drag-drop tray (spoon/soap/brush/pillow/ball) + feed menu (22 foods), sleep, bath, play, brush, potty + layered pet reactions / VFX
 - Home rooms: Living, Kitchen, Bathroom, Bedroom, Backyard
 - Talk-back mic (hold to record, pitch-shifted playback)
-- Large wardrobe (~280 looks) + 120 furniture SKUs
-- Mini-games: Space Trails (wrap edges, asteroids, comets, combos), Sky Race, Dunk-a-Pet, Build Your Plane (assemble + flight test)
+- Large wardrobe (~340 looks) + 150 furniture SKUs
+- Mini-games: Space Trails (wrap edges, asteroids, comets, combos), Sky Race (rings/boosts/combos), Dunk-a-Pet, Build Your Plane (assemble + flight test)
 - Interactive rooms: fridge/stove, tub/sink, bed/lamp, yard trampoline/swing, living TV/sofa
 - Plane travel to 8 worlds with flight cutscene
 - Daily missions with coin/fuel claims

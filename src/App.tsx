@@ -25,6 +25,7 @@ import {
   WorldVisitPanel,
 } from './ui/HubPanels'
 import { PhotoPanel } from './ui/PhotoPanel'
+import { CareTray } from './ui/CareTray'
 import { getActiveEvent } from './game/events'
 
 export default function App() {
@@ -97,6 +98,7 @@ export default function App() {
       {!inMinigame ? <NeedsHud /> : null}
       <main className="stage">
         <GameCanvas />
+        {!inMinigame && named ? <CareTray /> : null}
       </main>
       {!inMinigame ? <ActionBar /> : null}
       <ShopPanel />

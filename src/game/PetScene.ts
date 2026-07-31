@@ -1091,9 +1091,32 @@ export class PetScene {
     g.fill(fill)
     g.ellipse(78, 20 + b - swing * 0.15, 22, 36)
     g.fill(fill)
+    // Palm pads for softer cartoon paws
+    g.ellipse(-78, 48 + b + swing * 0.1, 10, 8)
+    g.fill({ color: 0xffb4a2, alpha: 0.72 })
+    g.ellipse(78, 48 + b - swing * 0.1, 10, 8)
+    g.fill({ color: 0xffb4a2, alpha: 0.72 })
+    for (const sx of [-86, -78, -70]) {
+      g.circle(sx, 38 + b + swing * 0.08, 2.2)
+      g.fill({ color: 0xffb4a2, alpha: 0.65 })
+    }
+    for (const sx of [70, 78, 86]) {
+      g.circle(sx, 38 + b - swing * 0.08, 2.2)
+      g.fill({ color: 0xffb4a2, alpha: 0.65 })
+    }
     if (reaction === 'skill_hoop') {
       g.circle(0, -20 + b + Math.sin(this.time * 10) * 20, 28)
       g.stroke({ width: 5, color: 0xf4d35e })
+    }
+    if (reaction === 'skill_boxing') {
+      g.circle(-90, 10 + b + swing, 14)
+      g.fill(0xe63946)
+      g.circle(90, 10 + b - swing, 14)
+      g.fill(0xe63946)
+      g.circle(-90, 10 + b + swing, 7)
+      g.fill({ color: 0xffffff, alpha: 0.35 })
+      g.circle(90, 10 + b - swing, 7)
+      g.fill({ color: 0xffffff, alpha: 0.35 })
     }
   }
 
@@ -1212,18 +1235,22 @@ export class PetScene {
       g.stroke({ width: 3, color: 0x243029, cap: 'round' })
     }
 
-    // Soft muzzle plate for talking-pet silhouette
-    g.ellipse(0, headY + 20, 22, 14)
-    g.fill({ color: 0xffe8c8, alpha: 0.55 })
-    g.moveTo(0, headY + 10)
-    g.lineTo(-7, headY + 18)
-    g.lineTo(7, headY + 18)
-    g.closePath()
+    // Soft muzzle plate + nose specular for denser talking-pet face
+    g.ellipse(0, headY + 20, 24, 15)
+    g.fill({ color: 0xffe8c8, alpha: 0.62 })
+    g.ellipse(0, headY + 14, 9, 7)
     g.fill(0xe76f51)
-    g.circle(-3.5, headY + 16, 1.6)
+    g.ellipse(-2, headY + 12, 2.4, 1.6)
+    g.fill({ color: 0xffffff, alpha: 0.55 })
+    g.circle(-3.5, headY + 18, 1.5)
     g.fill(0x243029)
-    g.circle(3.5, headY + 16, 1.6)
+    g.circle(3.5, headY + 18, 1.5)
     g.fill(0x243029)
+    // Subtle brow ridge for more dimensional head
+    g.ellipse(-20, headY - 14, 12, 3)
+    g.fill({ color: 0x000000, alpha: 0.05 })
+    g.ellipse(20, headY - 14, 12, 3)
+    g.fill({ color: 0x000000, alpha: 0.05 })
 
     const mouthY = headY + 28
     const yawning = this.yawnT > 0 && !sleeping && reaction === 'idle' && !talking

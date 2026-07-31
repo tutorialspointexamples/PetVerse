@@ -119,6 +119,36 @@ export type FurnitureId =
   | 'neon_sign'
   | 'skate_ramp'
   | 'bird_bath'
+  | 'rug_sunset'
+  | 'bed_bunk_space'
+  | 'sofa_corner'
+  | 'lamp_fairy'
+  | 'poster_comic'
+  | 'plant_succulent'
+  | 'shelf_trophy'
+  | 'table_round'
+  | 'chair_rocking'
+  | 'mirror_full'
+  | 'rug_paw'
+  | 'bed_tent'
+  | 'lamp_moon'
+  | 'poster_travel'
+  | 'plant_ivy'
+  | 'cabinet_snack'
+  | 'basket_laundry'
+  | 'clock_digital'
+  | 'cushion_star'
+  | 'toy_robot_xl'
+  | 'rug_ocean'
+  | 'bed_loft'
+  | 'sofa_bean'
+  | 'lamp_prism'
+  | 'poster_music'
+  | 'plant_bamboo'
+  | 'shelf_photo'
+  | 'table_craft'
+  | 'chair_egg'
+  | 'fountain_mini'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -252,6 +282,36 @@ export const FURNITURE: FurnitureItem[] = [
   { id: 'neon_sign', name: 'Neon Sign', price: 155, slot: 'wall', color: 0xff006e, accent: 0x00f5d4 },
   { id: 'skate_ramp', name: 'Skate Ramp', price: 180, slot: 'floor', color: 0x457b9d, accent: 0xe63946 },
   { id: 'bird_bath', name: 'Bird Bath', price: 115, slot: 'floor', color: 0x90e0ef, accent: 0xffffff },
+  { id: 'rug_sunset', name: 'Sunset Rug', price: 120, slot: 'floor', color: 0xff6b35, accent: 0xffbe0b },
+  { id: 'bed_bunk_space', name: 'Space Bunk', price: 240, slot: 'side', color: 0x240046, accent: 0x00f5d4 },
+  { id: 'sofa_corner', name: 'Corner Sofa', price: 210, slot: 'side', color: 0x457b9d, accent: 0xffe8c8 },
+  { id: 'lamp_fairy', name: 'Fairy Lights', price: 100, slot: 'wall', color: 0xffe066, accent: 0xffffff },
+  { id: 'poster_comic', name: 'Comic Poster', price: 60, slot: 'wall', color: 0xff006e, accent: 0x4cc9f0 },
+  { id: 'plant_succulent', name: 'Succulent Set', price: 75, slot: 'side', color: 0x2a9d8f, accent: 0xe9c46a },
+  { id: 'shelf_trophy', name: 'Prize Shelf', price: 165, slot: 'wall', color: 0x8b5e3c, accent: 0xf4d35e },
+  { id: 'table_round', name: 'Round Table', price: 125, slot: 'floor', color: 0xb56b45, accent: 0xf2e8d5 },
+  { id: 'chair_rocking', name: 'Rocking Chair', price: 150, slot: 'side', color: 0x6b4428, accent: 0xffe8c8 },
+  { id: 'mirror_full', name: 'Full Mirror', price: 140, slot: 'wall', color: 0xcaf0f8, accent: 0xffffff },
+  { id: 'rug_paw', name: 'Paw Rug', price: 110, slot: 'floor', color: 0xf4a261, accent: 0xffe8c8 },
+  { id: 'bed_tent', name: 'Tent Bed', price: 200, slot: 'side', color: 0xff85a1, accent: 0xffe066 },
+  { id: 'lamp_moon', name: 'Moon Lamp', price: 130, slot: 'side', color: 0xffe066, accent: 0x3a86ff },
+  { id: 'poster_travel', name: 'Travel Poster', price: 58, slot: 'wall', color: 0x4cc9f0, accent: 0xe9c46a },
+  { id: 'plant_ivy', name: 'Ivy Wall', price: 90, slot: 'wall', color: 0x4caf7a, accent: 0x2a9d8f },
+  { id: 'cabinet_snack', name: 'Snack Cabinet', price: 155, slot: 'side', color: 0xe63946, accent: 0xf4d35e },
+  { id: 'basket_laundry', name: 'Laundry Basket', price: 70, slot: 'floor', color: 0xe8d5b5, accent: 0xb56b45 },
+  { id: 'clock_digital', name: 'Digital Clock', price: 95, slot: 'wall', color: 0x1a1a1a, accent: 0x00f5d4 },
+  { id: 'cushion_star', name: 'Star Cushion', price: 80, slot: 'floor', color: 0xf4d35e, accent: 0xffffff },
+  { id: 'toy_robot_xl', name: 'XL Robot', price: 190, slot: 'side', color: 0x8d99ae, accent: 0xff006e },
+  { id: 'rug_ocean', name: 'Ocean Rug', price: 125, slot: 'floor', color: 0x0077b6, accent: 0x90e0ef },
+  { id: 'bed_loft', name: 'Loft Bed', price: 230, slot: 'side', color: 0x457b9d, accent: 0xffe8c8 },
+  { id: 'sofa_bean', name: 'Bean Sofa', price: 175, slot: 'side', color: 0x9b5de5, accent: 0xff85a1 },
+  { id: 'lamp_prism', name: 'Prism Lamp', price: 145, slot: 'side', color: 0x00f5d4, accent: 0xff006e },
+  { id: 'poster_music', name: 'Music Poster', price: 55, slot: 'wall', color: 0xe63946, accent: 0x1a1a1a },
+  { id: 'plant_bamboo', name: 'Bamboo Pot', price: 100, slot: 'side', color: 0x606c38, accent: 0xb56b45 },
+  { id: 'shelf_photo', name: 'Photo Shelf', price: 115, slot: 'wall', color: 0xb56b45, accent: 0xffffff },
+  { id: 'table_craft', name: 'Craft Table', price: 150, slot: 'floor', color: 0xe9c46a, accent: 0x4cc9f0 },
+  { id: 'chair_egg', name: 'Egg Chair', price: 180, slot: 'side', color: 0xffffff, accent: 0xff85a1 },
+  { id: 'fountain_mini', name: 'Mini Fountain', price: 160, slot: 'floor', color: 0x4cc9f0, accent: 0xffffff },
 ]
 
 export function getFurniture(id: FurnitureId): FurnitureItem {

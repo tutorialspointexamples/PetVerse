@@ -92,6 +92,184 @@ input {
   touch-action: none;
 }
 
+.care-tray {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 6px;
+  border-radius: 18px;
+  background: rgba(255, 248, 240, 0.88);
+  box-shadow: 0 8px 24px rgba(26, 42, 34, 0.18);
+  backdrop-filter: blur(6px);
+  max-width: 72px;
+  pointer-events: auto;
+}
+
+.care-tray-label {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-align: center;
+  color: #4a6b5c;
+  line-height: 1.15;
+}
+
+.care-tray-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.care-tool {
+  appearance: none;
+  border: 0;
+  border-radius: 14px;
+  padding: 8px 4px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 2px 0 rgba(26, 42, 34, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.care-tool:active:not(:disabled) {
+  cursor: grabbing;
+  transform: scale(0.96);
+}
+
+.care-tool:disabled,
+.care-tool.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.care-tool-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: block;
+  position: relative;
+}
+
+.care-tool-mark.spoon {
+  background: radial-gradient(circle at 35% 35%, #ffe8c8, #e9b44c 55%, #b56b45);
+}
+
+.care-tool-mark.spoon::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 18px;
+  width: 4px;
+  height: 12px;
+  border-radius: 2px;
+  background: #8d99ae;
+}
+
+.care-tool-mark.soap {
+  background: radial-gradient(circle at 40% 30%, #ffffff, #90e0ef 70%, #4cc9f0);
+  border-radius: 8px;
+}
+
+.care-tool-mark.brush {
+  background: linear-gradient(180deg, #4cc9f0 45%, #ffffff 46%);
+  border-radius: 6px;
+}
+
+.care-tool-mark.pillow {
+  background: radial-gradient(circle at 40% 40%, #fff8ee, #ffc8dd);
+  border-radius: 40% 40% 45% 45%;
+}
+
+.care-tool-mark.ball {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.55), transparent 40%),
+    radial-gradient(circle at 50% 50%, #e63946, #9b2226);
+}
+
+.care-ghost {
+  position: fixed;
+  z-index: 40;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(26, 42, 34, 0.28);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transition: transform 0.08s ease;
+}
+
+.care-ghost.over {
+  transform: scale(1.12);
+  outline: 3px solid rgba(76, 201, 240, 0.85);
+}
+
+.care-ghost .care-tool-mark {
+  width: 34px;
+  height: 34px;
+}
+
+.care-drop-ring {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 180px;
+  height: 180px;
+  margin: -90px 0 0 -90px;
+  border-radius: 50%;
+  border: 3px dashed rgba(76, 201, 240, 0.75);
+  background: radial-gradient(circle, rgba(76, 201, 240, 0.12), transparent 70%);
+  pointer-events: none;
+  z-index: 2;
+  animation: care-ring-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes care-ring-pulse {
+  0%,
+  100% {
+    transform: scale(0.96);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 420px) {
+  .care-tray {
+    right: 4px;
+    max-width: 64px;
+    padding: 6px 4px;
+  }
+
+  .care-tool {
+    font-size: 0.55rem;
+    padding: 6px 2px;
+  }
+
+  .care-drop-ring {
+    width: 150px;
+    height: 150px;
+    margin: -75px 0 0 -75px;
+  }
+}
+
 .hud {
   position: relative;
   z-index: 2;
