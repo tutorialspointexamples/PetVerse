@@ -995,5 +995,59 @@ input {
   gap: 8px;
 }
 
+.card-album {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-height: 55vh;
+  overflow: auto;
+  padding-bottom: 8px;
+}
+
+.album-card {
+  border-radius: 14px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--card-color) 28%, #fff8ef);
+  border: 2px solid color-mix(in srgb, var(--card-color) 55%, #1a2a22);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 110px;
+}
+
+.album-card.locked {
+  filter: grayscale(0.85);
+  opacity: 0.65;
+}
+
+.album-card strong {
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+.album-card span {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.album-card em {
+  margin-top: auto;
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.album-card.rarity-epic {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+@media (max-width: 420px) {
+  .card-album {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 
 

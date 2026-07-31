@@ -17,6 +17,7 @@ import {
   GamesHub,
   RewardedPanel,
   RoomsPanel,
+  CardsPanel,
   SkillsPanel,
   TravelPanel,
   WorldVisitPanel,
@@ -102,6 +103,7 @@ export default function App() {
       <WorldVisitPanel />
       <FoodPanel />
       <RoomsPanel />
+      <CardsPanel />
       <SkillsPanel />
       <CompanionsPanel />
       <EventPanel />

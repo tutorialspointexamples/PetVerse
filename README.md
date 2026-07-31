@@ -17,6 +17,7 @@ npm run dev
 - Wardrobe + furniture decoration (world unlocks included)
 - Mini-games: Space Trails, Sky Race, Dunk-a-Pet, Build Your Plane
 - Plane travel to 8 worlds with flight cutscene
+- Collectible card album from worlds + mini-games
 - Companions, skills (drums / hoop / boxing), seasonal event bonus
 - Optional mock rewarded ad / IAP boosts
 - Capacitor Android packaging notes in `docs/ANDROID.md`

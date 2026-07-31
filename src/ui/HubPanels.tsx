@@ -3,6 +3,7 @@ import { getActiveEvent } from '../game/events'
 import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
 import { FOODS } from '../game/foods'
 import { ROOMS } from '../game/rooms'
+import { CARDS } from '../game/cards'
 import { IAP_PRODUCTS, purchaseIap, showRewardedAd } from '../monetization/stubs'
 import { useGameStore } from '../state/gameStore'
 import { useEffect } from 'react'
@@ -99,7 +100,7 @@ export function WorldVisitPanel() {
         }}
       >
         <h2>{world.name}</h2>
-        <p>{world.blurb} You landed safely and collected rewards. New unlocks were added to your shop.</p>
+        <p>{world.blurb} You landed safely and collected rewards. New unlocks (and a collectible card) were added.</p>
         <button type="button" className="name-submit" onClick={clearWorldVisit}>
           Fly home
         </button>
@@ -205,6 +206,45 @@ export function RoomsPanel() {
               <span>{room === r.id ? 'You are here' : 'Go'}</span>
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function CardsPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const ownedCards = useGameStore((s) => s.ownedCards)
+  if (overlay !== 'cards') return null
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Collectible cards">
+      <div className="shop-panel wide">
+        <div className="shop-header">
+          <h2>Card Album</h2>
+          <p className="shop-coins">
+            {ownedCards.length}/{CARDS.length}
+          </p>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        <p className="panel-note">Earn cards by flying to worlds and finishing mini-games.</p>
+        <div className="card-album">
+          {CARDS.map((card) => {
+            const owned = ownedCards.includes(card.id)
+            return (
+              <div
+                key={card.id}
+                className={`album-card ${owned ? 'owned' : 'locked'} rarity-${card.rarity}`}
+                style={{ ['--card-color' as string]: `#${card.color.toString(16).padStart(6, '0')}` }}
+              >
+                <strong>{owned ? card.name : '???'}</strong>
+                <span>{owned ? card.blurb : 'Keep playing to unlock'}</span>
+                <em>{card.rarity}</em>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import type { WorldId } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
 import type { RoomId } from '../game/rooms'
 import type { FoodId } from '../game/foods'
+import type { CardId } from '../game/cards'
 import { DEFAULT_NEEDS } from '../game/needs'
 
 const SAVE_KEY = 'petverse-save-v3'
@@ -44,6 +45,7 @@ export interface SaveData {
   sleeping: boolean
   room: RoomId
   favoriteFood: FoodId
+  ownedCards: CardId[]
   lastSavedAt: number
 }
 
@@ -77,6 +79,7 @@ export function defaultSave(): SaveData {
     sleeping: false,
     room: 'living',
     favoriteFood: 'kibble',
+    ownedCards: [],
     lastSavedAt: Date.now(),
   }
 }
@@ -107,6 +110,7 @@ export function loadSave(): SaveData {
       claimedEventIds: parsed.claimedEventIds ?? base.claimedEventIds,
       room: parsed.room ?? base.room,
       favoriteFood: parsed.favoriteFood ?? base.favoriteFood,
+      ownedCards: parsed.ownedCards ?? base.ownedCards,
     }
   } catch {
     return defaultSave()

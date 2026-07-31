@@ -32,6 +32,7 @@ import type { RoomId } from '../game/rooms'
 import type { FoodId } from '../game/foods'
 import { getFood } from '../game/foods'
 import { clampNeed } from '../game/needs'
+import { MINIGAME_CARDS, WORLD_CARDS, type CardId } from '../game/cards'
 import { defaultSave, loadSave, writeSave, type SaveData } from './save'
 
 export type Reaction =
@@ -65,6 +66,7 @@ export type Overlay =
   | 'flight'
   | 'food'
   | 'rooms'
+  | 'cards'
   | 'rewarded'
 
 const MINIGAME_OVERLAYS: Overlay[] = ['skyDash', 'dunkToss', 'spaceTrails', 'buildPlane']
@@ -109,6 +111,7 @@ export interface GameState extends SaveData {
   applyRewardedBoost: () => void
   setRoom: (id: RoomId) => void
   feedFood: (id: FoodId) => boolean
+  collectCard: (id: CardId) => boolean
   level: () => number
   mood: () => Mood
   shopOpen: boolean
@@ -145,6 +148,7 @@ function sliceSave(state: GameState): SaveData {
     sleeping,
     room,
     favoriteFood,
+    ownedCards,
   } = state
   return {
     petName,
@@ -175,6 +179,7 @@ function sliceSave(state: GameState): SaveData {
     sleeping,
     room,
     favoriteFood,
+    ownedCards,
     lastSavedAt: Date.now(),
   }
 }
@@ -395,6 +400,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (world.unlockHat && !ownedHats.includes(world.unlockHat as HatId)) {
       ownedHats = [...ownedHats, world.unlockHat as HatId]
     }
+    const cardId = WORLD_CARDS[id]
+    const ownedCards =
+      cardId && !state.ownedCards.includes(cardId)
+        ? [...state.ownedCards, cardId]
+        : state.ownedCards
     set({
       fuel: state.fuel - world.fuelCost,
       coins: state.coins + world.rewardCoins,
@@ -403,6 +413,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       visitedWorlds: visited,
       ownedFurniture,
       ownedHats,
+      ownedCards,
       activeWorld: id,
       overlay: 'flight',
     })
@@ -536,15 +547,29 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   grantMinigameReward: (coins, fuel = 1) => {
     const state = get()
+    const cardId = MINIGAME_CARDS[state.overlay]
+    const ownedCards =
+      cardId && !state.ownedCards.includes(cardId)
+        ? [...state.ownedCards, cardId]
+        : state.ownedCards
     set({
       coins: state.coins + coins,
       fuel: Math.min(20, state.fuel + fuel),
       stars: state.stars + (coins >= 15 ? 1 : 0),
       xp: state.xp + Math.max(5, Math.floor(coins / 2)),
       lastMinigameReward: coins,
+      ownedCards,
       overlay: 'none',
     })
     get().save()
+  },
+
+  collectCard: (id) => {
+    const state = get()
+    if (state.ownedCards.includes(id)) return false
+    set({ ownedCards: [...state.ownedCards, id] })
+    get().save()
+    return true
   },
 
   applyRewardedBoost: () => {
