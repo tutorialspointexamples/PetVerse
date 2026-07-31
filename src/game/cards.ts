@@ -11,6 +11,12 @@ export type CardId =
   | 'dunk_star'
   | 'trail_comet'
   | 'plane_blueprint'
+  | 'yard_balloon'
+  | 'photo_flash'
+  | 'brush_sparkle'
+  | 'event_badge'
+  | 'golden_paw'
+  | 'midnight_star'
 
 export interface CardDef {
   id: CardId
@@ -33,6 +39,12 @@ export const CARDS: CardDef[] = [
   { id: 'dunk_star', name: 'Dunk Star', rarity: 'common', blurb: 'Swish prize from Dunk-a-Pet.', color: 0xf4d35e },
   { id: 'trail_comet', name: 'Trail Comet', rarity: 'rare', blurb: 'Caught on Space Trails.', color: 0xf4a261 },
   { id: 'plane_blueprint', name: 'Plane Blueprint', rarity: 'rare', blurb: 'From Build Your Plane.', color: 0xe76f51 },
+  { id: 'yard_balloon', name: 'Yard Balloon', rarity: 'common', blurb: 'Popped up in the backyard.', color: 0xff85a1 },
+  { id: 'photo_flash', name: 'Photo Flash', rarity: 'common', blurb: 'Snapped in the photo booth.', color: 0xffffff },
+  { id: 'brush_sparkle', name: 'Brush Sparkle', rarity: 'rare', blurb: 'Shiny smile after brushing.', color: 0xcaf0f8 },
+  { id: 'event_badge', name: 'Event Badge', rarity: 'rare', blurb: 'Seasonal login keepsake.', color: 0x9b5de5 },
+  { id: 'golden_paw', name: 'Golden Paw', rarity: 'epic', blurb: 'Legendary care streak trophy.', color: 0xf4d35e },
+  { id: 'midnight_star', name: 'Midnight Star', rarity: 'epic', blurb: 'Rare night-sky collectible.', color: 0x3a0ca3 },
 ]
 
 export function getCard(id: CardId): CardDef {

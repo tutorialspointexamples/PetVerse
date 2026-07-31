@@ -285,14 +285,26 @@ export const useGameStore = create<GameState>((set, get) => ({
       potty: 'potty',
     }
 
+    const nextXp = state.xp + 3
+    let ownedCards = state.ownedCards
+    if (action === 'brush' && !ownedCards.includes('brush_sparkle')) {
+      ownedCards = [...ownedCards, 'brush_sparkle']
+    }
+    if (nextXp >= 120 && !ownedCards.includes('golden_paw')) {
+      ownedCards = [...ownedCards, 'golden_paw']
+    }
+    if (nextXp >= 200 && !ownedCards.includes('midnight_star')) {
+      ownedCards = [...ownedCards, 'midnight_star']
+    }
     set({
       needs: applyCare(state.needs, action),
       coins: state.coins + effect.coins,
       fuel: Math.min(20, state.fuel + (action === 'play' ? 1 : 0)),
-      xp: state.xp + 3,
+      xp: nextXp,
       reaction: reactionMap[action],
       cooldowns: { ...state.cooldowns, [action]: now + effect.cooldownMs },
       sleeping: false,
+      ownedCards,
     })
     get().save()
     window.setTimeout(() => {
@@ -444,7 +456,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   clearWorldVisit: () => set({ activeWorld: null, overlay: 'none' }),
 
   setRoom: (id) => {
-    set({ room: id, overlay: 'none' })
+    const state = get()
+    const ownedCards =
+      id === 'yard' && !state.ownedCards.includes('yard_balloon')
+        ? [...state.ownedCards, 'yard_balloon' as CardId]
+        : state.ownedCards
+    set({ room: id, overlay: 'none', ownedCards })
     get().save()
   },
 
@@ -543,14 +560,23 @@ export const useGameStore = create<GameState>((set, get) => ({
       ? state.claimedEventIds
       : [...state.claimedEventIds, event.id]
     let ownedColors = state.ownedColors
+    let ownedHats = state.ownedHats
     if (event.shopColorBonus && !ownedColors.includes(event.shopColorBonus as BodyColorId)) {
       ownedColors = [...ownedColors, event.shopColorBonus as BodyColorId]
     }
+    if (event.hatBonus && !ownedHats.includes(event.hatBonus as HatId)) {
+      ownedHats = [...ownedHats, event.hatBonus as HatId]
+    }
+    const ownedCards = state.ownedCards.includes('event_badge')
+      ? state.ownedCards
+      : [...state.ownedCards, 'event_badge' as CardId]
     set({
       coins: state.coins + event.loginBonus,
       eventClaimDate: today,
       claimedEventIds: claimed,
       ownedColors,
+      ownedHats,
+      ownedCards,
       overlay: 'none',
     })
     get().save()

@@ -43,8 +43,10 @@ export function PhotoPanel() {
             onClick={() => {
               setFlash(true)
               setSnaps((n) => n + 1)
-              useGameStore.getState().addCoins(1)
-              useGameStore.getState().addXp(1)
+              const store = useGameStore.getState()
+              store.addCoins(1)
+              store.addXp(1)
+              store.collectCard('photo_flash')
             }}
           >
             {t('photo.snap')}
