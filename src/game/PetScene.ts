@@ -69,6 +69,7 @@ export class PetScene {
   private hatGfx = new Graphics()
   private companionGfx = new Graphics()
   private companionHit = new Graphics()
+  private fx = new Graphics()
   private zzz = new Text({
     text: 'z',
     style: { fill: 0xffffff, fontSize: 28, fontFamily: 'Fredoka, system-ui' },
@@ -87,6 +88,20 @@ export class PetScene {
   private bellyHit = new Graphics()
   private time = 0
   private blinkT = 0
+  private yawnT = 0
+  private idleClock = 0
+  private lastFxReaction: Reaction = 'idle'
+  private particles: Array<{
+    x: number
+    y: number
+    vx: number
+    vy: number
+    life: number
+    max: number
+    color: number
+    size: number
+    kind: 'circle' | 'heart' | 'crumb' | 'spark'
+  }> = []
   private props: PetSceneProps
   private onPoke: (zone: PokeZone) => void
   private disposed = false
@@ -137,6 +152,7 @@ export class PetScene {
       this.face,
       this.glassesGfx,
       this.hatGfx,
+      this.fx,
       this.zzz,
       this.headHit,
       this.bellyHit,
@@ -721,6 +737,17 @@ export class PetScene {
     g.fill(fill)
     g.roundRect(20, 70 + b * 0.2, 28, 42, 12)
     g.fill(fill)
+    // Soft paw pads when barefoot
+    if (this.props.shoes === 'none') {
+      g.ellipse(-34, 108 + b * 0.2, 10, 6)
+      g.fill({ color: 0xffb4a2, alpha: 0.75 })
+      g.ellipse(34, 108 + b * 0.2, 10, 6)
+      g.fill({ color: 0xffb4a2, alpha: 0.75 })
+      for (const sx of [-40, -34, -28, 28, 34, 40]) {
+        g.circle(sx, 100 + b * 0.2, 2.4)
+        g.fill({ color: 0xffb4a2, alpha: 0.7 })
+      }
+    }
   }
 
   private drawShoesLayer(shoes: ShoesId, b: number) {
@@ -1072,14 +1099,28 @@ export class PetScene {
       g.stroke({ width: 3, color: 0x243029, cap: 'round' })
     }
 
+    // Soft muzzle plate for talking-pet silhouette
+    g.ellipse(0, headY + 20, 22, 14)
+    g.fill({ color: 0xffe8c8, alpha: 0.55 })
     g.moveTo(0, headY + 10)
     g.lineTo(-7, headY + 18)
     g.lineTo(7, headY + 18)
     g.closePath()
     g.fill(0xe76f51)
+    g.circle(-3.5, headY + 16, 1.6)
+    g.fill(0x243029)
+    g.circle(3.5, headY + 16, 1.6)
+    g.fill(0x243029)
 
     const mouthY = headY + 28
-    if (talking || reaction === 'talk') {
+    const yawning = this.yawnT > 0 && !sleeping && reaction === 'idle' && !talking
+    if (yawning) {
+      const open = 10 + Math.sin(this.yawnT * 8) * 4
+      g.ellipse(0, mouthY + 4, 14, open)
+      g.fill(0x3a1f1a)
+      g.ellipse(0, mouthY + 2, 10, 4)
+      g.fill({ color: 0xff8fab, alpha: 0.45 })
+    } else if (talking || reaction === 'talk') {
       const open = 6 + Math.abs(Math.sin(this.time * 16)) * 10
       g.ellipse(0, mouthY + 4, 12, open)
       g.fill(0x3a1f1a)
@@ -1101,15 +1142,20 @@ export class PetScene {
       g.stroke({ width: 3.5, color: 0x243029, cap: 'round' })
     }
 
+    const whiskerWiggle = talking || reaction === 'talk' ? Math.sin(this.time * 18) * 3 : Math.sin(this.time * 2) * 1
     g.moveTo(-18, headY + 20)
-    g.lineTo(-58, headY + 12)
+    g.lineTo(-58, headY + 12 + whiskerWiggle)
     g.moveTo(-18, headY + 26)
-    g.lineTo(-58, headY + 28)
+    g.lineTo(-58, headY + 28 - whiskerWiggle * 0.5)
+    g.moveTo(-16, headY + 23)
+    g.lineTo(-54, headY + 22)
     g.moveTo(18, headY + 20)
-    g.lineTo(58, headY + 12)
+    g.lineTo(58, headY + 12 - whiskerWiggle)
     g.moveTo(18, headY + 26)
-    g.lineTo(58, headY + 28)
-    g.stroke({ width: 2, color: 0x243029, alpha: 0.45, cap: 'round' })
+    g.lineTo(58, headY + 28 + whiskerWiggle * 0.5)
+    g.moveTo(16, headY + 23)
+    g.lineTo(54, headY + 22)
+    g.stroke({ width: 2, color: 0x243029, alpha: 0.5, cap: 'round' })
 
     if (mood === 'happy' || reaction === 'laugh') {
       g.ellipse(-34, headY + 18, 8, 5)
@@ -1431,11 +1477,105 @@ export class PetScene {
     }
   }
 
+  private spawnReactionFx(reaction: Reaction) {
+    const bursts: Array<{
+      n: number
+      color: number
+      kind: 'circle' | 'heart' | 'crumb' | 'spark'
+      spread: number
+    }> = []
+    if (reaction === 'eat') bursts.push({ n: 10, color: 0xf4a261, kind: 'crumb', spread: 40 })
+    if (reaction === 'bath') bursts.push({ n: 14, color: 0xffffff, kind: 'circle', spread: 70 })
+    if (reaction === 'laugh' || reaction === 'play')
+      bursts.push({ n: 8, color: 0xff85a1, kind: 'heart', spread: 50 })
+    if (reaction === 'brush') bursts.push({ n: 10, color: 0x4cc9f0, kind: 'spark', spread: 45 })
+    if (reaction === 'potty') bursts.push({ n: 6, color: 0x90e0ef, kind: 'spark', spread: 30 })
+    if (reaction.startsWith('skill_')) bursts.push({ n: 12, color: 0xf4d35e, kind: 'spark', spread: 60 })
+    for (const b of bursts) {
+      for (let i = 0; i < b.n; i++) {
+        const ang = Math.random() * Math.PI * 2
+        const spd = 20 + Math.random() * b.spread
+        this.particles.push({
+          x: (Math.random() - 0.5) * 40,
+          y: -40 + Math.random() * 40,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 30,
+          life: 0,
+          max: 0.7 + Math.random() * 0.6,
+          color: b.color,
+          size: 3 + Math.random() * 5,
+          kind: b.kind,
+        })
+      }
+    }
+  }
+
+  private drawFx() {
+    const g = this.fx
+    g.clear()
+    for (const p of this.particles) {
+      const a = 1 - p.life / p.max
+      if (p.kind === 'heart') {
+        g.ellipse(p.x - p.size * 0.35, p.y, p.size * 0.45, p.size * 0.4)
+        g.fill({ color: p.color, alpha: a * 0.85 })
+        g.ellipse(p.x + p.size * 0.35, p.y, p.size * 0.45, p.size * 0.4)
+        g.fill({ color: p.color, alpha: a * 0.85 })
+        g.moveTo(p.x - p.size * 0.75, p.y + 1)
+        g.lineTo(p.x, p.y + p.size)
+        g.lineTo(p.x + p.size * 0.75, p.y + 1)
+        g.closePath()
+        g.fill({ color: p.color, alpha: a * 0.85 })
+      } else if (p.kind === 'spark') {
+        g.moveTo(p.x, p.y - p.size)
+        g.lineTo(p.x + p.size * 0.25, p.y - p.size * 0.25)
+        g.lineTo(p.x + p.size, p.y)
+        g.lineTo(p.x + p.size * 0.25, p.y + p.size * 0.25)
+        g.lineTo(p.x, p.y + p.size)
+        g.lineTo(p.x - p.size * 0.25, p.y + p.size * 0.25)
+        g.lineTo(p.x - p.size, p.y)
+        g.lineTo(p.x - p.size * 0.25, p.y - p.size * 0.25)
+        g.closePath()
+        g.fill({ color: p.color, alpha: a })
+      } else {
+        g.circle(p.x, p.y, p.size)
+        g.fill({ color: p.color, alpha: a * (p.kind === 'crumb' ? 0.9 : 0.65) })
+      }
+    }
+  }
+
   private update(dt: number) {
     if (!this.ready || this.disposed) return
     this.time += dt
     this.blinkT += dt
     if (this.blinkT > 3.4) this.blinkT = 0
+
+    if (this.yawnT > 0) this.yawnT = Math.max(0, this.yawnT - dt)
+    this.idleClock += dt
+    if (
+      this.idleClock > 12 &&
+      this.props.reaction === 'idle' &&
+      !this.props.sleeping &&
+      !this.props.talking
+    ) {
+      this.idleClock = 0
+      this.yawnT = 1.4
+    }
+
+    if (this.props.reaction !== this.lastFxReaction) {
+      this.lastFxReaction = this.props.reaction
+      if (this.props.reaction !== 'idle' && this.props.reaction !== 'sleep') {
+        this.spawnReactionFx(this.props.reaction)
+      }
+    }
+
+    for (const p of this.particles) {
+      p.life += dt
+      p.x += p.vx * dt
+      p.y += p.vy * dt
+      p.vy += 40 * dt
+    }
+    this.particles = this.particles.filter((p) => p.life < p.max)
+
     if (this.props.sleeping) {
       this.zzz.position.set(48, -150 + Math.sin(this.time * 2) * 8)
       this.zzz.alpha = 0.55 + Math.sin(this.time * 3) * 0.25
@@ -1446,6 +1586,7 @@ export class PetScene {
     this.drawCompanion(w, h)
     this.drawRoomProps(w, h)
     this.redraw()
+    this.drawFx()
   }
 
   destroy() {

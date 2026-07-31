@@ -57,6 +57,28 @@ export type FurnitureId =
   | 'disco_ball'
   | 'bean_stalk'
   | 'trophy_shelf'
+  | 'rug_galaxy'
+  | 'rug_leaf'
+  | 'bed_capsule'
+  | 'sofa_cloud'
+  | 'chair_gaming'
+  | 'table_picnic'
+  | 'lamp_mushroom'
+  | 'poster_planet'
+  | 'poster_heart'
+  | 'plant_bonsai'
+  | 'fireplace'
+  | 'arcade'
+  | 'drum_kit'
+  | 'whiteboard'
+  | 'yoga_mat'
+  | 'slide'
+  | 'pool'
+  | 'tent'
+  | 'garden_gnome'
+  | 'wind_chime'
+  | 'statue_cat'
+  | 'vending'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -128,6 +150,28 @@ export const FURNITURE: FurnitureItem[] = [
   { id: 'disco_ball', name: 'Disco Ball', price: 145, slot: 'wall', color: 0xcaf0f8, accent: 0xff006e },
   { id: 'bean_stalk', name: 'Bean Stalk', price: 100, slot: 'side', color: 0x4caf7a, accent: 0x3d9a68 },
   { id: 'trophy_shelf', name: 'Trophy Shelf', price: 170, slot: 'wall', color: 0x8b5e3c, accent: 0xf4d35e },
+  { id: 'rug_galaxy', name: 'Galaxy Rug', price: 130, slot: 'floor', color: 0x240046, accent: 0xf4d35e },
+  { id: 'rug_leaf', name: 'Leaf Rug', price: 95, slot: 'floor', color: 0x4caf7a, accent: 0xdda15e },
+  { id: 'bed_capsule', name: 'Capsule Bed', price: 250, slot: 'side', color: 0x00f5d4, accent: 0x1a1a1a },
+  { id: 'sofa_cloud', name: 'Cloud Sofa', price: 190, slot: 'side', color: 0xffffff, accent: 0x90e0ef },
+  { id: 'chair_gaming', name: 'Gaming Chair', price: 175, slot: 'side', color: 0xe63946, accent: 0x1a1a1a },
+  { id: 'table_picnic', name: 'Picnic Table', price: 120, slot: 'floor', color: 0xb56b45, accent: 0xe9c46a },
+  { id: 'lamp_mushroom', name: 'Mushroom Lamp', price: 115, slot: 'side', color: 0xe63946, accent: 0xffffff },
+  { id: 'poster_planet', name: 'Planet Poster', price: 50, slot: 'wall', color: 0x3a86ff, accent: 0xffbe0b },
+  { id: 'poster_heart', name: 'Heart Poster', price: 48, slot: 'wall', color: 0xff85a1, accent: 0xffffff },
+  { id: 'plant_bonsai', name: 'Bonsai', price: 105, slot: 'side', color: 0x606c38, accent: 0xb56b45 },
+  { id: 'fireplace', name: 'Cozy Fireplace', price: 220, slot: 'wall', color: 0x6b4428, accent: 0xe76f51 },
+  { id: 'arcade', name: 'Arcade Cabinet', price: 230, slot: 'side', color: 0x9b5de5, accent: 0x00f5d4 },
+  { id: 'drum_kit', name: 'Drum Kit', price: 200, slot: 'floor', color: 0xe63946, accent: 0xf4d35e },
+  { id: 'whiteboard', name: 'Whiteboard', price: 90, slot: 'wall', color: 0xffffff, accent: 0x4cc9f0 },
+  { id: 'yoga_mat', name: 'Yoga Mat', price: 70, slot: 'floor', color: 0x9b5de5, accent: 0xff85a1 },
+  { id: 'slide', name: 'Yard Slide', price: 185, slot: 'side', color: 0xffbe0b, accent: 0x4cc9f0 },
+  { id: 'pool', name: 'Kiddie Pool', price: 160, slot: 'floor', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'tent', name: 'Play Tent', price: 150, slot: 'side', color: 0xff006e, accent: 0xffe066 },
+  { id: 'garden_gnome', name: 'Garden Gnome', price: 85, slot: 'floor', color: 0xe63946, accent: 0xffffff },
+  { id: 'wind_chime', name: 'Wind Chime', price: 75, slot: 'wall', color: 0xf4d35e, accent: 0x90e0ef },
+  { id: 'statue_cat', name: 'Cat Statue', price: 140, slot: 'side', color: 0x8d99ae, accent: 0xf4d35e },
+  { id: 'vending', name: 'Snack Machine', price: 195, slot: 'side', color: 0xe63946, accent: 0x4cc9f0 },
 ]
 
 export function getFurniture(id: FurnitureId): FurnitureItem {

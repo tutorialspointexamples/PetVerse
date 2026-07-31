@@ -23,6 +23,12 @@ export type BodyColorId =
   | 'grape'
   | 'moss'
   | 'ink'
+  | 'sunrise'
+  | 'storm'
+  | 'cotton'
+  | 'ruby'
+  | 'seafoam'
+  | 'midnight'
 
 export type HatId =
   | 'none'
@@ -63,6 +69,16 @@ export type HatId =
   | 'spaceHelm'
   | 'detective'
   | 'plunger'
+  | 'turban'
+  | 'jester'
+  | 'firefighter'
+  | 'pilot'
+  | 'bouquet'
+  | 'pancake'
+  | 'banana'
+  | 'crownFlower'
+  | 'robotHelm'
+  | 'sheep'
 
 export type GlassesId =
   | 'none'
@@ -83,6 +99,12 @@ export type GlassesId =
   | 'oval'
   | 'steampunk'
   | 'night'
+  | 'square'
+  | 'flip'
+  | 'goggles'
+  | 'shutter'
+  | 'laser'
+  | 'crystal'
 
 export type ScarfId =
   | 'none'
@@ -103,6 +125,12 @@ export type ScarfId =
   | 'fur'
   | 'medal'
   | 'ascot'
+  | 'silk'
+  | 'bandanaNeck'
+  | 'lei'
+  | 'chain'
+  | 'bell'
+  | 'feather'
 
 export type ShirtId =
   | 'none'
@@ -128,6 +156,16 @@ export type ShirtId =
   | 'blazer'
   | 'onesie'
   | 'apron'
+  | 'tracksuit'
+  | 'poncho'
+  | 'wetsuit'
+  | 'cardigan'
+  | 'denim'
+  | 'toga'
+  | 'raincoatClear'
+  | 'scout'
+  | 'ballet'
+  | 'mechanic'
 
 export type ShoesId =
   | 'none'
@@ -144,6 +182,13 @@ export type ShoesId =
   | 'hiking'
   | 'socks'
   | 'cloud'
+  | 'ballet'
+  | 'cowboyBoots'
+  | 'moonBoots'
+  | 'rainBoots'
+  | 'tap'
+  | 'furry'
+  | 'glow'
 
 export interface BodyColorOption {
   id: BodyColorId
@@ -216,6 +261,12 @@ export const BODY_COLORS: BodyColorOption[] = [
   { id: 'grape', name: 'Grape', fill: 0x7b2cbf, belly: 0xe0aaff, ear: 0x5a189a, price: 122 },
   { id: 'moss', name: 'Moss', fill: 0x606c38, belly: 0xdda15e, ear: 0x283618, price: 98 },
   { id: 'ink', name: 'Ink', fill: 0x14213d, belly: 0x8d99ae, ear: 0x0d1b2a, price: 135 },
+  { id: 'sunrise', name: 'Sunrise', fill: 0xff7b54, belly: 0xffe5d9, ear: 0xe85d04, price: 128 },
+  { id: 'storm', name: 'Storm', fill: 0x4a5568, belly: 0xcbd5e0, ear: 0x2d3748, price: 132 },
+  { id: 'cotton', name: 'Cotton', fill: 0xfaf0e6, belly: 0xffffff, ear: 0xf5d0c5, price: 120 },
+  { id: 'ruby', name: 'Ruby', fill: 0x9b2226, belly: 0xffc2c2, ear: 0x660708, price: 145 },
+  { id: 'seafoam', name: 'Seafoam', fill: 0x80ed99, belly: 0xd8f3dc, ear: 0x38a3a5, price: 126 },
+  { id: 'midnight', name: 'Midnight', fill: 0x10002b, belly: 0x7b2cbf, ear: 0x240046, price: 150 },
 ]
 
 export const HATS: HatOption[] = [
@@ -257,6 +308,16 @@ export const HATS: HatOption[] = [
   { id: 'spaceHelm', name: 'Space Helm', price: 180, color: 0xd8e2dc, style: 'diver' },
   { id: 'detective', name: 'Detective Hat', price: 120, color: 0x6b4428, style: 'cowboy' },
   { id: 'plunger', name: 'Plunger Hat', price: 70, color: 0xe63946, style: 'party' },
+  { id: 'turban', name: 'Turban', price: 125, color: 0xffbe0b, style: 'beanie' },
+  { id: 'jester', name: 'Jester Cap', price: 140, color: 0x9b5de5, style: 'party' },
+  { id: 'firefighter', name: 'Fire Helm', price: 155, color: 0xe63946, style: 'knight' },
+  { id: 'pilot', name: 'Pilot Cap', price: 135, color: 0x1d3557, style: 'cap' },
+  { id: 'bouquet', name: 'Flower Bouquet', price: 110, color: 0xff85a1, style: 'flower' },
+  { id: 'pancake', name: 'Pancake Stack', price: 95, color: 0xe9c46a, style: 'beanie' },
+  { id: 'banana', name: 'Banana Hat', price: 85, color: 0xffe066, style: 'party' },
+  { id: 'crownFlower', name: 'Flower Crown', price: 130, color: 0xff006e, style: 'crown' },
+  { id: 'robotHelm', name: 'Robot Helm', price: 185, color: 0x8d99ae, style: 'diver' },
+  { id: 'sheep', name: 'Sheep Hood', price: 145, color: 0xf8f9fa, style: 'beanie' },
 ]
 
 export const GLASSES: SimpleCosmetic<GlassesId>[] = [
@@ -278,6 +339,12 @@ export const GLASSES: SimpleCosmetic<GlassesId>[] = [
   { id: 'oval', name: 'Oval', price: 72, color: 0x6c757d },
   { id: 'steampunk', name: 'Steampunk', price: 135, color: 0xb56b45 },
   { id: 'night', name: 'Night Vision', price: 145, color: 0x2a9d8f },
+  { id: 'square', name: 'Square Specs', price: 78, color: 0x264653 },
+  { id: 'flip', name: 'Flip Shades', price: 98, color: 0x1a1a1a },
+  { id: 'goggles', name: 'Lab Goggles', price: 112, color: 0x4cc9f0 },
+  { id: 'shutter', name: 'Shutter Shades', price: 105, color: 0xe63946 },
+  { id: 'laser', name: 'Laser Visor', price: 155, color: 0xff006e },
+  { id: 'crystal', name: 'Crystal Specs', price: 160, color: 0xcaf0f8 },
 ]
 
 export const SCARVES: SimpleCosmetic<ScarfId>[] = [
@@ -299,6 +366,12 @@ export const SCARVES: SimpleCosmetic<ScarfId>[] = [
   { id: 'fur', name: 'Fluffy Collar', price: 110, color: 0xf2e8d5 },
   { id: 'medal', name: 'Medal Ribbon', price: 95, color: 0xf4d35e },
   { id: 'ascot', name: 'Ascot', price: 100, color: 0x9b5de5 },
+  { id: 'silk', name: 'Silk Scarf', price: 115, color: 0xff85a1 },
+  { id: 'bandanaNeck', name: 'Neck Bandana', price: 55, color: 0x457b9d },
+  { id: 'lei', name: 'Flower Lei', price: 90, color: 0xffbe0b },
+  { id: 'chain', name: 'Gold Chain', price: 150, color: 0xf4d35e },
+  { id: 'bell', name: 'Collar Bell', price: 70, color: 0xf4d35e },
+  { id: 'feather', name: 'Feather Boa', price: 135, color: 0xff006e },
 ]
 
 export const SHIRTS: SimpleCosmetic<ShirtId>[] = [
@@ -325,6 +398,16 @@ export const SHIRTS: SimpleCosmetic<ShirtId>[] = [
   { id: 'blazer', name: 'Blazer', price: 130, color: 0x1d3557 },
   { id: 'onesie', name: 'Bunny Onesie', price: 120, color: 0xffc8dd },
   { id: 'apron', name: 'Chef Apron', price: 70, color: 0xffffff },
+  { id: 'tracksuit', name: 'Tracksuit', price: 105, color: 0x3a86ff },
+  { id: 'poncho', name: 'Poncho', price: 115, color: 0xe76f51 },
+  { id: 'wetsuit', name: 'Wetsuit', price: 145, color: 0x1a1a1a },
+  { id: 'cardigan', name: 'Cardigan', price: 95, color: 0xb8a0d8 },
+  { id: 'denim', name: 'Denim Jacket', price: 125, color: 0x457b9d },
+  { id: 'toga', name: 'Toga', price: 130, color: 0xffffff },
+  { id: 'raincoatClear', name: 'Clear Raincoat', price: 100, color: 0x90e0ef },
+  { id: 'scout', name: 'Scout Shirt', price: 85, color: 0x2a9d8f },
+  { id: 'ballet', name: 'Ballet Tutu', price: 140, color: 0xffc8dd },
+  { id: 'mechanic', name: 'Mechanic Overalls', price: 110, color: 0x6c757d },
 ]
 
 export const SHOES: SimpleCosmetic<ShoesId>[] = [
@@ -342,6 +425,13 @@ export const SHOES: SimpleCosmetic<ShoesId>[] = [
   { id: 'hiking', name: 'Hiking Boots', price: 95, color: 0x606c38 },
   { id: 'socks', name: 'Cozy Socks', price: 40, color: 0xf8edeb },
   { id: 'cloud', name: 'Cloud Shoes', price: 150, color: 0xffffff },
+  { id: 'ballet', name: 'Ballet Slippers', price: 110, color: 0xffc8dd },
+  { id: 'cowboyBoots', name: 'Cowboy Boots', price: 125, color: 0xb56b45 },
+  { id: 'moonBoots', name: 'Moon Boots', price: 155, color: 0xd8e2dc },
+  { id: 'rainBoots', name: 'Rain Boots', price: 80, color: 0xffbe0b },
+  { id: 'tap', name: 'Tap Shoes', price: 120, color: 0x1a1a1a },
+  { id: 'furry', name: 'Furry Boots', price: 135, color: 0xf2e8d5 },
+  { id: 'glow', name: 'Glow Sneakers', price: 160, color: 0x00f5d4 },
 ]
 
 export function getBodyColor(id: BodyColorId): BodyColorOption {

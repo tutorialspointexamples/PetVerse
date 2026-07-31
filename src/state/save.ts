@@ -15,7 +15,7 @@ import type { FoodId } from '../game/foods'
 import type { CardId } from '../game/cards'
 import { DEFAULT_NEEDS } from '../game/needs'
 
-const SAVE_KEY = 'petverse-save-v3'
+const SAVE_KEY = 'petverse-save-v4'
 
 export interface SaveData {
   petName: string
@@ -49,6 +49,10 @@ export interface SaveData {
   room: RoomId
   favoriteFood: FoodId
   ownedCards: CardId[]
+  /** YYYY-MM-DD for the active daily mission set */
+  missionDate: string | null
+  missionProgress: Record<string, number>
+  claimedMissions: string[]
   lastSavedAt: number
 }
 
@@ -85,6 +89,9 @@ export function defaultSave(): SaveData {
     room: 'living',
     favoriteFood: 'kibble',
     ownedCards: [],
+    missionDate: null,
+    missionProgress: {},
+    claimedMissions: [],
     lastSavedAt: Date.now(),
   }
 }
@@ -93,6 +100,7 @@ export function loadSave(): SaveData {
   try {
     const raw =
       localStorage.getItem(SAVE_KEY) ??
+      localStorage.getItem('petverse-save-v3') ??
       localStorage.getItem('petverse-save-v2') ??
       localStorage.getItem('petverse-save-v1')
     if (!raw) return defaultSave()
@@ -118,6 +126,9 @@ export function loadSave(): SaveData {
       room: parsed.room ?? base.room,
       favoriteFood: parsed.favoriteFood ?? base.favoriteFood,
       ownedCards: parsed.ownedCards ?? base.ownedCards,
+      missionDate: parsed.missionDate ?? base.missionDate,
+      missionProgress: parsed.missionProgress ?? base.missionProgress,
+      claimedMissions: parsed.claimedMissions ?? base.claimedMissions,
     }
   } catch {
     return defaultSave()

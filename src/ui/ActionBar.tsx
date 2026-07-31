@@ -106,6 +106,9 @@ export function ActionBar() {
         <button type="button" className="action-btn slim" onClick={() => setOverlay('cards')}>
           {t('nav.cards')}
         </button>
+        <button type="button" className="action-btn slim" onClick={() => setOverlay('missions')}>
+          {t('nav.missions')}
+        </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('games')}>
           {t('nav.games')}
         </button>

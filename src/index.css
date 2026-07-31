@@ -717,15 +717,30 @@ input {
 
 .dunk-court {
   position: relative;
-  height: 160px;
+  height: 190px;
   border-radius: 14px;
-  background: linear-gradient(180deg, #4cc9f0, #2a6f97);
+  background:
+    radial-gradient(ellipse 40% 20% at 50% 18%, rgba(255, 255, 255, 0.25), transparent 60%),
+    linear-gradient(180deg, #7ec8e3 0%, #4cc9f0 40%, #2a6f97 70%, #1d4e6f 100%);
   overflow: hidden;
+}
+
+.dunk-backboard {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 86px;
+  height: 54px;
+  margin-left: -43px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border: 3px solid #e9ecef;
+  box-shadow: inset 0 0 0 8px #dee2e6;
 }
 
 .dunk-hoop {
   position: absolute;
-  top: 28px;
+  top: 58px;
   left: 50%;
   width: 70px;
   height: 14px;
@@ -733,6 +748,55 @@ input {
   border: 4px solid #f4d35e;
   border-radius: 8px;
   background: transparent;
+  z-index: 2;
+}
+
+.dunk-net {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  width: 54px;
+  height: 34px;
+  margin-left: -27px;
+  background:
+    repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(255, 255, 255, 0.55) 6px, rgba(255, 255, 255, 0.55) 7px),
+    repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(255, 255, 255, 0.4) 6px, rgba(255, 255, 255, 0.4) 7px);
+  clip-path: polygon(0 0, 100% 0, 85% 100%, 15% 100%);
+  opacity: 0.85;
+  z-index: 1;
+}
+
+.dunk-pet {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  width: 44px;
+  height: 54px;
+  border-radius: 22px 22px 16px 16px;
+  background: #f4a261;
+  box-shadow: inset 0 -10px 0 rgba(0, 0, 0, 0.08);
+}
+
+.dunk-pet::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: 4px;
+  width: 36px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f4a261;
+}
+
+.dunk-pet::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 12px;
+  width: 20px;
+  height: 8px;
+  border-radius: 0 0 10px 10px;
+  background: #3a1f1a;
 }
 
 .dunk-ball {
@@ -743,8 +807,124 @@ input {
   height: 28px;
   margin-left: -14px;
   border-radius: 50%;
-  background: #f4a261;
-  transform: translateY(calc(var(--lift, 0px) * -1));
+  background:
+    radial-gradient(circle at 30% 30%, #ffd6a5, #f4a261 55%, #e76f51);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+  transform: translate(var(--drift, 0px), calc(var(--lift, 0px) * -1)) scale(var(--scale, 1));
+  z-index: 3;
+  transition: none;
+}
+
+.dunk-ball.flying {
+  transition: none;
+}
+
+.dunk-ball.swish {
+  filter: drop-shadow(0 0 8px rgba(244, 211, 94, 0.8));
+}
+
+.dunk-popup {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: Fredoka, Nunito, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: #fff8ef;
+  text-shadow: 0 2px 0 rgba(26, 42, 34, 0.35);
+  animation: dunk-pop 0.55s ease-out both;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.dunk-popup.miss {
+  color: #ffc9c0;
+}
+
+@keyframes dunk-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -30%) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 4px 8px;
+}
+
+.mission-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(26, 42, 34, 0.08);
+}
+
+.mission-card.ready {
+  border-color: rgba(92, 184, 138, 0.7);
+  background: rgba(92, 184, 138, 0.16);
+}
+
+.mission-card.claimed {
+  opacity: 0.7;
+}
+
+.mission-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mission-copy strong {
+  font-family: Fredoka, Nunito, system-ui, sans-serif;
+}
+
+.mission-copy span {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.mission-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(26, 42, 34, 0.1);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.mission-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #5cb88a, #4cc9f0);
+  border-radius: inherit;
+}
+
+.mission-claim {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+  background: var(--accent);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mission-claim:disabled {
+  background: rgba(26, 42, 34, 0.18);
+  color: rgba(26, 42, 34, 0.55);
+  cursor: default;
 }
 
 .dunk-meter {

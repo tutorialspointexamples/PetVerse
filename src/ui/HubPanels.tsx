@@ -4,6 +4,7 @@ import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
 import { FOODS } from '../game/foods'
 import { ROOMS } from '../game/rooms'
 import { CARDS } from '../game/cards'
+import { missionsForDay, todayKey } from '../game/missions'
 import { IAP_PRODUCTS, purchaseIap, showRewardedAd } from '../monetization/stubs'
 import { useGameStore } from '../state/gameStore'
 import { useEffect } from 'react'
@@ -424,6 +425,66 @@ export function EventPanel() {
         >
           {claimed ? 'Bonus claimed today' : `Claim +${event.loginBonus} coins`}
         </button>
+      </div>
+    </div>
+  )
+}
+
+export function MissionsPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const missionProgress = useGameStore((s) => s.missionProgress)
+  const claimedMissions = useGameStore((s) => s.claimedMissions)
+  const claimMission = useGameStore((s) => s.claimMission)
+  const ensureMissions = useGameStore((s) => s.ensureMissions)
+  const { t } = useLocale()
+
+  useEffect(() => {
+    if (overlay === 'missions') ensureMissions()
+  }, [overlay, ensureMissions])
+
+  if (overlay !== 'missions') return null
+  const missions = missionsForDay(todayKey())
+
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Daily missions">
+      <div className="shop-panel">
+        <div className="shop-header">
+          <h2>{t('missions.title')}</h2>
+          <p className="shop-coins">{t('missions.subtitle')}</p>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        <div className="mission-list">
+          {missions.map((m) => {
+            const progress = missionProgress[m.id] ?? 0
+            const claimed = claimedMissions.includes(m.id)
+            const ready = progress >= m.target && !claimed
+            return (
+              <div key={m.id} className={`mission-card ${claimed ? 'claimed' : ''} ${ready ? 'ready' : ''}`}>
+                <div className="mission-copy">
+                  <strong>{m.label}</strong>
+                  <span>
+                    {Math.min(progress, m.target)}/{m.target} · +{m.rewardCoins}c
+                    {m.rewardFuel ? ` · +${m.rewardFuel} fuel` : ''}
+                  </span>
+                  <div className="mission-bar">
+                    <i style={{ width: `${Math.min(100, (progress / m.target) * 100)}%` }} />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="mission-claim"
+                  disabled={!ready}
+                  onClick={() => claimMission(m.id)}
+                >
+                  {claimed ? t('missions.done') : ready ? t('missions.claim') : t('missions.track')}
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

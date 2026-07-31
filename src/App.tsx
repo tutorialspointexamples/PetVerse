@@ -16,6 +16,7 @@ import {
   FoodPanel,
   GamesHub,
   LangPanel,
+  MissionsPanel,
   RewardedPanel,
   RoomsPanel,
   CardsPanel,
@@ -106,6 +107,7 @@ export default function App() {
       <FoodPanel />
       <RoomsPanel />
       <CardsPanel />
+      <MissionsPanel />
       <SkillsPanel />
       <CompanionsPanel />
       <EventPanel />
