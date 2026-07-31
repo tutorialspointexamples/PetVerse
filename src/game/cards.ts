@@ -1,0 +1,58 @@
+export type CardId =
+  | 'beach_shell'
+  | 'forest_leaf'
+  | 'candy_swirl'
+  | 'pirate_map'
+  | 'coral_gem'
+  | 'cyber_chip'
+  | 'dragon_scale'
+  | 'alien_orb'
+  | 'sky_medal'
+  | 'dunk_star'
+  | 'trail_comet'
+  | 'plane_blueprint'
+
+export interface CardDef {
+  id: CardId
+  name: string
+  rarity: 'common' | 'rare' | 'epic'
+  blurb: string
+  color: number
+}
+
+export const CARDS: CardDef[] = [
+  { id: 'beach_shell', name: 'Beach Shell', rarity: 'common', blurb: 'Found on Adventure Beach.', color: 0xf2cc8f },
+  { id: 'forest_leaf', name: 'Magic Leaf', rarity: 'common', blurb: 'Glows in Magic Forest.', color: 0x95d5b2 },
+  { id: 'candy_swirl', name: 'Candy Swirl', rarity: 'rare', blurb: 'Sweet souvenir from Candy Kingdom.', color: 0xff85a1 },
+  { id: 'pirate_map', name: 'Pirate Map', rarity: 'rare', blurb: 'X marks Pirate Island loot.', color: 0xe9b44c },
+  { id: 'coral_gem', name: 'Coral Gem', rarity: 'rare', blurb: 'From Underwater Home reefs.', color: 0x4cc9f0 },
+  { id: 'cyber_chip', name: 'Cyber Chip', rarity: 'epic', blurb: 'Pulsing circuit from Cyber City.', color: 0x00f5d4 },
+  { id: 'dragon_scale', name: 'Dragon Scale', rarity: 'epic', blurb: 'Warm relic of Dragon Kingdom.', color: 0x9b2226 },
+  { id: 'alien_orb', name: 'Alien Orb', rarity: 'epic', blurb: 'Humming souvenir from Alien Planet.', color: 0x80ffdb },
+  { id: 'sky_medal', name: 'Sky Medal', rarity: 'common', blurb: 'Earned in Sky Race.', color: 0x4cc9f0 },
+  { id: 'dunk_star', name: 'Dunk Star', rarity: 'common', blurb: 'Swish prize from Dunk-a-Pet.', color: 0xf4d35e },
+  { id: 'trail_comet', name: 'Trail Comet', rarity: 'rare', blurb: 'Caught on Space Trails.', color: 0xf4a261 },
+  { id: 'plane_blueprint', name: 'Plane Blueprint', rarity: 'rare', blurb: 'From Build Your Plane.', color: 0xe76f51 },
+]
+
+export function getCard(id: CardId): CardDef {
+  return CARDS.find((c) => c.id === id) ?? CARDS[0]
+}
+
+export const WORLD_CARDS: Record<string, CardId> = {
+  beach: 'beach_shell',
+  forest: 'forest_leaf',
+  candy: 'candy_swirl',
+  pirate: 'pirate_map',
+  underwater: 'coral_gem',
+  cyber: 'cyber_chip',
+  dragon: 'dragon_scale',
+  alien: 'alien_orb',
+}
+
+export const MINIGAME_CARDS: Record<string, CardId> = {
+  skyDash: 'sky_medal',
+  dunkToss: 'dunk_star',
+  spaceTrails: 'trail_comet',
+  buildPlane: 'plane_blueprint',
+}

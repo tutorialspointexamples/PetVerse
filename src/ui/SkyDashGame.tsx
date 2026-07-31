@@ -162,7 +162,7 @@ export function SkyDashGame() {
     <div className="minigame-overlay">
       <div className="minigame-frame">
         <div className="minigame-top">
-          <h2>Sky Dash</h2>
+          <h2>Sky Race</h2>
           <p>Score {Math.floor(score)} · Tap to flap · Grab coins, dodge blocks</p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×

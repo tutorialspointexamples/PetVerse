@@ -5,13 +5,17 @@ import type {
   HatId,
   ScarfId,
   ShirtId,
+  ShoesId,
 } from '../game/cosmetics'
 import type { FurnitureId } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
+import type { RoomId } from '../game/rooms'
+import type { FoodId } from '../game/foods'
+import type { CardId } from '../game/cards'
 import { DEFAULT_NEEDS } from '../game/needs'
 
-const SAVE_KEY = 'petverse-save-v2'
+const SAVE_KEY = 'petverse-save-v3'
 
 export interface SaveData {
   petName: string
@@ -26,11 +30,13 @@ export interface SaveData {
   glasses: GlassesId
   scarf: ScarfId
   shirt: ShirtId
+  shoes: ShoesId
   ownedColors: BodyColorId[]
   ownedHats: HatId[]
   ownedGlasses: GlassesId[]
   ownedScarves: ScarfId[]
   ownedShirts: ShirtId[]
+  ownedShoes: ShoesId[]
   ownedFurniture: FurnitureId[]
   placedFurniture: FurnitureId[]
   visitedWorlds: WorldId[]
@@ -40,6 +46,9 @@ export interface SaveData {
   eventClaimDate: string | null
   claimedEventIds: string[]
   sleeping: boolean
+  room: RoomId
+  favoriteFood: FoodId
+  ownedCards: CardId[]
   lastSavedAt: number
 }
 
@@ -57,11 +66,13 @@ export function defaultSave(): SaveData {
     glasses: 'none',
     scarf: 'none',
     shirt: 'none',
+    shoes: 'none',
     ownedColors: ['ginger'],
     ownedHats: ['none'],
     ownedGlasses: ['none'],
     ownedScarves: ['none'],
     ownedShirts: ['none'],
+    ownedShoes: ['none'],
     ownedFurniture: ['rug_basic'],
     placedFurniture: ['rug_basic'],
     visitedWorlds: [],
@@ -71,13 +82,19 @@ export function defaultSave(): SaveData {
     eventClaimDate: null,
     claimedEventIds: [],
     sleeping: false,
+    room: 'living',
+    favoriteFood: 'kibble',
+    ownedCards: [],
     lastSavedAt: Date.now(),
   }
 }
 
 export function loadSave(): SaveData {
   try {
-    const raw = localStorage.getItem(SAVE_KEY) ?? localStorage.getItem('petverse-save-v1')
+    const raw =
+      localStorage.getItem(SAVE_KEY) ??
+      localStorage.getItem('petverse-save-v2') ??
+      localStorage.getItem('petverse-save-v1')
     if (!raw) return defaultSave()
     const parsed = JSON.parse(raw) as Partial<SaveData>
     const base = defaultSave()
@@ -90,12 +107,17 @@ export function loadSave(): SaveData {
       ownedGlasses: parsed.ownedGlasses?.length ? parsed.ownedGlasses : base.ownedGlasses,
       ownedScarves: parsed.ownedScarves?.length ? parsed.ownedScarves : base.ownedScarves,
       ownedShirts: parsed.ownedShirts?.length ? parsed.ownedShirts : base.ownedShirts,
+      ownedShoes: parsed.ownedShoes?.length ? parsed.ownedShoes : base.ownedShoes,
+      shoes: parsed.shoes ?? base.shoes,
       ownedFurniture: parsed.ownedFurniture?.length ? parsed.ownedFurniture : base.ownedFurniture,
       placedFurniture: parsed.placedFurniture?.length ? parsed.placedFurniture : base.placedFurniture,
       visitedWorlds: parsed.visitedWorlds ?? base.visitedWorlds,
       ownedCompanions: parsed.ownedCompanions?.length ? parsed.ownedCompanions : base.ownedCompanions,
       unlockedSkills: parsed.unlockedSkills?.length ? parsed.unlockedSkills : base.unlockedSkills,
       claimedEventIds: parsed.claimedEventIds ?? base.claimedEventIds,
+      room: parsed.room ?? base.room,
+      favoriteFood: parsed.favoriteFood ?? base.favoriteFood,
+      ownedCards: parsed.ownedCards ?? base.ownedCards,
     }
   } catch {
     return defaultSave()

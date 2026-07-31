@@ -5,16 +5,19 @@ import {
   getHat,
   getScarf,
   getShirt,
+  getShoes,
   type BodyColorId,
   type GlassesId,
   type HatId,
   type ScarfId,
   type ShirtId,
+  type ShoesId,
 } from './cosmetics'
 import { getFurniture, type FurnitureId } from './furniture'
 import { getCompanion, type CompanionId } from './progress'
 import { deriveMood, type Needs } from './needs'
 import type { Reaction } from '../state/gameStore'
+import { getRoom, type RoomId } from './rooms'
 
 export interface PetSceneProps {
   needs: Needs
@@ -23,15 +26,24 @@ export interface PetSceneProps {
   glasses: GlassesId
   scarf: ScarfId
   shirt: ShirtId
+  shoes: ShoesId
   reaction: Reaction
   sleeping: boolean
   talking: boolean
   petName: string
   placedFurniture: FurnitureId[]
   companion: CompanionId
+  room: RoomId
 }
 
-export type PokeZone = 'head' | 'belly' | 'companion'
+export type PokeZone =
+  | 'head'
+  | 'belly'
+  | 'companion'
+  | 'kitchen_food'
+  | 'bath_tub'
+  | 'bath_sink'
+  | 'bed_sleep'
 
 export class PetScene {
   readonly app: Application
@@ -39,9 +51,13 @@ export class PetScene {
   private roomBack = new Graphics()
   private furnitureLayer = new Graphics()
   private roomFront = new Graphics()
+  private roomPropHit = new Graphics()
+  private roomPropHitB = new Graphics()
+  private roomPropHint = new Graphics()
   private pet = new Container()
   private shadow = new Graphics()
   private legs = new Graphics()
+  private shoesGfx = new Graphics()
   private body = new Graphics()
   private shirtGfx = new Graphics()
   private arms = new Graphics()
@@ -99,6 +115,9 @@ export class PetScene {
     this.root.addChild(
       this.roomBack,
       this.furnitureLayer,
+      this.roomPropHint,
+      this.roomPropHit,
+      this.roomPropHitB,
       this.pet,
       this.companionGfx,
       this.companionHit,
@@ -108,6 +127,7 @@ export class PetScene {
     this.pet.addChild(
       this.shadow,
       this.legs,
+      this.shoesGfx,
       this.body,
       this.shirtGfx,
       this.arms,
@@ -127,9 +147,22 @@ export class PetScene {
     this.bellyHit.cursor = 'pointer'
     this.companionHit.eventMode = 'static'
     this.companionHit.cursor = 'pointer'
+    this.roomPropHit.eventMode = 'none'
+    this.roomPropHit.cursor = 'pointer'
+    this.roomPropHitB.eventMode = 'none'
+    this.roomPropHitB.cursor = 'pointer'
     this.headHit.on('pointertap', () => this.onPoke('head'))
     this.bellyHit.on('pointertap', () => this.onPoke('belly'))
     this.companionHit.on('pointertap', () => this.onPoke('companion'))
+    this.roomPropHit.on('pointertap', () => {
+      const room = this.props.room
+      if (room === 'kitchen') this.onPoke('kitchen_food')
+      else if (room === 'bathroom') this.onPoke('bath_tub')
+      else if (room === 'bedroom') this.onPoke('bed_sleep')
+    })
+    this.roomPropHitB.on('pointertap', () => {
+      if (this.props.room === 'bathroom') this.onPoke('bath_sink')
+    })
 
     this.zzz.anchor.set(0.5)
     this.nameTag.anchor.set(0.5, 0)
@@ -149,6 +182,7 @@ export class PetScene {
     this.nameTag.position.set(w * 0.5, h * 0.1)
     this.drawRoom(w, h)
     this.drawFurniture(w, h)
+    this.drawRoomProps(w, h)
     this.drawCompanion(w, h)
   }
 
@@ -157,44 +191,107 @@ export class PetScene {
     const front = this.roomFront
     back.clear()
     front.clear()
+    const room = getRoom(this.props.room)
 
-    // Parallax wall wash
     back.rect(0, 0, w, h * 0.62)
-    back.fill(0x2f6f5e)
+    back.fill(room.wall)
     back.rect(0, 0, w, h * 0.62)
-    back.fill({ color: 0x4a9b82, alpha: 0.28 })
+    back.fill({ color: room.wallAccent, alpha: 0.28 })
 
-    // Window
-    const wx = w * 0.72
-    const wy = h * 0.12
-    const ww = Math.min(160, w * 0.22)
-    const wh = Math.min(120, h * 0.2)
-    back.roundRect(wx, wy, ww, wh, 12)
-    back.fill(0x9fd7ff)
-    back.stroke({ width: 6, color: 0xf2e8d5 })
-    back.moveTo(wx + ww / 2, wy)
-    back.lineTo(wx + ww / 2, wy + wh)
-    back.moveTo(wx, wy + wh / 2)
-    back.lineTo(wx + ww, wy + wh / 2)
-    back.stroke({ width: 4, color: 0xf2e8d5, alpha: 0.9 })
+    if (this.props.room === 'kitchen') {
+      back.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
+      back.fill(0xffffff)
+      back.roundRect(w * 0.1, h * 0.32, w * 0.1, h * 0.08, 4)
+      back.fill(0x4cc9f0)
+      back.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
+      back.fill(0xe76f51)
+    } else if (this.props.room === 'bathroom') {
+      back.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
+      back.fill(0xffffff)
+      back.ellipse(w * 0.2, h * 0.5, 40, 28)
+      back.fill(0x48cae4)
+      back.roundRect(w * 0.12, h * 0.48, 16, 40, 4)
+      back.fill(0x0077b6)
+    } else if (this.props.room === 'bedroom') {
+      back.roundRect(w * 0.08, h * 0.34, w * 0.32, h * 0.24, 10)
+      back.fill(0x4a90a4)
+      back.roundRect(w * 0.1, h * 0.28, w * 0.2, h * 0.1, 8)
+      back.fill(0xffe8c8)
+      back.circle(w * 0.78, h * 0.2, 18)
+      back.fill({ color: 0xffe066, alpha: 0.55 })
+    } else {
+      const wx = w * 0.72
+      const wy = h * 0.12
+      const ww = Math.min(160, w * 0.22)
+      const wh = Math.min(120, h * 0.2)
+      back.roundRect(wx, wy, ww, wh, 12)
+      back.fill(0x9fd7ff)
+      back.stroke({ width: 6, color: 0xf2e8d5 })
+      back.moveTo(wx + ww / 2, wy)
+      back.lineTo(wx + ww / 2, wy + wh)
+      back.moveTo(wx, wy + wh / 2)
+      back.lineTo(wx + ww, wy + wh / 2)
+      back.stroke({ width: 4, color: 0xf2e8d5, alpha: 0.9 })
+      back.moveTo(wx, wy + wh)
+      back.lineTo(wx + ww, wy + wh)
+      back.lineTo(wx + ww + 40, h * 0.62)
+      back.lineTo(wx - 20, h * 0.62)
+      back.closePath()
+      back.fill({ color: 0xfff6d8, alpha: 0.12 })
+    }
 
-    // Soft light shaft
-    back.moveTo(wx, wy + wh)
-    back.lineTo(wx + ww, wy + wh)
-    back.lineTo(wx + ww + 40, h * 0.62)
-    back.lineTo(wx - 20, h * 0.62)
-    back.closePath()
-    back.fill({ color: 0xfff6d8, alpha: 0.12 })
-
-    // Floor
     back.rect(0, h * 0.62, w, h * 0.38)
-    back.fill(0xc4a574)
+    back.fill(room.floor)
     back.rect(0, h * 0.62, w, 14)
-    back.fill(0xa8885a)
+    back.fill(room.trim)
 
-    // Depth board at bottom
     front.rect(0, h * 0.92, w, h * 0.08)
     front.fill({ color: 0x1a2a22, alpha: 0.12 })
+  }
+
+  /** Interactive kitchen / bathroom / bedroom props beyond backdrop. */
+  private drawRoomProps(w: number, h: number) {
+    const hit = this.roomPropHit
+    const hitB = this.roomPropHitB
+    const hint = this.roomPropHint
+    hit.clear()
+    hitB.clear()
+    hint.clear()
+    hit.eventMode = 'none'
+    hitB.eventMode = 'none'
+    const pulse = 0.35 + Math.abs(Math.sin(this.time * 2.4)) * 0.35
+    const room = this.props.room
+
+    if (room === 'kitchen') {
+      hit.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
+      hit.fill({ color: 0xffffff, alpha: 0.001 })
+      hit.eventMode = 'static'
+      hint.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
+      hint.stroke({ width: 3, color: 0xffbe0b, alpha: pulse })
+      hint.circle(w * 0.72, h * 0.42, 5)
+      hint.fill({ color: 0x333333, alpha: 0.5 })
+      hint.circle(w * 0.78, h * 0.42, 5)
+      hint.fill({ color: 0x333333, alpha: 0.5 })
+    } else if (room === 'bathroom') {
+      // Tub → bath
+      hit.ellipse(w * 0.2, h * 0.5, 44, 32)
+      hit.fill({ color: 0xffffff, alpha: 0.001 })
+      hit.eventMode = 'static'
+      hint.ellipse(w * 0.2, h * 0.5, 44, 32)
+      hint.stroke({ width: 3, color: 0xffffff, alpha: pulse })
+      // Sink → brush teeth
+      hitB.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
+      hitB.fill({ color: 0xffffff, alpha: 0.001 })
+      hitB.eventMode = 'static'
+      hint.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
+      hint.stroke({ width: 3, color: 0x4cc9f0, alpha: pulse })
+    } else if (room === 'bedroom') {
+      hit.roundRect(w * 0.08, h * 0.28, w * 0.32, h * 0.3, 10)
+      hit.fill({ color: 0xffffff, alpha: 0.001 })
+      hit.eventMode = 'static'
+      hint.roundRect(w * 0.08, h * 0.28, w * 0.32, h * 0.3, 10)
+      hint.stroke({ width: 3, color: 0xffe066, alpha: pulse })
+    }
   }
 
   private drawFurniture(w: number, h: number) {
@@ -243,9 +340,35 @@ export class PetScene {
           g.fill(item.color)
           g.ellipse(w * 0.28, floorY + 4, 24, 12)
           g.fill(item.accent)
+        } else if (id === 'coral_reef') {
+          g.ellipse(w * 0.7, floorY + 12, 40, 16)
+          g.fill(item.accent)
+          g.ellipse(w * 0.68, floorY - 4, 10, 22)
+          g.fill(item.color)
+          g.ellipse(w * 0.74, floorY, 8, 18)
+          g.fill(0xffc8dd)
+        } else if (id === 'dragon_egg') {
+          g.ellipse(w * 0.34, floorY + 6, 22, 30)
+          g.fill(item.color)
+          g.ellipse(w * 0.34, floorY - 4, 10, 8)
+          g.fill(item.accent)
+        } else if (id === 'rug_wave') {
+          g.ellipse(w * 0.5, floorY, Math.min(210, w * 0.34), Math.min(64, h * 0.07))
+          g.fill(item.color)
+          g.moveTo(w * 0.35, floorY)
+          g.quadraticCurveTo(w * 0.42, floorY - 12, w * 0.5, floorY)
+          g.quadraticCurveTo(w * 0.58, floorY + 12, w * 0.65, floorY)
+          g.stroke({ width: 4, color: item.accent })
+        } else if (id === 'fountain') {
+          g.ellipse(w * 0.72, floorY + 10, 28, 12)
+          g.fill(item.color)
+          g.rect(w * 0.7, floorY - 30, 10, 40)
+          g.fill(0xb0b0b0)
+          g.circle(w * 0.705, floorY - 34, 10)
+          g.fill(item.accent)
         }
       } else if (item.slot === 'wall') {
-        const x = id.includes('moon') ? w * 0.18 : w * 0.08
+        const x = id.includes('moon') || id === 'pirate_flag' ? w * 0.18 : w * 0.08
         const y = h * 0.2
         if (id.startsWith('poster')) {
           g.roundRect(x, y, 54, 68, 6)
@@ -269,12 +392,38 @@ export class PetScene {
           g.fill(0x4cc9f0)
           g.rect(w * 0.42, h * 0.29, 9, 17)
           g.fill(0xf4d35e)
+        } else if (id === 'tv_wall') {
+          g.roundRect(w * 0.62, h * 0.16, 90, 58, 6)
+          g.fill(item.color)
+          g.roundRect(w * 0.65, h * 0.19, 78, 44, 4)
+          g.fill(item.accent)
+        } else if (id === 'clock_cuckoo') {
+          g.roundRect(w * 0.78, h * 0.18, 40, 48, 4)
+          g.fill(item.color)
+          g.circle(w * 0.98 - 40, h * 0.32, 12)
+          g.fill(item.accent)
+        } else if (id === 'pirate_flag') {
+          g.rect(x + 40, y - 10, 4, 70)
+          g.fill(0x8b5e3c)
+          g.rect(x + 44, y - 6, 40, 28)
+          g.fill(item.color)
+          g.circle(x + 64, y + 8, 6)
+          g.fill(item.accent)
         }
       } else {
         const x = sideIndex % 2 === 0 ? w * 0.14 : w * 0.86
         const y = floorY - 10
         sideIndex++
-        if (id.startsWith('bed')) {
+        if (id === 'bed_castle') {
+          g.roundRect(x - 42, y - 30, 84, 44, 8)
+          g.fill(item.color)
+          g.rect(x - 42, y - 55, 12, 28)
+          g.fill(item.accent)
+          g.rect(x + 30, y - 55, 12, 28)
+          g.fill(item.accent)
+          g.roundRect(x - 30, y - 38, 48, 16, 6)
+          g.fill(0xffffff)
+        } else if (id.startsWith('bed')) {
           g.roundRect(x - 40, y - 28, 80, 40, 10)
           g.fill(item.color)
           g.roundRect(x - 34, y - 36, 50, 18, 8)
@@ -307,6 +456,64 @@ export class PetScene {
           g.fill(item.color)
           g.circle(x, y - 40, 12)
           g.fill(item.accent)
+        } else if (id === 'treasure_chest') {
+          g.roundRect(x - 28, y - 28, 56, 34, 6)
+          g.fill(item.color)
+          g.rect(x - 28, y - 14, 56, 6)
+          g.fill(item.accent)
+          g.circle(x, y - 14, 5)
+          g.fill(0xe9b44c)
+        } else if (id === 'neon_console') {
+          g.roundRect(x - 26, y - 48, 52, 42, 6)
+          g.fill(item.color)
+          g.roundRect(x - 18, y - 40, 36, 18, 4)
+          g.fill(item.accent)
+        } else if (id === 'alien_pod') {
+          g.ellipse(x, y - 36, 28, 36)
+          g.fill({ color: item.color, alpha: 0.85 })
+          g.ellipse(x, y - 36, 14, 18)
+          g.fill({ color: item.accent, alpha: 0.5 })
+        } else if (id === 'mirror_vanity') {
+          g.ellipse(x, y - 55, 22, 28)
+          g.stroke({ width: 5, color: item.accent })
+          g.ellipse(x, y - 55, 16, 22)
+          g.fill({ color: item.color, alpha: 0.7 })
+          g.roundRect(x - 20, y - 20, 40, 16, 4)
+          g.fill(0xb56b45)
+        } else if (id === 'bathtub_prop') {
+          g.ellipse(x, y - 18, 36, 20)
+          g.fill(item.color)
+          g.circle(x - 12, y - 30, 8)
+          g.fill(item.accent)
+          g.circle(x + 8, y - 34, 10)
+          g.fill(item.accent)
+        } else if (id === 'fridge') {
+          g.roundRect(x - 22, y - 70, 44, 70, 6)
+          g.fill(item.color)
+          g.rect(x + 12, y - 50, 4, 12)
+          g.fill(item.accent)
+        } else if (id === 'stove') {
+          g.roundRect(x - 26, y - 36, 52, 36, 4)
+          g.fill(item.color)
+          g.circle(x - 10, y - 24, 7)
+          g.fill(item.accent)
+          g.circle(x + 10, y - 24, 7)
+          g.fill(item.accent)
+        } else if (id === 'hammock') {
+          g.moveTo(x - 36, y - 40)
+          g.quadraticCurveTo(x, y - 10, x + 36, y - 40)
+          g.stroke({ width: 4, color: item.accent })
+          g.ellipse(x, y - 22, 30, 12)
+          g.fill(item.color)
+        } else if (id === 'candy_machine') {
+          g.roundRect(x - 16, y - 20, 32, 20, 4)
+          g.fill(0x333333)
+          g.circle(x, y - 48, 22)
+          g.fill({ color: item.color, alpha: 0.55 })
+          g.circle(x - 6, y - 50, 5)
+          g.fill(item.accent)
+          g.circle(x + 8, y - 44, 5)
+          g.fill(0x4cc9f0)
         }
       }
     }
@@ -347,6 +554,24 @@ export class PetScene {
     if (id === 'sprout') {
       g.ellipse(x, y - 26, 8, 12)
       g.fill(0x3d9a68)
+    } else if (id === 'blinky') {
+      g.circle(x - 10, y - 8, 6)
+      g.fill(0xffffff)
+      g.circle(x + 10, y - 8, 6)
+      g.fill(0xffffff)
+      g.circle(x - 10, y - 8, 2.5)
+      g.fill(def.accent)
+      g.circle(x + 10, y - 8, 2.5)
+      g.fill(def.accent)
+      g.ellipse(x, y - 28, 6, 14)
+      g.fill(def.accent)
+    } else if (id === 'pebble') {
+      g.ellipse(x, y + 4, 26, 18)
+      g.fill(def.fill)
+      g.circle(x - 8, y - 2, 3)
+      g.fill(0x243029)
+      g.circle(x + 8, y - 2, 3)
+      g.fill(0x243029)
     } else {
       g.ellipse(x - 16, y - 10, 8, 5)
       g.fill(def.fill)
@@ -367,7 +592,8 @@ export class PetScene {
 
   private bounce(): number {
     const { reaction } = this.props
-    if (reaction === 'laugh' || reaction === 'play' || reaction.startsWith('skill_')) {
+    if (reaction === 'laugh') return Math.sin(this.time * 20) * 10
+    if (reaction === 'play' || reaction.startsWith('skill_')) {
       return Math.sin(this.time * 16) * 5
     }
     if (reaction === 'eat') return Math.sin(this.time * 12) * 2
@@ -376,7 +602,7 @@ export class PetScene {
 
   private redraw() {
     if (!this.ready || this.disposed) return
-    const { needs, bodyColor, hat, glasses, scarf, shirt, reaction, sleeping, talking, petName } =
+    const { needs, bodyColor, hat, glasses, scarf, shirt, shoes, reaction, sleeping, talking, petName } =
       this.props
     const color = getBodyColor(bodyColor)
     const mood = deriveMood(needs)
@@ -387,6 +613,7 @@ export class PetScene {
 
     this.drawShadow(b)
     this.drawLegs(color.fill, b)
+    this.drawShoesLayer(shoes, b)
     this.drawBodyLayer(color.fill, color.belly, color.ear, mood, b)
     this.drawShirtLayer(shirt, b)
     this.drawArms(color.fill, reaction, b)
@@ -422,22 +649,95 @@ export class PetScene {
     g.fill(fill)
   }
 
+  private drawShoesLayer(shoes: ShoesId, b: number) {
+    const g = this.shoesGfx
+    g.clear()
+    if (shoes === 'none') return
+    const c = getShoes(shoes).color
+    const y = 102 + b * 0.2
+    if (shoes === 'sneakers' || shoes === 'boots') {
+      g.roundRect(-52, y, 34, shoes === 'boots' ? 22 : 16, 8)
+      g.fill(c)
+      g.roundRect(18, y, 34, shoes === 'boots' ? 22 : 16, 8)
+      g.fill(c)
+      if (shoes === 'sneakers') {
+        g.rect(-52, y + 10, 34, 4)
+        g.fill(0x4cc9f0)
+        g.rect(18, y + 10, 34, 4)
+        g.fill(0x4cc9f0)
+      }
+    } else if (shoes === 'sandals') {
+      g.ellipse(-35, y + 10, 16, 7)
+      g.fill(c)
+      g.ellipse(35, y + 10, 16, 7)
+      g.fill(c)
+      g.moveTo(-45, y + 2)
+      g.lineTo(-25, y + 8)
+      g.moveTo(25, y + 2)
+      g.lineTo(45, y + 8)
+      g.stroke({ width: 3, color: 0x8b5e3c })
+    } else if (shoes === 'rocket') {
+      g.roundRect(-52, y - 4, 34, 20, 6)
+      g.fill(c)
+      g.roundRect(18, y - 4, 34, 20, 6)
+      g.fill(c)
+      g.moveTo(-35, y + 16)
+      g.lineTo(-42, y + 28)
+      g.lineTo(-28, y + 28)
+      g.closePath()
+      g.fill(0xffbe0b)
+      g.moveTo(35, y + 16)
+      g.lineTo(28, y + 28)
+      g.lineTo(42, y + 28)
+      g.closePath()
+      g.fill(0xffbe0b)
+    } else if (shoes === 'roller') {
+      g.roundRect(-52, y, 34, 14, 6)
+      g.fill(c)
+      g.roundRect(18, y, 34, 14, 6)
+      g.fill(c)
+      g.circle(-42, y + 16, 5)
+      g.fill(0x333333)
+      g.circle(-28, y + 16, 5)
+      g.fill(0x333333)
+      g.circle(28, y + 16, 5)
+      g.fill(0x333333)
+      g.circle(42, y + 16, 5)
+      g.fill(0x333333)
+    }
+  }
+
   private drawBodyLayer(fill: number, belly: number, ear: number, mood: string, b: number) {
     const g = this.body
     g.clear()
+    // Soft outer rim for rounded cartoon volume
+    g.ellipse(0, 30 + b, 82, 96)
+    g.fill({ color: ear, alpha: 0.35 })
     g.ellipse(0, 28 + b, 78, 92)
     g.fill(fill)
-    // Depth shade
+    // Depth shade + highlight
     g.ellipse(18, 40 + b, 40, 70)
-    g.fill({ color: 0x000000, alpha: 0.06 })
+    g.fill({ color: 0x000000, alpha: 0.07 })
+    g.ellipse(-22, 8 + b, 22, 28)
+    g.fill({ color: 0xffffff, alpha: 0.1 })
+    // Cream belly patch
     g.ellipse(0, 42 + b, 48, 58)
     g.fill(belly)
+    // Fur stripes (talking-pet silhouette cue)
+    g.ellipse(-40, 20 + b, 8, 22)
+    g.fill({ color: ear, alpha: 0.28 })
+    g.ellipse(-36, 55 + b, 7, 18)
+    g.fill({ color: ear, alpha: 0.22 })
+    g.ellipse(40, 24 + b, 8, 20)
+    g.fill({ color: ear, alpha: 0.24 })
 
-    // Tail
+    // Tail with tip accent
     const wag = Math.sin(this.time * (mood === 'happy' ? 6 : 2.5)) * 10
     g.moveTo(70, 50 + b)
     g.quadraticCurveTo(110 + wag, 10 + b, 98 + wag * 0.4, -20 + b)
     g.stroke({ width: 16, color: fill, cap: 'round' })
+    g.circle(98 + wag * 0.4, -20 + b, 9)
+    g.fill(ear)
 
     if (mood === 'dirty' || this.props.needs.cleanliness < 40) {
       g.circle(-20, 50 + b, 6)
@@ -445,7 +745,6 @@ export class PetScene {
       g.circle(24, 66 + b, 5)
       g.fill({ color: 0x6b4f3a, alpha: 0.3 })
     }
-    void ear
   }
 
   private drawShirtLayer(shirt: ShirtId, b: number) {
@@ -490,6 +789,32 @@ export class PetScene {
       g.fill(0xffffff)
       g.circle(0, 18 + b, 5)
       g.fill(0xe63946)
+    } else if (shirt === 'raincoat' || shirt === 'sweater' || shirt === 'astronaut') {
+      g.ellipse(0, 36 + b, 54, 50)
+      g.fill(c)
+      if (shirt === 'raincoat') {
+        g.ellipse(0, 8 + b, 56, 16)
+        g.fill(c)
+      }
+      if (shirt === 'astronaut') {
+        g.circle(0, 30 + b, 12)
+        g.fill(0x4cc9f0)
+      }
+    } else if (shirt === 'jersey') {
+      g.ellipse(0, 36 + b, 52, 48)
+      g.fill(c)
+      g.rect(-8, 16 + b, 16, 36)
+      g.fill(0xffffff)
+    } else if (shirt === 'kimono') {
+      g.ellipse(0, 40 + b, 56, 52)
+      g.fill(c)
+      g.moveTo(0, 8 + b)
+      g.lineTo(-24, 80 + b)
+      g.moveTo(0, 8 + b)
+      g.lineTo(24, 80 + b)
+      g.stroke({ width: 4, color: 0xffffff })
+      g.ellipse(0, 24 + b, 40, 10)
+      g.fill(0xf4d35e)
     }
   }
 
@@ -516,10 +841,20 @@ export class PetScene {
     const g = this.head
     g.clear()
     const headY = -78 + b
-    g.circle(0, headY, 62)
+    // Cheek fluff for rounder talking-pet silhouette
+    g.ellipse(-52, headY + 18, 18, 16)
+    g.fill(fill)
+    g.ellipse(52, headY + 18, 18, 16)
+    g.fill(fill)
+    g.circle(0, headY, 64)
     g.fill(fill)
     g.circle(16, headY + 6, 40)
     g.fill({ color: 0x000000, alpha: 0.05 })
+    g.ellipse(-18, headY - 10, 16, 12)
+    g.fill({ color: 0xffffff, alpha: 0.08 })
+    // Muzzle plate
+    g.ellipse(0, headY + 22, 28, 20)
+    g.fill({ color: 0xffe8c8, alpha: 0.55 })
 
     g.moveTo(-48, headY - 42)
     g.lineTo(-68, headY - 98)
@@ -542,6 +877,16 @@ export class PetScene {
     g.lineTo(30, headY - 58)
     g.closePath()
     g.fill(ear)
+
+    // Ear tufts
+    g.moveTo(-58, headY - 88)
+    g.lineTo(-62, headY - 104)
+    g.lineTo(-50, headY - 90)
+    g.stroke({ width: 3, color: fill, cap: 'round' })
+    g.moveTo(58, headY - 88)
+    g.lineTo(62, headY - 104)
+    g.lineTo(50, headY - 90)
+    g.stroke({ width: 3, color: fill, cap: 'round' })
   }
 
   private drawFaceLayer(
@@ -571,14 +916,23 @@ export class PetScene {
       g.quadraticCurveTo(18, headY + 8, 26, headY - 2)
       g.stroke({ width: 4, color: 0x243029, cap: 'round' })
     } else {
-      const eyeOpen = mood === 'tired' ? 5 : 9
-      g.ellipse(-20, headY - 2, 8, eyeOpen)
-      g.fill(0x243029)
-      g.ellipse(20, headY - 2, 8, eyeOpen)
-      g.fill(0x243029)
-      g.circle(-17, headY - 5, 2.5)
+      const eyeOpen = mood === 'tired' ? 6 : 12
+      // Bigger cartoon eyes with iris rings
+      g.ellipse(-20, headY - 2, 11, eyeOpen)
       g.fill(0xffffff)
-      g.circle(23, headY - 5, 2.5)
+      g.ellipse(20, headY - 2, 11, eyeOpen)
+      g.fill(0xffffff)
+      g.ellipse(-20, headY - 1, 7, eyeOpen * 0.75)
+      g.fill(0x2a6f97)
+      g.ellipse(20, headY - 1, 7, eyeOpen * 0.75)
+      g.fill(0x2a6f97)
+      g.ellipse(-20, headY - 1, 4, eyeOpen * 0.55)
+      g.fill(0x243029)
+      g.ellipse(20, headY - 1, 4, eyeOpen * 0.55)
+      g.fill(0x243029)
+      g.circle(-17, headY - 5, 2.8)
+      g.fill(0xffffff)
+      g.circle(23, headY - 5, 2.8)
       g.fill(0xffffff)
     }
 
@@ -645,6 +999,23 @@ export class PetScene {
       g.fill({ color: 0xffffff, alpha: 0.5 })
     }
 
+    if (reaction === 'brush') {
+      g.roundRect(30, headY - 10, 36, 10, 4)
+      g.fill(0xffffff)
+      g.roundRect(58, headY - 14, 8, 18, 3)
+      g.fill(0x4cc9f0)
+      g.moveTo(-10, mouthY - 4)
+      g.lineTo(10, mouthY - 4)
+      g.stroke({ width: 3, color: 0xffffff, alpha: 0.85 })
+    }
+
+    if (reaction === 'potty') {
+      g.roundRect(-24, 95 + b, 48, 18, 6)
+      g.fill(0x90e0ef)
+      g.ellipse(0, 95 + b, 20, 6)
+      g.fill(0xffffff)
+    }
+
     if (reaction === 'skill_drums') {
       g.roundRect(-30, 70 + b, 60, 28, 6)
       g.fill(0xb56b45)
@@ -660,15 +1031,32 @@ export class PetScene {
     g.clear()
     if (scarf === 'none') return
     const c = getScarf(scarf).color
+    if (scarf === 'cape') {
+      g.moveTo(-30, -20 + b)
+      g.lineTo(-70, 70 + b)
+      g.lineTo(70, 70 + b)
+      g.lineTo(30, -20 + b)
+      g.closePath()
+      g.fill(c)
+      g.ellipse(0, -28 + b, 40, 10)
+      g.fill(0xf4d35e)
+      return
+    }
     g.ellipse(0, -28 + b, 48, 14)
     g.fill(c)
     g.roundRect(-8, -20 + b, 14, 40, 4)
     g.fill(c)
-    if (scarf === 'striped') {
+    if (scarf === 'striped' || scarf === 'rainbow') {
       g.rect(-8, -10 + b, 14, 6)
       g.fill(0xffffff)
       g.rect(-8, 6 + b, 14, 6)
-      g.fill(0xffffff)
+      g.fill(scarf === 'rainbow' ? 0x4cc9f0 : 0xffffff)
+    }
+    if (scarf === 'spots') {
+      g.circle(-20, -28 + b, 4)
+      g.fill(0xe63946)
+      g.circle(18, -24 + b, 3)
+      g.fill(0xe63946)
     }
   }
 
@@ -678,10 +1066,10 @@ export class PetScene {
     if (glasses === 'none') return
     const c = getGlasses(glasses).color
     const y = -80 + b
-    if (glasses === 'sun') {
-      g.ellipse(-20, y, 14, 10)
+    if (glasses === 'sun' || glasses === 'aviator') {
+      g.ellipse(-20, y, 14, glasses === 'aviator' ? 8 : 10)
       g.fill({ color: c, alpha: 0.85 })
-      g.ellipse(20, y, 14, 10)
+      g.ellipse(20, y, 14, glasses === 'aviator' ? 8 : 10)
       g.fill({ color: c, alpha: 0.85 })
     } else if (glasses === 'heart') {
       g.circle(-24, y, 8)
@@ -692,15 +1080,43 @@ export class PetScene {
       g.fill(c)
       g.circle(24, y, 8)
       g.fill(c)
+    } else if (glasses === 'monocle') {
+      g.circle(20, y, 12)
+      g.stroke({ width: 3, color: c })
+      g.moveTo(32, y)
+      g.lineTo(40, y + 20)
+      g.stroke({ width: 2, color: c })
+    } else if (glasses === 'cat') {
+      g.moveTo(-34, y - 4)
+      g.lineTo(-8, y)
+      g.lineTo(-34, y + 8)
+      g.stroke({ width: 3, color: c })
+      g.moveTo(34, y - 4)
+      g.lineTo(8, y)
+      g.lineTo(34, y + 8)
+      g.stroke({ width: 3, color: c })
+      g.circle(-20, y, 10)
+      g.stroke({ width: 3, color: c })
+      g.circle(20, y, 10)
+      g.stroke({ width: 3, color: c })
+    } else if (glasses === 'swim') {
+      g.ellipse(-20, y, 14, 11)
+      g.stroke({ width: 4, color: c })
+      g.ellipse(20, y, 14, 11)
+      g.stroke({ width: 4, color: c })
+      g.ellipse(0, y - 14, 18, 6)
+      g.stroke({ width: 3, color: c })
     } else {
       g.circle(-20, y, 12)
       g.stroke({ width: 3, color: c })
       g.circle(20, y, 12)
       g.stroke({ width: 3, color: c })
     }
-    g.moveTo(-8, y)
-    g.lineTo(8, y)
-    g.stroke({ width: 2, color: c })
+    if (glasses !== 'monocle') {
+      g.moveTo(-8, y)
+      g.lineTo(8, y)
+      g.stroke({ width: 2, color: c })
+    }
   }
 
   private drawHatLayer(hat: HatId, b: number) {
@@ -789,6 +1205,95 @@ export class PetScene {
       g.fill(0xf4d35e)
       g.circle(8, y - 28, 3)
       g.fill(0xf4d35e)
+    } else if (hat === 'pirate') {
+      g.ellipse(0, y + 22, 48, 12)
+      g.fill(col)
+      g.roundRect(-36, y - 6, 72, 28, 10)
+      g.fill(col)
+      g.moveTo(-8, y + 4)
+      g.lineTo(0, y + 18)
+      g.lineTo(8, y + 4)
+      g.closePath()
+      g.fill(0xe63946)
+    } else if (hat === 'diver') {
+      g.circle(0, y + 10, 40)
+      g.stroke({ width: 8, color: col })
+      g.circle(0, y + 10, 28)
+      g.fill({ color: 0x90e0ef, alpha: 0.35 })
+    } else if (hat === 'visor') {
+      g.roundRect(-40, y + 8, 80, 18, 8)
+      g.fill({ color: col, alpha: 0.85 })
+      g.rect(-40, y + 14, 80, 4)
+      g.fill(0xffffff)
+    } else if (hat === 'dragon') {
+      g.moveTo(-36, y + 20)
+      g.lineTo(-20, y - 10)
+      g.lineTo(0, y + 8)
+      g.lineTo(20, y - 10)
+      g.lineTo(36, y + 20)
+      g.closePath()
+      g.fill(col)
+      g.circle(0, y + 4, 5)
+      g.fill(0xf4d35e)
+    } else if (hat === 'antenna') {
+      g.moveTo(-14, y + 18)
+      g.lineTo(-14, y - 18)
+      g.moveTo(14, y + 18)
+      g.lineTo(14, y - 18)
+      g.stroke({ width: 3, color: col })
+      g.circle(-14, y - 22, 6)
+      g.fill(0xff85a1)
+      g.circle(14, y - 22, 6)
+      g.fill(0x80ffdb)
+    } else if (hat === 'chef') {
+      g.ellipse(0, y + 8, 36, 16)
+      g.fill(col)
+      g.ellipse(0, y - 10, 28, 22)
+      g.fill(col)
+      g.ellipse(0, y + 18, 40, 10)
+      g.fill(0xf0f0f0)
+    } else if (hat === 'cowboy') {
+      g.ellipse(0, y + 22, 52, 12)
+      g.fill(col)
+      g.roundRect(-28, y - 4, 56, 24, 8)
+      g.fill(col)
+      g.rect(-28, y + 8, 56, 6)
+      g.fill(0x6b4428)
+    } else if (hat === 'headphones') {
+      g.ellipse(0, y + 10, 48, 18)
+      g.stroke({ width: 5, color: col })
+      g.circle(-42, y + 18, 14)
+      g.fill(col)
+      g.circle(42, y + 18, 14)
+      g.fill(col)
+      g.circle(-42, y + 18, 7)
+      g.fill(0xff85a1)
+      g.circle(42, y + 18, 7)
+      g.fill(0xff85a1)
+    } else if (hat === 'propeller') {
+      g.roundRect(-18, y, 36, 22, 8)
+      g.fill(col)
+      g.rect(-40, y + 6, 80, 4)
+      g.fill(0xf4d35e)
+      g.circle(0, y + 8, 5)
+      g.fill(0xe63946)
+    } else if (hat === 'knight') {
+      g.roundRect(-34, y - 8, 68, 48, 10)
+      g.fill(col)
+      g.rect(-18, y + 8, 36, 14)
+      g.fill(0x1a1a1a)
+      g.rect(-4, y - 8, 8, 48)
+      g.fill(0xf4d35e)
+    } else if (hat === 'santa') {
+      g.moveTo(0, y - 28)
+      g.lineTo(-34, y + 20)
+      g.lineTo(34, y + 20)
+      g.closePath()
+      g.fill(col)
+      g.ellipse(0, y + 22, 36, 10)
+      g.fill(0xffffff)
+      g.circle(0, y - 28, 7)
+      g.fill(0xffffff)
     }
   }
 
@@ -802,7 +1307,10 @@ export class PetScene {
       this.zzz.alpha = 0.55 + Math.sin(this.time * 3) * 0.25
       this.zzz.scale.set(0.9 + Math.sin(this.time * 2.5) * 0.15)
     }
-    this.drawCompanion(this.app.screen.width, this.app.screen.height)
+    const w = this.app.screen.width
+    const h = this.app.screen.height
+    this.drawCompanion(w, h)
+    this.drawRoomProps(w, h)
     this.redraw()
   }
 

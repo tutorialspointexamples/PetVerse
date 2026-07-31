@@ -46,7 +46,7 @@ export function ActionBar() {
     <footer className="action-bar">
       {micError ? <p className="mic-banner">{micError}</p> : null}
       <div className="action-row">
-        <button type="button" className="action-btn" disabled={cooling('feed') || sleeping} onClick={() => doCare('feed')}>
+        <button type="button" className="action-btn" disabled={cooling('feed') || sleeping} onClick={() => setOverlay('food')}>
           <span className="action-mark feed" aria-hidden />
           Feed
         </button>
@@ -68,7 +68,15 @@ export function ActionBar() {
           Play
         </button>
       </div>
-      <div className="action-row secondary">
+      <div className="action-row care-extra">
+        <button type="button" className="action-btn" disabled={cooling('brush') || sleeping} onClick={() => doCare('brush')}>
+          <span className="action-mark brush" aria-hidden />
+          Brush
+        </button>
+        <button type="button" className="action-btn" disabled={cooling('potty') || sleeping} onClick={() => doCare('potty')}>
+          <span className="action-mark potty" aria-hidden />
+          Potty
+        </button>
         <button
           type="button"
           className={`action-btn mic ${talkStatus === 'recording' ? 'recording' : ''} ${talkStatus === 'playing' ? 'playing' : ''}`}
@@ -86,6 +94,12 @@ export function ActionBar() {
         </button>
       </div>
       <div className="action-row tertiary">
+        <button type="button" className="action-btn slim" onClick={() => setOverlay('rooms')}>
+          Rooms
+        </button>
+        <button type="button" className="action-btn slim" onClick={() => setOverlay('cards')}>
+          Cards
+        </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('games')}>
           Games
         </button>
@@ -102,7 +116,9 @@ export function ActionBar() {
           Boost
         </button>
       </div>
-      <p className="hint">Tap head, belly, or companion · Hold mic to talk-back</p>
+      <p className="hint">
+        Tap head/belly/companion · Room props: kitchen fridge, bath tub/sink, bedroom bed · Hold mic to talk
+      </p>
     </footer>
   )
 }
