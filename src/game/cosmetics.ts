@@ -1,0 +1,137 @@
+export type BodyColorId =
+  | 'ginger'
+  | 'cream'
+  | 'slate'
+  | 'mint'
+  | 'rose'
+  | 'charcoal'
+  | 'honey'
+  | 'sky'
+  | 'lilac'
+  | 'snow'
+  | 'cocoa'
+  | 'coral'
+
+export type HatId =
+  | 'none'
+  | 'cap'
+  | 'bow'
+  | 'crown'
+  | 'beanie'
+  | 'flower'
+  | 'topHat'
+  | 'party'
+  | 'halo'
+  | 'bandana'
+  | 'wizard'
+  | 'sailor'
+
+export type GlassesId = 'none' | 'round' | 'sun' | 'star' | 'pixel' | 'heart'
+
+export type ScarfId = 'none' | 'red' | 'striped' | 'green' | 'gold' | 'winter'
+
+export type ShirtId = 'none' | 'tee' | 'hoodie' | 'vest' | 'overalls' | 'tuxedo'
+
+export interface BodyColorOption {
+  id: BodyColorId
+  name: string
+  fill: number
+  belly: number
+  ear: number
+  price: number
+}
+
+export interface HatOption {
+  id: HatId
+  name: string
+  price: number
+  color: number
+}
+
+export interface SimpleCosmetic<T extends string> {
+  id: T
+  name: string
+  price: number
+  color: number
+}
+
+export const BODY_COLORS: BodyColorOption[] = [
+  { id: 'ginger', name: 'Ginger', fill: 0xf4a261, belly: 0xffe8c8, ear: 0xe76f51, price: 0 },
+  { id: 'cream', name: 'Cream', fill: 0xf6e6c8, belly: 0xfff8ee, ear: 0xe8b4a0, price: 40 },
+  { id: 'slate', name: 'Slate', fill: 0x6b7c8a, belly: 0xd5dde3, ear: 0x4a5a66, price: 60 },
+  { id: 'mint', name: 'Mint', fill: 0x7bc9a6, belly: 0xe4f7ef, ear: 0x4fa882, price: 80 },
+  { id: 'rose', name: 'Rose', fill: 0xe8a0b0, belly: 0xffe8ee, ear: 0xd4788a, price: 100 },
+  { id: 'charcoal', name: 'Charcoal', fill: 0x3d4450, belly: 0xb8bec8, ear: 0x2a3038, price: 90 },
+  { id: 'honey', name: 'Honey', fill: 0xe8b84a, belly: 0xfff0c8, ear: 0xd49a2e, price: 70 },
+  { id: 'sky', name: 'Sky', fill: 0x7eb8d8, belly: 0xe8f4fc, ear: 0x5a9ab8, price: 85 },
+  { id: 'lilac', name: 'Lilac', fill: 0xb8a0d8, belly: 0xf0e8fc, ear: 0x9878c0, price: 95 },
+  { id: 'snow', name: 'Snow', fill: 0xf2f2f0, belly: 0xffffff, ear: 0xe8d0c8, price: 110 },
+  { id: 'cocoa', name: 'Cocoa', fill: 0x8b5e3c, belly: 0xe8d0b0, ear: 0x6b4428, price: 75 },
+  { id: 'coral', name: 'Coral', fill: 0xff8a70, belly: 0xffe0d8, ear: 0xe06850, price: 105 },
+]
+
+export const HATS: HatOption[] = [
+  { id: 'none', name: 'No Hat', price: 0, color: 0x000000 },
+  { id: 'cap', name: 'Cap', price: 50, color: 0x2a6f97 },
+  { id: 'bow', name: 'Bow', price: 45, color: 0xe63946 },
+  { id: 'crown', name: 'Crown', price: 120, color: 0xf4d35e },
+  { id: 'beanie', name: 'Beanie', price: 70, color: 0x9b5de5 },
+  { id: 'flower', name: 'Flower', price: 55, color: 0xff85a1 },
+  { id: 'topHat', name: 'Top Hat', price: 130, color: 0x1a1a1a },
+  { id: 'party', name: 'Party', price: 65, color: 0xff6b6b },
+  { id: 'halo', name: 'Halo', price: 140, color: 0xffe066 },
+  { id: 'bandana', name: 'Bandana', price: 48, color: 0x2a9d8f },
+  { id: 'wizard', name: 'Wizard', price: 150, color: 0x5a189a },
+  { id: 'sailor', name: 'Sailor', price: 80, color: 0x1d3557 },
+]
+
+export const GLASSES: SimpleCosmetic<GlassesId>[] = [
+  { id: 'none', name: 'No Glasses', price: 0, color: 0x000000 },
+  { id: 'round', name: 'Round', price: 55, color: 0x333333 },
+  { id: 'sun', name: 'Sunnies', price: 70, color: 0x1a1a1a },
+  { id: 'star', name: 'Star', price: 90, color: 0xf4d35e },
+  { id: 'pixel', name: 'Pixel', price: 85, color: 0x00ff88 },
+  { id: 'heart', name: 'Heart', price: 95, color: 0xff6b9d },
+]
+
+export const SCARVES: SimpleCosmetic<ScarfId>[] = [
+  { id: 'none', name: 'No Scarf', price: 0, color: 0x000000 },
+  { id: 'red', name: 'Red', price: 40, color: 0xe63946 },
+  { id: 'striped', name: 'Striped', price: 55, color: 0x457b9d },
+  { id: 'green', name: 'Forest', price: 45, color: 0x2a9d8f },
+  { id: 'gold', name: 'Gold', price: 100, color: 0xf4d35e },
+  { id: 'winter', name: 'Winter', price: 60, color: 0xe8f1f8 },
+]
+
+export const SHIRTS: SimpleCosmetic<ShirtId>[] = [
+  { id: 'none', name: 'No Shirt', price: 0, color: 0x000000 },
+  { id: 'tee', name: 'Tee', price: 50, color: 0x4cc9f0 },
+  { id: 'hoodie', name: 'Hoodie', price: 80, color: 0xe76f51 },
+  { id: 'vest', name: 'Vest', price: 70, color: 0x264653 },
+  { id: 'overalls', name: 'Overalls', price: 90, color: 0x457b9d },
+  { id: 'tuxedo', name: 'Tuxedo', price: 160, color: 0x1a1a1a },
+]
+
+export function getBodyColor(id: BodyColorId): BodyColorOption {
+  return BODY_COLORS.find((c) => c.id === id) ?? BODY_COLORS[0]
+}
+
+export function getHat(id: HatId): HatOption {
+  return HATS.find((h) => h.id === id) ?? HATS[0]
+}
+
+export function getGlasses(id: GlassesId): SimpleCosmetic<GlassesId> {
+  return GLASSES.find((g) => g.id === id) ?? GLASSES[0]
+}
+
+export function getScarf(id: ScarfId): SimpleCosmetic<ScarfId> {
+  return SCARVES.find((s) => s.id === id) ?? SCARVES[0]
+}
+
+export function getShirt(id: ShirtId): SimpleCosmetic<ShirtId> {
+  return SHIRTS.find((s) => s.id === id) ?? SHIRTS[0]
+}
+
+/** Total wearable SKUs for Phase 1 catalog size (~41). */
+export const WEARABLE_COUNT =
+  BODY_COLORS.length + HATS.length + GLASSES.length + SCARVES.length + SHIRTS.length

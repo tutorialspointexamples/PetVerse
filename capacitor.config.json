@@ -1,0 +1,14 @@
+{
+  "appId": "com.petverse.app",
+  "appName": "PetVerse",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#2f6f5e"
+    }
+  }
+}
