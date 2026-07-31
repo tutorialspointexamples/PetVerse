@@ -710,19 +710,34 @@ export class PetScene {
   private drawBodyLayer(fill: number, belly: number, ear: number, mood: string, b: number) {
     const g = this.body
     g.clear()
+    // Soft outer rim for rounded cartoon volume
+    g.ellipse(0, 30 + b, 82, 96)
+    g.fill({ color: ear, alpha: 0.35 })
     g.ellipse(0, 28 + b, 78, 92)
     g.fill(fill)
-    // Depth shade
+    // Depth shade + highlight
     g.ellipse(18, 40 + b, 40, 70)
-    g.fill({ color: 0x000000, alpha: 0.06 })
+    g.fill({ color: 0x000000, alpha: 0.07 })
+    g.ellipse(-22, 8 + b, 22, 28)
+    g.fill({ color: 0xffffff, alpha: 0.1 })
+    // Cream belly patch
     g.ellipse(0, 42 + b, 48, 58)
     g.fill(belly)
+    // Fur stripes (talking-pet silhouette cue)
+    g.ellipse(-40, 20 + b, 8, 22)
+    g.fill({ color: ear, alpha: 0.28 })
+    g.ellipse(-36, 55 + b, 7, 18)
+    g.fill({ color: ear, alpha: 0.22 })
+    g.ellipse(40, 24 + b, 8, 20)
+    g.fill({ color: ear, alpha: 0.24 })
 
-    // Tail
+    // Tail with tip accent
     const wag = Math.sin(this.time * (mood === 'happy' ? 6 : 2.5)) * 10
     g.moveTo(70, 50 + b)
     g.quadraticCurveTo(110 + wag, 10 + b, 98 + wag * 0.4, -20 + b)
     g.stroke({ width: 16, color: fill, cap: 'round' })
+    g.circle(98 + wag * 0.4, -20 + b, 9)
+    g.fill(ear)
 
     if (mood === 'dirty' || this.props.needs.cleanliness < 40) {
       g.circle(-20, 50 + b, 6)
@@ -730,7 +745,6 @@ export class PetScene {
       g.circle(24, 66 + b, 5)
       g.fill({ color: 0x6b4f3a, alpha: 0.3 })
     }
-    void ear
   }
 
   private drawShirtLayer(shirt: ShirtId, b: number) {
@@ -827,10 +841,20 @@ export class PetScene {
     const g = this.head
     g.clear()
     const headY = -78 + b
-    g.circle(0, headY, 62)
+    // Cheek fluff for rounder talking-pet silhouette
+    g.ellipse(-52, headY + 18, 18, 16)
+    g.fill(fill)
+    g.ellipse(52, headY + 18, 18, 16)
+    g.fill(fill)
+    g.circle(0, headY, 64)
     g.fill(fill)
     g.circle(16, headY + 6, 40)
     g.fill({ color: 0x000000, alpha: 0.05 })
+    g.ellipse(-18, headY - 10, 16, 12)
+    g.fill({ color: 0xffffff, alpha: 0.08 })
+    // Muzzle plate
+    g.ellipse(0, headY + 22, 28, 20)
+    g.fill({ color: 0xffe8c8, alpha: 0.55 })
 
     g.moveTo(-48, headY - 42)
     g.lineTo(-68, headY - 98)
@@ -853,6 +877,16 @@ export class PetScene {
     g.lineTo(30, headY - 58)
     g.closePath()
     g.fill(ear)
+
+    // Ear tufts
+    g.moveTo(-58, headY - 88)
+    g.lineTo(-62, headY - 104)
+    g.lineTo(-50, headY - 90)
+    g.stroke({ width: 3, color: fill, cap: 'round' })
+    g.moveTo(58, headY - 88)
+    g.lineTo(62, headY - 104)
+    g.lineTo(50, headY - 90)
+    g.stroke({ width: 3, color: fill, cap: 'round' })
   }
 
   private drawFaceLayer(
@@ -882,14 +916,23 @@ export class PetScene {
       g.quadraticCurveTo(18, headY + 8, 26, headY - 2)
       g.stroke({ width: 4, color: 0x243029, cap: 'round' })
     } else {
-      const eyeOpen = mood === 'tired' ? 5 : 9
-      g.ellipse(-20, headY - 2, 8, eyeOpen)
-      g.fill(0x243029)
-      g.ellipse(20, headY - 2, 8, eyeOpen)
-      g.fill(0x243029)
-      g.circle(-17, headY - 5, 2.5)
+      const eyeOpen = mood === 'tired' ? 6 : 12
+      // Bigger cartoon eyes with iris rings
+      g.ellipse(-20, headY - 2, 11, eyeOpen)
       g.fill(0xffffff)
-      g.circle(23, headY - 5, 2.5)
+      g.ellipse(20, headY - 2, 11, eyeOpen)
+      g.fill(0xffffff)
+      g.ellipse(-20, headY - 1, 7, eyeOpen * 0.75)
+      g.fill(0x2a6f97)
+      g.ellipse(20, headY - 1, 7, eyeOpen * 0.75)
+      g.fill(0x2a6f97)
+      g.ellipse(-20, headY - 1, 4, eyeOpen * 0.55)
+      g.fill(0x243029)
+      g.ellipse(20, headY - 1, 4, eyeOpen * 0.55)
+      g.fill(0x243029)
+      g.circle(-17, headY - 5, 2.8)
+      g.fill(0xffffff)
+      g.circle(23, headY - 5, 2.8)
       g.fill(0xffffff)
     }
 
