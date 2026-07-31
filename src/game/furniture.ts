@@ -1,8 +1,10 @@
 export type FurnitureId =
   | 'rug_basic'
   | 'rug_star'
+  | 'rug_wave'
   | 'bed_cozy'
   | 'bed_bunk'
+  | 'bed_castle'
   | 'bowl_wood'
   | 'bowl_gold'
   | 'toybox'
@@ -22,6 +24,16 @@ export type FurnitureId =
   | 'neon_console'
   | 'dragon_egg'
   | 'alien_pod'
+  | 'mirror_vanity'
+  | 'bathtub_prop'
+  | 'fridge'
+  | 'stove'
+  | 'tv_wall'
+  | 'clock_cuckoo'
+  | 'hammock'
+  | 'fountain'
+  | 'candy_machine'
+  | 'pirate_flag'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -37,8 +49,10 @@ export interface FurnitureItem {
 export const FURNITURE: FurnitureItem[] = [
   { id: 'rug_basic', name: 'Coral Rug', price: 0, slot: 'floor', color: 0xe07a5f, accent: 0xf2cc8f },
   { id: 'rug_star', name: 'Star Rug', price: 80, slot: 'floor', color: 0x9b5de5, accent: 0xf4d35e },
+  { id: 'rug_wave', name: 'Wave Rug', price: 95, slot: 'floor', color: 0x4cc9f0, accent: 0xffffff },
   { id: 'bed_cozy', name: 'Cozy Bed', price: 120, slot: 'side', color: 0x4a90a4, accent: 0xffe8c8 },
   { id: 'bed_bunk', name: 'Cloud Bed', price: 180, slot: 'side', color: 0x7eb8d8, accent: 0xffffff },
+  { id: 'bed_castle', name: 'Castle Bed', price: 220, slot: 'side', color: 0x9b5de5, accent: 0xf4d35e },
   { id: 'bowl_wood', name: 'Wood Bowl', price: 35, slot: 'floor', color: 0xb56b45, accent: 0xe8d5b5 },
   { id: 'bowl_gold', name: 'Gold Bowl', price: 90, slot: 'floor', color: 0xf4d35e, accent: 0xe9b44c },
   { id: 'toybox', name: 'Toy Box', price: 70, slot: 'side', color: 0xe76f51, accent: 0xf4a261 },
@@ -58,8 +72,20 @@ export const FURNITURE: FurnitureItem[] = [
   { id: 'neon_console', name: 'Neon Console', price: 180, slot: 'side', color: 0x240046, accent: 0x00f5d4 },
   { id: 'dragon_egg', name: 'Dragon Egg', price: 170, slot: 'floor', color: 0x9b2226, accent: 0xf4d35e },
   { id: 'alien_pod', name: 'Alien Pod', price: 190, slot: 'side', color: 0x5a189a, accent: 0x80ffdb },
+  { id: 'mirror_vanity', name: 'Vanity Mirror', price: 125, slot: 'side', color: 0xf8edeb, accent: 0xff85a1 },
+  { id: 'bathtub_prop', name: 'Bubble Tub', price: 160, slot: 'side', color: 0x90e0ef, accent: 0xffffff },
+  { id: 'fridge', name: 'Snack Fridge', price: 145, slot: 'side', color: 0xd8e2dc, accent: 0x4cc9f0 },
+  { id: 'stove', name: 'Little Stove', price: 135, slot: 'side', color: 0x6c757d, accent: 0xe63946 },
+  { id: 'tv_wall', name: 'Wall TV', price: 155, slot: 'wall', color: 0x1a1a1a, accent: 0x4cc9f0 },
+  { id: 'clock_cuckoo', name: 'Cuckoo Clock', price: 110, slot: 'wall', color: 0xb56b45, accent: 0xf4d35e },
+  { id: 'hammock', name: 'Hammock', price: 100, slot: 'side', color: 0xffbe0b, accent: 0x2a9d8f },
+  { id: 'fountain', name: 'Yard Fountain', price: 175, slot: 'floor', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'candy_machine', name: 'Candy Machine', price: 165, slot: 'side', color: 0xff006e, accent: 0xffe066 },
+  { id: 'pirate_flag', name: 'Pirate Flag', price: 85, slot: 'wall', color: 0x1a1a1a, accent: 0xffffff },
 ]
 
 export function getFurniture(id: FurnitureId): FurnitureItem {
   return FURNITURE.find((f) => f.id === id) ?? FURNITURE[0]
 }
+
+export const FURNITURE_COUNT = FURNITURE.length

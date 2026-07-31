@@ -13,6 +13,7 @@ import type {
   HatId,
   ScarfId,
   ShirtId,
+  ShoesId,
 } from '../game/cosmetics'
 import {
   getBodyColor,
@@ -20,7 +21,9 @@ import {
   getHat,
   getScarf,
   getShirt,
+  getShoes,
 } from '../game/cosmetics'
+import { playCompanionVoice } from '../audio/companionVoice'
 import type { FurnitureId } from '../game/furniture'
 import { getFurniture } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
@@ -95,6 +98,7 @@ export interface GameState extends SaveData {
   buyGlasses: (id: GlassesId) => boolean
   buyScarf: (id: ScarfId) => boolean
   buyShirt: (id: ShirtId) => boolean
+  buyShoes: (id: ShoesId) => boolean
   buyFurniture: (id: FurnitureId) => boolean
   togglePlaceFurniture: (id: FurnitureId) => void
   addCoins: (n: number) => void
@@ -132,11 +136,13 @@ function sliceSave(state: GameState): SaveData {
     glasses,
     scarf,
     shirt,
+    shoes,
     ownedColors,
     ownedHats,
     ownedGlasses,
     ownedScarves,
     ownedShirts,
+    ownedShoes,
     ownedFurniture,
     placedFurniture,
     visitedWorlds,
@@ -163,11 +169,13 @@ function sliceSave(state: GameState): SaveData {
     glasses,
     scarf,
     shirt,
+    shoes,
     ownedColors,
     ownedHats,
     ownedGlasses,
     ownedScarves,
     ownedShirts,
+    ownedShoes,
     ownedFurniture,
     placedFurniture,
     visitedWorlds,
@@ -314,6 +322,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pokeCompanion: () => {
     const state = get()
     if (state.companion === 'none') return
+    playCompanionVoice(state.companion)
     set({
       needs: {
         ...state.needs,
@@ -342,6 +351,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   buyGlasses: (id) => buyOwned(get, set, 'ownedGlasses', 'glasses', id, getGlasses(id).price),
   buyScarf: (id) => buyOwned(get, set, 'ownedScarves', 'scarf', id, getScarf(id).price),
   buyShirt: (id) => buyOwned(get, set, 'ownedShirts', 'shirt', id, getShirt(id).price),
+  buyShoes: (id) => buyOwned(get, set, 'ownedShoes', 'shoes', id, getShoes(id).price),
 
   buyFurniture: (id) => {
     const state = get()

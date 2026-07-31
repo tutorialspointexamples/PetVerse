@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { BODY_COLORS, GLASSES, HATS, SCARVES, SHIRTS } from '../game/cosmetics'
-import { FURNITURE } from '../game/furniture'
+import { BODY_COLORS, GLASSES, HATS, SCARVES, SHIRTS, SHOES, WEARABLE_COUNT } from '../game/cosmetics'
+import { FURNITURE, FURNITURE_COUNT } from '../game/furniture'
 import { useGameStore } from '../state/gameStore'
 
-type Tab = 'coats' | 'hats' | 'glasses' | 'scarves' | 'shirts' | 'furniture'
+type Tab = 'coats' | 'hats' | 'glasses' | 'scarves' | 'shirts' | 'shoes' | 'furniture'
 
 export function ShopPanel() {
   const overlay = useGameStore((s) => s.overlay)
@@ -14,11 +14,13 @@ export function ShopPanel() {
   const glasses = useGameStore((s) => s.glasses)
   const scarf = useGameStore((s) => s.scarf)
   const shirt = useGameStore((s) => s.shirt)
+  const shoes = useGameStore((s) => s.shoes)
   const ownedColors = useGameStore((s) => s.ownedColors)
   const ownedHats = useGameStore((s) => s.ownedHats)
   const ownedGlasses = useGameStore((s) => s.ownedGlasses)
   const ownedScarves = useGameStore((s) => s.ownedScarves)
   const ownedShirts = useGameStore((s) => s.ownedShirts)
+  const ownedShoes = useGameStore((s) => s.ownedShoes)
   const ownedFurniture = useGameStore((s) => s.ownedFurniture)
   const placedFurniture = useGameStore((s) => s.placedFurniture)
   const buyColor = useGameStore((s) => s.buyColor)
@@ -26,6 +28,7 @@ export function ShopPanel() {
   const buyGlasses = useGameStore((s) => s.buyGlasses)
   const buyScarf = useGameStore((s) => s.buyScarf)
   const buyShirt = useGameStore((s) => s.buyShirt)
+  const buyShoes = useGameStore((s) => s.buyShoes)
   const buyFurniture = useGameStore((s) => s.buyFurniture)
   const [tab, setTab] = useState<Tab>('coats')
 
@@ -36,7 +39,9 @@ export function ShopPanel() {
       <div className="shop-panel wide">
         <div className="shop-header">
           <h2>Style Shop</h2>
-          <p className="shop-coins">{coins} coins</p>
+          <p className="shop-coins">
+            {coins} coins · {WEARABLE_COUNT} looks · {FURNITURE_COUNT} decor
+          </p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')} aria-label="Close shop">
             ×
           </button>
@@ -50,6 +55,7 @@ export function ShopPanel() {
               ['glasses', 'Glasses'],
               ['scarves', 'Scarves'],
               ['shirts', 'Shirts'],
+              ['shoes', 'Shoes'],
               ['furniture', 'Furniture'],
             ] as const
           ).map(([id, label]) => (
@@ -180,6 +186,33 @@ export function ShopPanel() {
                   className={`shop-item ${equipped ? 'equipped' : ''}`}
                   disabled={!owned && coins < item.price}
                   onClick={() => buyShirt(item.id)}
+                >
+                  <span
+                    className="swatch"
+                    style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
+                  />
+                  <span className="shop-item-name">{item.name}</span>
+                  <span className="shop-item-price">
+                    {equipped ? 'On' : owned ? 'Own' : `${item.price}c`}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {tab === 'shoes' && (
+          <div className="shop-grid">
+            {SHOES.map((item) => {
+              const owned = ownedShoes.includes(item.id)
+              const equipped = shoes === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`shop-item ${equipped ? 'equipped' : ''}`}
+                  disabled={!owned && coins < item.price}
+                  onClick={() => buyShoes(item.id)}
                 >
                   <span
                     className="swatch"

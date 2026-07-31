@@ -5,6 +5,7 @@ import type {
   HatId,
   ScarfId,
   ShirtId,
+  ShoesId,
 } from '../game/cosmetics'
 import type { FurnitureId } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
@@ -29,11 +30,13 @@ export interface SaveData {
   glasses: GlassesId
   scarf: ScarfId
   shirt: ShirtId
+  shoes: ShoesId
   ownedColors: BodyColorId[]
   ownedHats: HatId[]
   ownedGlasses: GlassesId[]
   ownedScarves: ScarfId[]
   ownedShirts: ShirtId[]
+  ownedShoes: ShoesId[]
   ownedFurniture: FurnitureId[]
   placedFurniture: FurnitureId[]
   visitedWorlds: WorldId[]
@@ -63,11 +66,13 @@ export function defaultSave(): SaveData {
     glasses: 'none',
     scarf: 'none',
     shirt: 'none',
+    shoes: 'none',
     ownedColors: ['ginger'],
     ownedHats: ['none'],
     ownedGlasses: ['none'],
     ownedScarves: ['none'],
     ownedShirts: ['none'],
+    ownedShoes: ['none'],
     ownedFurniture: ['rug_basic'],
     placedFurniture: ['rug_basic'],
     visitedWorlds: [],
@@ -102,6 +107,8 @@ export function loadSave(): SaveData {
       ownedGlasses: parsed.ownedGlasses?.length ? parsed.ownedGlasses : base.ownedGlasses,
       ownedScarves: parsed.ownedScarves?.length ? parsed.ownedScarves : base.ownedScarves,
       ownedShirts: parsed.ownedShirts?.length ? parsed.ownedShirts : base.ownedShirts,
+      ownedShoes: parsed.ownedShoes?.length ? parsed.ownedShoes : base.ownedShoes,
+      shoes: parsed.shoes ?? base.shoes,
       ownedFurniture: parsed.ownedFurniture?.length ? parsed.ownedFurniture : base.ownedFurniture,
       placedFurniture: parsed.placedFurniture?.length ? parsed.placedFurniture : base.placedFurniture,
       visitedWorlds: parsed.visitedWorlds ?? base.visitedWorlds,

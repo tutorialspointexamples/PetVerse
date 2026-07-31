@@ -333,10 +333,15 @@ export function CompanionsPanel() {
               onClick={() => unlockCompanion(c.id)}
             >
               <strong>{c.name}</strong>
-              <span>{owned ? (companion === c.id ? 'Active' : 'Own · tap to equip') : `${c.unlockCost}c`}</span>
+              <span>
+                Voice: {c.voiceLabel}
+                {' · '}
+                {owned ? (companion === c.id ? 'Active · tap pet to hear' : 'Own · tap to equip') : `${c.unlockCost}c`}
+              </span>
             </button>
           )
         })}
+        <p className="hint">Each companion has a unique voice — tap them in the room to hear it.</p>
       </div>
     </div>
   )

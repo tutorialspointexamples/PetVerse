@@ -12,6 +12,7 @@ export function GameCanvas() {
   const glasses = useGameStore((s) => s.glasses)
   const scarf = useGameStore((s) => s.scarf)
   const shirt = useGameStore((s) => s.shirt)
+  const shoes = useGameStore((s) => s.shoes)
   const reaction = useGameStore((s) => s.reaction)
   const sleeping = useGameStore((s) => s.sleeping)
   const talking = useGameStore((s) => s.talking)
@@ -35,6 +36,7 @@ export function GameCanvas() {
         glasses,
         scarf,
         shirt,
+        shoes,
         reaction,
         sleeping,
         talking,
@@ -65,6 +67,7 @@ export function GameCanvas() {
       glasses,
       scarf,
       shirt,
+      shoes,
       reaction,
       sleeping,
       talking,
@@ -80,6 +83,7 @@ export function GameCanvas() {
     glasses,
     scarf,
     shirt,
+    shoes,
     reaction,
     sleeping,
     talking,
