@@ -32,7 +32,8 @@ export function SkyDashGame() {
       living = false
       setAlive(false)
       const coins = Math.min(40, 5 + Math.floor(finalScore / 3))
-      grant(coins, 1)
+      const fuel = finalScore >= 25 ? 2 : 1
+      grant(coins, fuel)
     }
 
     void (async () => {
@@ -121,23 +122,44 @@ export function SkyDashGame() {
         label.text = String(Math.floor(scoreLocal))
 
         gfx.clear()
+        // parallax sky bands
+        gfx.rect(0, 0, w, h * 0.55)
+        gfx.fill(0x244e66)
+        gfx.rect(0, h * 0.55, w, h * 0.45)
+        gfx.fill(0x163442)
         // clouds
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
           const cx = ((i * 160 - (scoreLocal * 30) % 800) + 800) % (w + 100) - 50
-          gfx.ellipse(cx, 40 + i * 30, 40, 16)
-          gfx.fill({ color: 0xffffff, alpha: 0.15 })
+          gfx.ellipse(cx, 40 + i * 28, 42, 16)
+          gfx.fill({ color: 0xffffff, alpha: 0.18 })
+          gfx.ellipse(cx + 18, 36 + i * 28, 28, 12)
+          gfx.fill({ color: 0xffffff, alpha: 0.12 })
         }
+        // pet with wing flap cue
+        const flap = pet.vy < 0 ? -6 : 4
+        gfx.ellipse(px - 16, py + flap, 10, 6)
+        gfx.fill(0xe76f51)
+        gfx.ellipse(px + 16, py - flap, 10, 6)
+        gfx.fill(0xe76f51)
         gfx.circle(px, py, 22)
         gfx.fill(0xf4a261)
+        gfx.ellipse(px, py + 6, 12, 10)
+        gfx.fill(0xffe8c8)
         gfx.circle(px + 6, py - 4, 4)
         gfx.fill(0x243029)
+        gfx.circle(px + 7, py - 5, 1.5)
+        gfx.fill(0xffffff)
         for (const o of obstacles) {
           if (o.good) {
-            gfx.circle(o.x, o.y, 12)
+            gfx.circle(o.x, o.y, 14)
+            gfx.fill({ color: 0xf4d35e, alpha: 0.25 })
+            gfx.circle(o.x, o.y, 10)
             gfx.fill(0xf4d35e)
           } else {
             gfx.roundRect(o.x - o.w / 2, o.y - o.h / 2, o.w, o.h, 8)
             gfx.fill(0xe76f51)
+            gfx.roundRect(o.x - o.w / 2 + 4, o.y - o.h / 2 + 4, o.w - 8, 8, 3)
+            gfx.fill({ color: 0xffffff, alpha: 0.2 })
           }
         }
       })
@@ -162,7 +184,7 @@ export function SkyDashGame() {
     <div className="minigame-overlay">
       <div className="minigame-frame">
         <div className="minigame-top">
-          <h2>Sky Dash</h2>
+          <h2>Sky Race</h2>
           <p>Score {Math.floor(score)} · Tap to flap · Grab coins, dodge blocks</p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
