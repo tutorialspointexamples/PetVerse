@@ -11,7 +11,7 @@ npm run dev
 ```
 
 ## Features
-- Care: feed menu (12 foods), sleep, bath, play, brush, potty + layered pet reactions / VFX
+- Care: feed menu (18 foods), sleep, bath, play, brush, potty + layered pet reactions / VFX
 - Home rooms: Living, Kitchen, Bathroom, Bedroom, Backyard
 - Talk-back mic (hold to record, pitch-shifted playback)
 - Large wardrobe (~280 looks) + 120 furniture SKUs
@@ -19,7 +19,7 @@ npm run dev
 - Interactive rooms: fridge/stove, tub/sink, bed/lamp, yard trampoline/swing, living TV/sofa
 - Plane travel to 8 worlds with flight cutscene
 - Daily missions with coin/fuel claims
-- Collectible card album from worlds + mini-games
+- Collectible card album (24) from worlds, rooms, missions, and mini-games
 - Photo booth snaps, multi-language UI (EN/ES/PT/FR/DE/RU/TR/AR)
 - Companions with unique voices, skills (drums / hoop / boxing), seasonal events
 - Optional mock rewarded ad / IAP boosts

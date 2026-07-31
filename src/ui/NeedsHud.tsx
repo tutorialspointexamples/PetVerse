@@ -1,5 +1,6 @@
 import { NEED_KEYS, NEED_LABELS, type NeedKey } from '../game/needs'
 import { getActiveEvent } from '../game/events'
+import { getRoom } from '../game/rooms'
 import { useGameStore } from '../state/gameStore'
 
 function barClass(value: number): string {
@@ -20,14 +21,7 @@ export function NeedsHud() {
   const level = Math.max(1, Math.floor(xp / 50) + 1)
   const setOverlay = useGameStore((s) => s.setOverlay)
   const event = getActiveEvent()
-  const roomLabel =
-    room === 'kitchen'
-      ? 'Kitchen'
-      : room === 'bathroom'
-        ? 'Bathroom'
-        : room === 'bedroom'
-          ? 'Bedroom'
-          : 'Living'
+  const roomLabel = getRoom(room).name
 
   return (
     <header className="hud">

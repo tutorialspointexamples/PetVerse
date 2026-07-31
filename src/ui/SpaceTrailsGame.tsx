@@ -9,6 +9,7 @@ type Pickup = Cell & { kind: 'star' | 'comet' }
 export function SpaceTrailsGame() {
   const hostRef = useRef<HTMLDivElement>(null)
   const grant = useGameStore((s) => s.grantMinigameReward)
+  const collectCard = useGameStore((s) => s.collectCard)
   const setOverlay = useGameStore((s) => s.setOverlay)
   const [score, setScore] = useState(0)
   const [combo, setCombo] = useState(0)
@@ -23,6 +24,7 @@ export function SpaceTrailsGame() {
     let scoreLocal = 0
     let comboLocal = 0
     let comboTimer = 0
+    let caughtComet = false
     const cell = 24
     let dir = { x: 1, y: 0 }
     let nextDir = { x: 1, y: 0 }
@@ -44,6 +46,7 @@ export function SpaceTrailsGame() {
       living = false
       setAlive(false)
       const coins = Math.min(55, 8 + Math.floor(finalScore / 1.6))
+      if (caughtComet) collectCard('comet_core')
       grant(coins, finalScore >= 10 ? 2 : 1)
     }
 
@@ -206,6 +209,7 @@ export function SpaceTrailsGame() {
           snake.unshift(head)
           if (head.x === pickup.x && head.y === pickup.y) {
             const gain = pickup.kind === 'comet' ? 3 : 1
+            if (pickup.kind === 'comet') caughtComet = true
             const mult = 1 + Math.min(4, Math.floor(comboLocal / 3))
             scoreLocal += gain * mult
             comboLocal += 1
@@ -339,7 +343,7 @@ export function SpaceTrailsGame() {
         /* ignore */
       }
     }
-  }, [grant])
+  }, [grant, collectCard])
 
   return (
     <div className="minigame-overlay">

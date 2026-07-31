@@ -17,6 +17,12 @@ export type CardId =
   | 'event_badge'
   | 'golden_paw'
   | 'midnight_star'
+  | 'sofa_cushion'
+  | 'stove_spark'
+  | 'lamp_glow'
+  | 'swing_ticket'
+  | 'comet_core'
+  | 'mission_ribbon'
 
 export interface CardDef {
   id: CardId
@@ -45,6 +51,12 @@ export const CARDS: CardDef[] = [
   { id: 'event_badge', name: 'Event Badge', rarity: 'rare', blurb: 'Seasonal login keepsake.', color: 0x9b5de5 },
   { id: 'golden_paw', name: 'Golden Paw', rarity: 'epic', blurb: 'Legendary care streak trophy.', color: 0xf4d35e },
   { id: 'midnight_star', name: 'Midnight Star', rarity: 'epic', blurb: 'Rare night-sky collectible.', color: 0x3a0ca3 },
+  { id: 'sofa_cushion', name: 'Sofa Cushion', rarity: 'common', blurb: 'Lounged on the living sofa.', color: 0xe07a5f },
+  { id: 'stove_spark', name: 'Stove Spark', rarity: 'common', blurb: 'Cooked a quick kitchen snack.', color: 0xffbe0b },
+  { id: 'lamp_glow', name: 'Lamp Glow', rarity: 'common', blurb: 'Clicked the bedroom night light.', color: 0xffe066 },
+  { id: 'swing_ticket', name: 'Swing Ticket', rarity: 'rare', blurb: 'Soared on the backyard swing.', color: 0xe76f51 },
+  { id: 'comet_core', name: 'Comet Core', rarity: 'epic', blurb: 'Caught a Space Trails comet.', color: 0x00f5d4 },
+  { id: 'mission_ribbon', name: 'Mission Ribbon', rarity: 'rare', blurb: 'Cleared a daily mission streak.', color: 0x9b5de5 },
 ]
 
 export function getCard(id: CardId): CardDef {

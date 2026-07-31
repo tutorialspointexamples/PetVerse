@@ -211,14 +211,14 @@ export function RoomsPanel() {
               <span>
                 {room === r.id ? 'You are here' : 'Go'}
                 {r.id === 'kitchen'
-                  ? ' · tap fridge to feed'
+                  ? ' · fridge=menu, stove=snack'
                   : r.id === 'bathroom'
                     ? ' · tub=bath, sink=brush'
                     : r.id === 'bedroom'
-                      ? ' · tap bed to sleep'
+                      ? ' · bed=sleep, lamp=poke'
                       : r.id === 'yard'
-                        ? ' · tap pad to play'
-                        : ''}
+                        ? ' · pad/swing=play'
+                        : ' · tv=play, sofa=poke'}
               </span>
             </button>
           ))}

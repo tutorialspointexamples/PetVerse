@@ -293,11 +293,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (state.claimedMissions.includes(id)) return false
     const progress = state.missionProgress[id] ?? 0
     if (progress < def.target) return false
+    const claimedMissions = [...state.claimedMissions, id]
+    const ownedCards = state.ownedCards.includes('mission_ribbon')
+      ? state.ownedCards
+      : [...state.ownedCards, 'mission_ribbon' as CardId]
     set({
       coins: state.coins + def.rewardCoins,
       fuel: Math.min(20, state.fuel + def.rewardFuel),
       xp: state.xp + 8,
-      claimedMissions: [...state.claimedMissions, id],
+      claimedMissions,
+      ownedCards,
     })
     get().save()
     return true

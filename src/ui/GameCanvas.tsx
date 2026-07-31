@@ -24,9 +24,10 @@ export function GameCanvas() {
   const pokeCompanion = useGameStore((s) => s.pokeCompanion)
   const doCare = useGameStore((s) => s.doCare)
   const setOverlay = useGameStore((s) => s.setOverlay)
+  const collectCard = useGameStore((s) => s.collectCard)
 
-  const actionsRef = useRef({ poke, pokeCompanion, doCare, setOverlay })
-  actionsRef.current = { poke, pokeCompanion, doCare, setOverlay }
+  const actionsRef = useRef({ poke, pokeCompanion, doCare, setOverlay, collectCard })
+  actionsRef.current = { poke, pokeCompanion, doCare, setOverlay, collectCard }
 
   useEffect(() => {
     const host = hostRef.current
@@ -36,15 +37,22 @@ export function GameCanvas() {
       const a = actionsRef.current
       if (zone === 'companion') a.pokeCompanion()
       else if (zone === 'kitchen_food') a.setOverlay('food')
-      else if (zone === 'kitchen_stove') a.doCare('feed')
-      else if (zone === 'bath_tub') a.doCare('bath')
+      else if (zone === 'kitchen_stove') {
+        if (a.doCare('feed')) a.collectCard('stove_spark')
+      } else if (zone === 'bath_tub') a.doCare('bath')
       else if (zone === 'bath_sink') a.doCare('brush')
       else if (zone === 'bed_sleep') a.doCare('sleep')
-      else if (zone === 'bedroom_lamp') a.poke('head')
-      else if (zone === 'yard_play' || zone === 'yard_swing') a.doCare('play')
+      else if (zone === 'bedroom_lamp') {
+        a.poke('head')
+        a.collectCard('lamp_glow')
+      } else if (zone === 'yard_swing') {
+        if (a.doCare('play')) a.collectCard('swing_ticket')
+      } else if (zone === 'yard_play') a.doCare('play')
       else if (zone === 'living_tv') a.doCare('play')
-      else if (zone === 'living_sofa') a.poke('belly')
-      else a.poke(zone)
+      else if (zone === 'living_sofa') {
+        a.poke('belly')
+        a.collectCard('sofa_cushion')
+      } else a.poke(zone)
     }
 
     const scene = new PetScene(
