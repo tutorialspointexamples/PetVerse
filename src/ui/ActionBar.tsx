@@ -68,7 +68,15 @@ export function ActionBar() {
           Play
         </button>
       </div>
-      <div className="action-row secondary">
+      <div className="action-row care-extra">
+        <button type="button" className="action-btn" disabled={cooling('brush') || sleeping} onClick={() => doCare('brush')}>
+          <span className="action-mark brush" aria-hidden />
+          Brush
+        </button>
+        <button type="button" className="action-btn" disabled={cooling('potty') || sleeping} onClick={() => doCare('potty')}>
+          <span className="action-mark potty" aria-hidden />
+          Potty
+        </button>
         <button
           type="button"
           className={`action-btn mic ${talkStatus === 'recording' ? 'recording' : ''} ${talkStatus === 'playing' ? 'playing' : ''}`}

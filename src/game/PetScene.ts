@@ -243,6 +243,18 @@ export class PetScene {
           g.fill(item.color)
           g.ellipse(w * 0.28, floorY + 4, 24, 12)
           g.fill(item.accent)
+        } else if (id === 'coral_reef') {
+          g.ellipse(w * 0.7, floorY + 12, 40, 16)
+          g.fill(item.accent)
+          g.ellipse(w * 0.68, floorY - 4, 10, 22)
+          g.fill(item.color)
+          g.ellipse(w * 0.74, floorY, 8, 18)
+          g.fill(0xffc8dd)
+        } else if (id === 'dragon_egg') {
+          g.ellipse(w * 0.34, floorY + 6, 22, 30)
+          g.fill(item.color)
+          g.ellipse(w * 0.34, floorY - 4, 10, 8)
+          g.fill(item.accent)
         }
       } else if (item.slot === 'wall') {
         const x = id.includes('moon') ? w * 0.18 : w * 0.08
@@ -307,6 +319,23 @@ export class PetScene {
           g.fill(item.color)
           g.circle(x, y - 40, 12)
           g.fill(item.accent)
+        } else if (id === 'treasure_chest') {
+          g.roundRect(x - 28, y - 28, 56, 34, 6)
+          g.fill(item.color)
+          g.rect(x - 28, y - 14, 56, 6)
+          g.fill(item.accent)
+          g.circle(x, y - 14, 5)
+          g.fill(0xe9b44c)
+        } else if (id === 'neon_console') {
+          g.roundRect(x - 26, y - 48, 52, 42, 6)
+          g.fill(item.color)
+          g.roundRect(x - 18, y - 40, 36, 18, 4)
+          g.fill(item.accent)
+        } else if (id === 'alien_pod') {
+          g.ellipse(x, y - 36, 28, 36)
+          g.fill({ color: item.color, alpha: 0.85 })
+          g.ellipse(x, y - 36, 14, 18)
+          g.fill({ color: item.accent, alpha: 0.5 })
         }
       }
     }
@@ -347,6 +376,24 @@ export class PetScene {
     if (id === 'sprout') {
       g.ellipse(x, y - 26, 8, 12)
       g.fill(0x3d9a68)
+    } else if (id === 'blinky') {
+      g.circle(x - 10, y - 8, 6)
+      g.fill(0xffffff)
+      g.circle(x + 10, y - 8, 6)
+      g.fill(0xffffff)
+      g.circle(x - 10, y - 8, 2.5)
+      g.fill(def.accent)
+      g.circle(x + 10, y - 8, 2.5)
+      g.fill(def.accent)
+      g.ellipse(x, y - 28, 6, 14)
+      g.fill(def.accent)
+    } else if (id === 'pebble') {
+      g.ellipse(x, y + 4, 26, 18)
+      g.fill(def.fill)
+      g.circle(x - 8, y - 2, 3)
+      g.fill(0x243029)
+      g.circle(x + 8, y - 2, 3)
+      g.fill(0x243029)
     } else {
       g.ellipse(x - 16, y - 10, 8, 5)
       g.fill(def.fill)
@@ -645,6 +692,23 @@ export class PetScene {
       g.fill({ color: 0xffffff, alpha: 0.5 })
     }
 
+    if (reaction === 'brush') {
+      g.roundRect(30, headY - 10, 36, 10, 4)
+      g.fill(0xffffff)
+      g.roundRect(58, headY - 14, 8, 18, 3)
+      g.fill(0x4cc9f0)
+      g.moveTo(-10, mouthY - 4)
+      g.lineTo(10, mouthY - 4)
+      g.stroke({ width: 3, color: 0xffffff, alpha: 0.85 })
+    }
+
+    if (reaction === 'potty') {
+      g.roundRect(-24, 95 + b, 48, 18, 6)
+      g.fill(0x90e0ef)
+      g.ellipse(0, 95 + b, 20, 6)
+      g.fill(0xffffff)
+    }
+
     if (reaction === 'skill_drums') {
       g.roundRect(-30, 70 + b, 60, 28, 6)
       g.fill(0xb56b45)
@@ -789,6 +853,46 @@ export class PetScene {
       g.fill(0xf4d35e)
       g.circle(8, y - 28, 3)
       g.fill(0xf4d35e)
+    } else if (hat === 'pirate') {
+      g.ellipse(0, y + 22, 48, 12)
+      g.fill(col)
+      g.roundRect(-36, y - 6, 72, 28, 10)
+      g.fill(col)
+      g.moveTo(-8, y + 4)
+      g.lineTo(0, y + 18)
+      g.lineTo(8, y + 4)
+      g.closePath()
+      g.fill(0xe63946)
+    } else if (hat === 'diver') {
+      g.circle(0, y + 10, 40)
+      g.stroke({ width: 8, color: col })
+      g.circle(0, y + 10, 28)
+      g.fill({ color: 0x90e0ef, alpha: 0.35 })
+    } else if (hat === 'visor') {
+      g.roundRect(-40, y + 8, 80, 18, 8)
+      g.fill({ color: col, alpha: 0.85 })
+      g.rect(-40, y + 14, 80, 4)
+      g.fill(0xffffff)
+    } else if (hat === 'dragon') {
+      g.moveTo(-36, y + 20)
+      g.lineTo(-20, y - 10)
+      g.lineTo(0, y + 8)
+      g.lineTo(20, y - 10)
+      g.lineTo(36, y + 20)
+      g.closePath()
+      g.fill(col)
+      g.circle(0, y + 4, 5)
+      g.fill(0xf4d35e)
+    } else if (hat === 'antenna') {
+      g.moveTo(-14, y + 18)
+      g.lineTo(-14, y - 18)
+      g.moveTo(14, y + 18)
+      g.lineTo(14, y - 18)
+      g.stroke({ width: 3, color: col })
+      g.circle(-14, y - 22, 6)
+      g.fill(0xff85a1)
+      g.circle(14, y - 22, 6)
+      g.fill(0x80ffdb)
     }
   }
 

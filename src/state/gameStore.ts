@@ -36,6 +36,8 @@ export type Reaction =
   | 'annoyed'
   | 'eat'
   | 'bath'
+  | 'brush'
+  | 'potty'
   | 'sleep'
   | 'talk'
   | 'play'
@@ -53,8 +55,12 @@ export type Overlay =
   | 'event'
   | 'skyDash'
   | 'dunkToss'
+  | 'spaceTrails'
+  | 'buildPlane'
   | 'worldVisit'
   | 'rewarded'
+
+const MINIGAME_OVERLAYS: Overlay[] = ['skyDash', 'dunkToss', 'spaceTrails', 'buildPlane']
 
 export interface GameState extends SaveData {
   reaction: Reaction
@@ -211,7 +217,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   tick: (dtSec) => {
     const { needs, sleeping, cooldowns, overlay } = get()
-    if (overlay === 'skyDash' || overlay === 'dunkToss') return
+    if (MINIGAME_OVERLAYS.includes(overlay)) return
     const nextNeeds = applyDecay(needs, dtSec, sleeping)
     const now = Date.now()
     const nextCooldowns: Partial<Record<CareAction, number>> = {}
@@ -246,6 +252,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       feed: 'eat',
       bath: 'bath',
       play: 'play',
+      brush: 'brush',
+      potty: 'potty',
     }
 
     set({

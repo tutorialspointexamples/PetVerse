@@ -17,13 +17,21 @@ export function GamesHub() {
             ×
           </button>
         </div>
+        <button type="button" className="hub-card" onClick={() => setOverlay('spaceTrails')}>
+          <strong>Space Trails</strong>
+          <span>Steer the trail, collect stars offline</span>
+        </button>
         <button type="button" className="hub-card" onClick={() => setOverlay('skyDash')}>
-          <strong>Sky Dash</strong>
+          <strong>Sky Race</strong>
           <span>Flap, grab coins, dodge blocks</span>
         </button>
         <button type="button" className="hub-card" onClick={() => setOverlay('dunkToss')}>
-          <strong>Dunk Toss</strong>
+          <strong>Dunk-a-Pet</strong>
           <span>Time your toss in the green zone</span>
+        </button>
+        <button type="button" className="hub-card" onClick={() => setOverlay('buildPlane')}>
+          <strong>Build Your Plane</strong>
+          <span>Assemble parts and earn fuel</span>
         </button>
       </div>
     </div>
@@ -62,6 +70,7 @@ export function TravelPanel() {
                 {w.fuelCost} fuel · +{w.rewardCoins}c
                 {visitedWorlds.includes(w.id) ? ' · visited' : ' · new'}
               </span>
+              <span className="hub-blurb">{w.blurb}</span>
             </button>
           ))}
         </div>
@@ -87,7 +96,7 @@ export function WorldVisitPanel() {
         }}
       >
         <h2>{world.name}</h2>
-        <p>You landed safely and collected rewards. New unlocks were added to your shop.</p>
+        <p>{world.blurb} You landed safely and collected rewards. New unlocks were added to your shop.</p>
         <button type="button" className="name-submit" onClick={clearWorldVisit}>
           Fly home
         </button>
@@ -236,7 +245,6 @@ export function RewardedPanel() {
     const result = await purchaseIap(id)
     if (result.ok && coins > 0) addCoins(coins)
     if (result.ok && id === 'outfit_pack') {
-      // grant a few cosmetics via coin proxy
       addCoins(50)
     }
     setOverlay('none')
