@@ -36,7 +36,14 @@ export interface PetSceneProps {
   room: RoomId
 }
 
-export type PokeZone = 'head' | 'belly' | 'companion'
+export type PokeZone =
+  | 'head'
+  | 'belly'
+  | 'companion'
+  | 'kitchen_food'
+  | 'bath_tub'
+  | 'bath_sink'
+  | 'bed_sleep'
 
 export class PetScene {
   readonly app: Application
@@ -44,6 +51,9 @@ export class PetScene {
   private roomBack = new Graphics()
   private furnitureLayer = new Graphics()
   private roomFront = new Graphics()
+  private roomPropHit = new Graphics()
+  private roomPropHitB = new Graphics()
+  private roomPropHint = new Graphics()
   private pet = new Container()
   private shadow = new Graphics()
   private legs = new Graphics()
@@ -105,6 +115,9 @@ export class PetScene {
     this.root.addChild(
       this.roomBack,
       this.furnitureLayer,
+      this.roomPropHint,
+      this.roomPropHit,
+      this.roomPropHitB,
       this.pet,
       this.companionGfx,
       this.companionHit,
@@ -134,9 +147,22 @@ export class PetScene {
     this.bellyHit.cursor = 'pointer'
     this.companionHit.eventMode = 'static'
     this.companionHit.cursor = 'pointer'
+    this.roomPropHit.eventMode = 'none'
+    this.roomPropHit.cursor = 'pointer'
+    this.roomPropHitB.eventMode = 'none'
+    this.roomPropHitB.cursor = 'pointer'
     this.headHit.on('pointertap', () => this.onPoke('head'))
     this.bellyHit.on('pointertap', () => this.onPoke('belly'))
     this.companionHit.on('pointertap', () => this.onPoke('companion'))
+    this.roomPropHit.on('pointertap', () => {
+      const room = this.props.room
+      if (room === 'kitchen') this.onPoke('kitchen_food')
+      else if (room === 'bathroom') this.onPoke('bath_tub')
+      else if (room === 'bedroom') this.onPoke('bed_sleep')
+    })
+    this.roomPropHitB.on('pointertap', () => {
+      if (this.props.room === 'bathroom') this.onPoke('bath_sink')
+    })
 
     this.zzz.anchor.set(0.5)
     this.nameTag.anchor.set(0.5, 0)
@@ -156,6 +182,7 @@ export class PetScene {
     this.nameTag.position.set(w * 0.5, h * 0.1)
     this.drawRoom(w, h)
     this.drawFurniture(w, h)
+    this.drawRoomProps(w, h)
     this.drawCompanion(w, h)
   }
 
@@ -220,6 +247,51 @@ export class PetScene {
 
     front.rect(0, h * 0.92, w, h * 0.08)
     front.fill({ color: 0x1a2a22, alpha: 0.12 })
+  }
+
+  /** Interactive kitchen / bathroom / bedroom props beyond backdrop. */
+  private drawRoomProps(w: number, h: number) {
+    const hit = this.roomPropHit
+    const hitB = this.roomPropHitB
+    const hint = this.roomPropHint
+    hit.clear()
+    hitB.clear()
+    hint.clear()
+    hit.eventMode = 'none'
+    hitB.eventMode = 'none'
+    const pulse = 0.35 + Math.abs(Math.sin(this.time * 2.4)) * 0.35
+    const room = this.props.room
+
+    if (room === 'kitchen') {
+      hit.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
+      hit.fill({ color: 0xffffff, alpha: 0.001 })
+      hit.eventMode = 'static'
+      hint.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
+      hint.stroke({ width: 3, color: 0xffbe0b, alpha: pulse })
+      hint.circle(w * 0.72, h * 0.42, 5)
+      hint.fill({ color: 0x333333, alpha: 0.5 })
+      hint.circle(w * 0.78, h * 0.42, 5)
+      hint.fill({ color: 0x333333, alpha: 0.5 })
+    } else if (room === 'bathroom') {
+      // Tub → bath
+      hit.ellipse(w * 0.2, h * 0.5, 44, 32)
+      hit.fill({ color: 0xffffff, alpha: 0.001 })
+      hit.eventMode = 'static'
+      hint.ellipse(w * 0.2, h * 0.5, 44, 32)
+      hint.stroke({ width: 3, color: 0xffffff, alpha: pulse })
+      // Sink → brush teeth
+      hitB.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
+      hitB.fill({ color: 0xffffff, alpha: 0.001 })
+      hitB.eventMode = 'static'
+      hint.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
+      hint.stroke({ width: 3, color: 0x4cc9f0, alpha: pulse })
+    } else if (room === 'bedroom') {
+      hit.roundRect(w * 0.08, h * 0.28, w * 0.32, h * 0.3, 10)
+      hit.fill({ color: 0xffffff, alpha: 0.001 })
+      hit.eventMode = 'static'
+      hint.roundRect(w * 0.08, h * 0.28, w * 0.32, h * 0.3, 10)
+      hint.stroke({ width: 3, color: 0xffe066, alpha: pulse })
+    }
   }
 
   private drawFurniture(w: number, h: number) {
@@ -1192,7 +1264,10 @@ export class PetScene {
       this.zzz.alpha = 0.55 + Math.sin(this.time * 3) * 0.25
       this.zzz.scale.set(0.9 + Math.sin(this.time * 2.5) * 0.15)
     }
-    this.drawCompanion(this.app.screen.width, this.app.screen.height)
+    const w = this.app.screen.width
+    const h = this.app.screen.height
+    this.drawCompanion(w, h)
+    this.drawRoomProps(w, h)
     this.redraw()
   }
 

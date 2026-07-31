@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { PetScene } from '../game/PetScene'
+import { PetScene, type PokeZone } from '../game/PetScene'
 import { useGameStore } from '../state/gameStore'
 
 export function GameCanvas() {
@@ -22,10 +22,25 @@ export function GameCanvas() {
   const room = useGameStore((s) => s.room)
   const poke = useGameStore((s) => s.poke)
   const pokeCompanion = useGameStore((s) => s.pokeCompanion)
+  const doCare = useGameStore((s) => s.doCare)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+
+  const actionsRef = useRef({ poke, pokeCompanion, doCare, setOverlay })
+  actionsRef.current = { poke, pokeCompanion, doCare, setOverlay }
 
   useEffect(() => {
     const host = hostRef.current
     if (!host) return
+
+    const onZone = (zone: PokeZone) => {
+      const a = actionsRef.current
+      if (zone === 'companion') a.pokeCompanion()
+      else if (zone === 'kitchen_food') a.setOverlay('food')
+      else if (zone === 'bath_tub') a.doCare('bath')
+      else if (zone === 'bath_sink') a.doCare('brush')
+      else if (zone === 'bed_sleep') a.doCare('sleep')
+      else a.poke(zone)
+    }
 
     const scene = new PetScene(
       host,
@@ -45,10 +60,7 @@ export function GameCanvas() {
         companion,
         room,
       },
-      (zone) => {
-        if (zone === 'companion') pokeCompanion()
-        else poke(zone)
-      },
+      onZone,
     )
     sceneRef.current = scene
 

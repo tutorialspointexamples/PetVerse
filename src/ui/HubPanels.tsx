@@ -203,7 +203,16 @@ export function RoomsPanel() {
               onClick={() => setRoom(r.id)}
             >
               <strong>{r.name}</strong>
-              <span>{room === r.id ? 'You are here' : 'Go'}</span>
+              <span>
+                {room === r.id ? 'You are here' : 'Go'}
+                {r.id === 'kitchen'
+                  ? ' · tap fridge to feed'
+                  : r.id === 'bathroom'
+                    ? ' · tub=bath, sink=brush'
+                    : r.id === 'bedroom'
+                      ? ' · tap bed to sleep'
+                      : ''}
+              </span>
             </button>
           ))}
         </div>

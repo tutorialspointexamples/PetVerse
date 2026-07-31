@@ -116,7 +116,9 @@ export function ActionBar() {
           Boost
         </button>
       </div>
-      <p className="hint">Tap head, belly, or companion · Hold mic to talk-back</p>
+      <p className="hint">
+        Tap head/belly/companion · Room props: kitchen fridge, bath tub/sink, bedroom bed · Hold mic to talk
+      </p>
     </footer>
   )
 }
