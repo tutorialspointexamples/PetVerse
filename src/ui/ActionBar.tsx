@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { createTalkBack, type TalkBackStatus } from '../audio/talkBack'
 import { useGameStore } from '../state/gameStore'
+import { useLocale } from '../i18n/useLocale'
 
 export function ActionBar() {
   const doCare = useGameStore((s) => s.doCare)
@@ -10,6 +11,7 @@ export function ActionBar() {
   const setTalking = useGameStore((s) => s.setTalking)
   const setMicError = useGameStore((s) => s.setMicError)
   const micError = useGameStore((s) => s.micError)
+  const { t } = useLocale()
   const [talkStatus, setTalkStatus] = useState<TalkBackStatus>('idle')
   const controllerRef = useRef<ReturnType<typeof createTalkBack> | null>(null)
 
@@ -46,9 +48,9 @@ export function ActionBar() {
     <footer className="action-bar">
       {micError ? <p className="mic-banner">{micError}</p> : null}
       <div className="action-row">
-        <button type="button" className="action-btn" disabled={cooling('feed') || sleeping} onClick={() => doCare('feed')}>
+        <button type="button" className="action-btn" disabled={cooling('feed') || sleeping} onClick={() => setOverlay('food')}>
           <span className="action-mark feed" aria-hidden />
-          Feed
+          {t('action.feed')}
         </button>
         <button
           type="button"
@@ -57,18 +59,26 @@ export function ActionBar() {
           onClick={() => doCare('sleep')}
         >
           <span className="action-mark sleep" aria-hidden />
-          {sleeping ? 'Wake' : 'Sleep'}
+          {sleeping ? t('action.wake') : t('action.sleep')}
         </button>
         <button type="button" className="action-btn" disabled={cooling('bath') || sleeping} onClick={() => doCare('bath')}>
           <span className="action-mark bath" aria-hidden />
-          Bath
+          {t('action.bath')}
         </button>
         <button type="button" className="action-btn" disabled={cooling('play') || sleeping} onClick={() => doCare('play')}>
           <span className="action-mark play" aria-hidden />
-          Play
+          {t('action.play')}
         </button>
       </div>
-      <div className="action-row secondary">
+      <div className="action-row care-extra">
+        <button type="button" className="action-btn" disabled={cooling('brush') || sleeping} onClick={() => doCare('brush')}>
+          <span className="action-mark brush" aria-hidden />
+          {t('action.brush')}
+        </button>
+        <button type="button" className="action-btn" disabled={cooling('potty') || sleeping} onClick={() => doCare('potty')}>
+          <span className="action-mark potty" aria-hidden />
+          {t('action.potty')}
+        </button>
         <button
           type="button"
           className={`action-btn mic ${talkStatus === 'recording' ? 'recording' : ''} ${talkStatus === 'playing' ? 'playing' : ''}`}
@@ -78,31 +88,47 @@ export function ActionBar() {
           onContextMenu={(e) => e.preventDefault()}
         >
           <span className="action-mark mic" aria-hidden />
-          {talkStatus === 'recording' ? 'Listening…' : talkStatus === 'playing' ? 'Talking…' : 'Hold to Talk'}
+          {talkStatus === 'recording'
+            ? t('action.listening')
+            : talkStatus === 'playing'
+              ? t('action.talking')
+              : t('action.talk')}
         </button>
         <button type="button" className="action-btn shop" onClick={() => setOverlay('shop')}>
           <span className="action-mark style" aria-hidden />
-          Style
+          {t('action.style')}
         </button>
       </div>
       <div className="action-row tertiary">
+        <button type="button" className="action-btn slim" onClick={() => setOverlay('rooms')}>
+          {t('nav.rooms')}
+        </button>
+        <button type="button" className="action-btn slim" onClick={() => setOverlay('cards')}>
+          {t('nav.cards')}
+        </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('games')}>
-          Games
+          {t('nav.games')}
         </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('travel')}>
-          Travel
+          {t('nav.travel')}
         </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('skills')}>
-          Skills
+          {t('nav.skills')}
         </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('companions')}>
-          Pets
+          {t('nav.pets')}
+        </button>
+        <button type="button" className="action-btn slim" onClick={() => setOverlay('photo')}>
+          Photo
+        </button>
+        <button type="button" className="action-btn slim" onClick={() => setOverlay('lang')}>
+          {t('nav.lang')}
         </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('rewarded')}>
-          Boost
+          {t('nav.boost')}
         </button>
       </div>
-      <p className="hint">Tap head, belly, or companion · Hold mic to talk-back</p>
+      <p className="hint">{t('hint.main')}</p>
     </footer>
   )
 }
