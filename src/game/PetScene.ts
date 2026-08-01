@@ -18,6 +18,7 @@ import { getCompanion, type CompanionId } from './progress'
 import { deriveMood, type Needs } from './needs'
 import type { Reaction } from '../state/gameStore'
 import { getRoom, type RoomId } from './rooms'
+import { derivePose } from './petPose'
 
 export interface PetSceneProps {
   needs: Needs
@@ -907,12 +908,23 @@ export class PetScene {
     }
     hit.eventMode = 'static'
     const def = getCompanion(id)
-    const x = w * 0.72
-    const y = h * 0.7 + Math.sin(this.time * 3) * 4
+    const playing = this.props.reaction === 'play'
+    const hop = playing ? Math.abs(Math.sin(this.time * 10)) * 18 : Math.sin(this.time * 3) * 4
+    const x = w * 0.72 + (playing ? Math.sin(this.time * 6) * 16 : 0)
+    const y = h * 0.7 + hop
     g.ellipse(x, y + 28, 22, 8)
     g.fill({ color: 0x1a2a22, alpha: 0.15 })
     g.circle(x, y, 22)
     g.fill(def.fill)
+    if (playing) {
+      // Fetch toy — companion play interaction beyond tap-to-hear
+      const ballX = w * 0.55 + Math.sin(this.time * 7) * 40
+      const ballY = h * 0.62 + Math.abs(Math.cos(this.time * 7)) * 30
+      g.circle(ballX, ballY, 8)
+      g.fill(0xff85a1)
+      g.circle(ballX - 2, ballY - 2, 2)
+      g.fill({ color: 0xffffff, alpha: 0.7 })
+    }
     g.circle(x - 8, y - 4, 3)
     g.fill(0x243029)
     g.circle(x + 8, y - 4, 3)
@@ -958,41 +970,18 @@ export class PetScene {
     }
   }
 
-  private bounce(): number {
-    const { reaction, needs } = this.props
-    const mood = deriveMood(needs)
-    if (this.sneezeT > 0) return Math.sin(this.sneezeT * 40) * 6
-    if (this.stretchT > 0) return -6 + Math.sin(this.stretchT * 4) * 4
-    if (reaction === 'laugh') return Math.sin(this.time * 20) * 10
-    if (reaction === 'play' || reaction.startsWith('skill_')) {
-      return Math.sin(this.time * 16) * 5
-    }
-    if (reaction === 'eat') return Math.sin(this.time * 12) * 2
-    if (mood === 'happy') return Math.sin(this.time * 3.4) * 5
-    return Math.sin(this.time * 2.2) * 3
-  }
-
-  /** Approximate spine squash/stretch from bounce — MTT2-like cartoon volume. */
-  private squash() {
-    const b = this.bounce()
-    const landing = Math.max(0, -b)
-    const rising = Math.max(0, b)
-    const reactive =
-      this.props.reaction === 'laugh' ||
-      this.props.reaction === 'play' ||
-      this.props.reaction.startsWith('skill_')
-    return {
-      sx: 1 + landing * 0.035 - rising * 0.022 + (reactive ? Math.sin(this.time * 12) * 0.03 : 0),
-      sy: 1 - landing * 0.035 + rising * 0.028 + (reactive ? Math.cos(this.time * 12) * 0.025 : 0),
-      tilt:
-        this.props.reaction === 'laugh'
-          ? Math.sin(this.time * 12) * 0.14
-          : this.props.reaction === 'play' || this.props.reaction.startsWith('skill_')
-            ? Math.sin(this.time * 8) * 0.1
-            : this.props.reaction === 'annoyed'
-              ? -0.08
-              : Math.sin(this.time * 1.4) * 0.03,
-    }
+  private pose() {
+    return derivePose({
+      time: this.time,
+      reaction: this.props.reaction,
+      sleeping: this.props.sleeping,
+      talking: this.props.talking,
+      needs: this.props.needs,
+      stretchT: this.stretchT,
+      sneezeT: this.sneezeT,
+      yawnT: this.yawnT,
+      earFlopT: this.earFlopT,
+    })
   }
 
   private redraw() {
@@ -1002,20 +991,20 @@ export class PetScene {
     const color = getBodyColor(bodyColor)
     const mood = deriveMood(needs)
     const scale = this.app.screen.width < 480 ? 0.82 : 1
-    const sq = this.squash()
-    this.pet.scale.set(scale * sq.sx, scale * sq.sy)
-    this.pet.rotation = sq.tilt
+    const pose = this.pose()
+    this.pet.scale.set(scale * pose.sx, scale * pose.sy)
+    this.pet.rotation = pose.tilt
     this.nameTag.text = petName || 'Your Pet'
-    const b = this.bounce()
+    const b = pose.bounce
 
     this.drawShadow(b)
-    this.drawLegs(color.fill, b)
+    this.drawLegs(color.fill, b, pose.limbPhase)
     this.drawShoesLayer(shoes, b)
-    this.drawBodyLayer(color.fill, color.belly, color.ear, mood, b)
+    this.drawBodyLayer(color.fill, color.belly, color.ear, mood, b, pose.breath)
     this.drawShirtLayer(shirt, b)
-    this.drawArms(color.fill, reaction, b)
-    this.drawHeadLayer(color.fill, color.ear, b)
-    this.drawFaceLayer(mood, reaction, sleeping, talking, b)
+    this.drawArms(color.fill, reaction, b, pose.armLift)
+    this.drawHeadLayer(color.fill, color.ear, b + pose.headBob * 0.15, pose.earFlop)
+    this.drawFaceLayer(mood, reaction, sleeping, talking, b, pose.mouthOpen)
     this.drawScarfLayer(scarf, b)
     this.drawGlassesLayer(glasses, b)
     this.drawHatLayer(hat, b)
@@ -1037,15 +1026,10 @@ export class PetScene {
     g.fill({ color: 0x1a2a22, alpha: 0.18 })
   }
 
-  private drawLegs(fill: number, b: number) {
+  private drawLegs(fill: number, b: number, limbPhase = 0) {
     const g = this.legs
     g.clear()
-    const playStep =
-      this.props.reaction === 'play' || this.props.reaction.startsWith('skill_')
-        ? Math.sin(this.time * 14) * 14
-        : this.props.reaction === 'laugh'
-          ? Math.sin(this.time * 16) * 6
-          : Math.sin(this.time * 2.2) * 2
+    const playStep = limbPhase
     const leftY = 70 + b * 0.2 + playStep * 0.35
     const rightY = 70 + b * 0.2 - playStep * 0.35
     // Thigh volume + shin taper for more articulated limbs
@@ -1161,10 +1145,10 @@ export class PetScene {
     }
   }
 
-  private drawBodyLayer(fill: number, belly: number, ear: number, mood: string, b: number) {
+  private drawBodyLayer(fill: number, belly: number, ear: number, mood: string, b: number, breathIn = 0) {
     const g = this.body
     g.clear()
-    const breath = Math.sin(this.time * 2.1) * 2.5
+    const breath = breathIn || Math.sin(this.time * 2.1) * 2.5
     // Soft outer rim for rounded cartoon volume
     g.ellipse(0, 30 + b, 82 + breath * 0.4, 96)
     g.fill({ color: ear, alpha: 0.35 })
@@ -1309,11 +1293,11 @@ export class PetScene {
     }
   }
 
-  private drawArms(fill: number, reaction: Reaction, b: number) {
+  private drawArms(fill: number, reaction: Reaction, b: number, armLift = 0) {
     const g = this.arms
     g.clear()
-    if (this.stretchT > 0) {
-      const lift = 28 + Math.sin(this.stretchT * 5) * 6
+    if (this.stretchT > 0 || (armLift > 10 && reaction === 'idle')) {
+      const lift = armLift || 28
       g.ellipse(-70, -10 + b - lift * 0.3, 20, 40)
       g.fill(fill)
       g.ellipse(70, -10 + b - lift * 0.3, 20, 40)
@@ -1332,14 +1316,15 @@ export class PetScene {
           : reaction === 'laugh'
             ? Math.sin(this.time * 16) * 12
             : Math.sin(this.time * 2) * 4
+    const liftBoost = armLift * 0.35
     // Upper-arm + forearm segments for clearer articulation
-    g.ellipse(-72, 6 + b + swing * 0.1, 16, 22)
+    g.ellipse(-72, 6 + b + swing * 0.1 - liftBoost, 16, 22)
     g.fill(fill)
-    g.ellipse(72, 6 + b - swing * 0.1, 16, 22)
+    g.ellipse(72, 6 + b - swing * 0.1 - liftBoost, 16, 22)
     g.fill(fill)
-    g.ellipse(-78, 20 + b + swing * 0.15, 22, 36)
+    g.ellipse(-78, 20 + b + swing * 0.15 - liftBoost, 22, 36)
     g.fill(fill)
-    g.ellipse(78, 20 + b - swing * 0.15, 22, 36)
+    g.ellipse(78, 20 + b - swing * 0.15 - liftBoost, 22, 36)
     g.fill(fill)
     g.ellipse(-74, 10 + b + swing * 0.08, 6, 8)
     g.fill({ color: 0xffffff, alpha: 0.12 })
@@ -1374,12 +1359,11 @@ export class PetScene {
     }
   }
 
-  private drawHeadLayer(fill: number, ear: number, b: number) {
+  private drawHeadLayer(fill: number, ear: number, b: number, earFlop = 0) {
     const g = this.head
     g.clear()
     const headY = -78 + b
-    const flop = this.earFlopT > 0 ? Math.sin(this.earFlopT * 14) * 14 : 0
-    const earWiggle = Math.sin(this.time * 2.6) * 4 + flop
+    const earWiggle = earFlop || Math.sin(this.time * 2.6) * 4
     const talkBob = this.props.talking ? Math.sin(this.time * 14) * 2 : 0
     const browLift =
       this.props.reaction === 'laugh'
@@ -1456,6 +1440,7 @@ export class PetScene {
     sleeping: boolean,
     talking: boolean,
     b: number,
+    mouthOpen = 0,
   ) {
     const g = this.face
     g.clear()
@@ -1567,11 +1552,11 @@ export class PetScene {
       g.quadraticCurveTo(0, mouthY + 12, 14, mouthY + 2)
       g.stroke({ width: 3.5, color: 0x243029, cap: 'round' })
     } else if (talking || reaction === 'talk') {
-      const open = 6 + Math.abs(Math.sin(this.time * 16)) * 10
+      const open = 4 + mouthOpen * 14
       g.ellipse(0, mouthY + 4, 12, open)
       g.fill(0x3a1f1a)
     } else if (reaction === 'eat') {
-      const chomp = Math.abs(Math.sin(this.time * 14)) * 8
+      const chomp = Math.max(2, mouthOpen * 10)
       g.ellipse(0, mouthY + 2, 10, 4 + chomp)
       g.fill(0x3a1f1a)
     } else if (reaction === 'laugh' || reaction === 'play' || mood === 'happy') {

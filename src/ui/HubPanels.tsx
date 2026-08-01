@@ -3,7 +3,7 @@ import { getActiveEvent } from '../game/events'
 import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
 import { FOODS } from '../game/foods'
 import { ROOMS } from '../game/rooms'
-import { CARDS } from '../game/cards'
+import { CARD_SETS, CARDS, setProgress } from '../game/cards'
 import { missionsForDay, todayKey } from '../game/missions'
 import { IAP_PRODUCTS, purchaseIap, showRewardedAd } from '../monetization/stubs'
 import { useGameStore } from '../state/gameStore'
@@ -328,6 +328,8 @@ export function CardsPanel() {
   const overlay = useGameStore((s) => s.overlay)
   const setOverlay = useGameStore((s) => s.setOverlay)
   const ownedCards = useGameStore((s) => s.ownedCards)
+  const claimedCardSets = useGameStore((s) => s.claimedCardSets)
+  const claimCardSet = useGameStore((s) => s.claimCardSet)
   const { t } = useLocale()
   if (overlay !== 'cards') return null
   return (
@@ -343,6 +345,37 @@ export function CardsPanel() {
           </button>
         </div>
         <p className="panel-note">{t('cards.note')}</p>
+        <div className="card-sets">
+          {CARD_SETS.map((set) => {
+            const progress = setProgress(ownedCards, set)
+            const claimed = claimedCardSets.includes(set.id)
+            const ready = progress.complete && !claimed
+            return (
+              <div key={set.id} className={`card-set ${claimed ? 'claimed' : ''} ${ready ? 'ready' : ''}`}>
+                <div className="card-set-copy">
+                  <strong>{set.name}</strong>
+                  <span>
+                    {progress.owned}/{progress.total} · +{set.rewardCoins}c
+                    {set.rewardStars ? ` · +${set.rewardStars}★` : ''}
+                    {set.rewardFuel ? ` · +${set.rewardFuel} fuel` : ''}
+                  </span>
+                  <em>{set.blurb}</em>
+                  <div className="mission-bar">
+                    <i style={{ width: `${Math.min(100, (progress.owned / progress.total) * 100)}%` }} />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="mission-claim"
+                  disabled={!ready}
+                  onClick={() => claimCardSet(set.id)}
+                >
+                  {claimed ? t('cards.set.done') : ready ? t('cards.set.claim') : t('cards.set.track')}
+                </button>
+              </div>
+            )
+          })}
+        </div>
         <div className="card-album">
           {CARDS.map((card) => {
             const owned = ownedCards.includes(card.id)
@@ -418,12 +451,16 @@ export function CompanionsPanel() {
   const companion = useGameStore((s) => s.companion)
   const ownedCompanions = useGameStore((s) => s.ownedCompanions)
   const unlockCompanion = useGameStore((s) => s.unlockCompanion)
+  const playWithCompanion = useGameStore((s) => s.playWithCompanion)
+  const companionPlayUntil = useGameStore((s) => s.companionPlayUntil)
+  const { t } = useLocale()
   if (overlay !== 'companions') return null
+  const playCooling = companionPlayUntil > Date.now()
   return (
     <div className="shop-overlay" role="dialog" aria-label="Companions">
       <div className="shop-panel">
         <div className="shop-header">
-          <h2>Companions</h2>
+          <h2>{t('companions.title')}</h2>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
           </button>
@@ -432,8 +469,8 @@ export function CompanionsPanel() {
           if (c.id === 'none') {
             return (
               <button key={c.id} type="button" className="hub-card" onClick={() => unlockCompanion('none')}>
-                <strong>Solo</strong>
-                <span>No companion in the room</span>
+                <strong>{t('companions.solo')}</strong>
+                <span>{t('companions.solo.blurb')}</span>
               </button>
             )
           }
@@ -448,14 +485,28 @@ export function CompanionsPanel() {
             >
               <strong>{c.name}</strong>
               <span>
-                Voice: {c.voiceLabel}
+                {t('companions.voice')}: {c.voiceLabel}
                 {' · '}
-                {owned ? (companion === c.id ? 'Active · tap pet to hear' : 'Own · tap to equip') : `${c.unlockCost}c`}
+                {owned
+                  ? companion === c.id
+                    ? t('companions.active')
+                    : t('companions.owned')
+                  : `${c.unlockCost}c`}
               </span>
             </button>
           )
         })}
-        <p className="hint">Each companion has a unique voice — tap them in the room to hear it.</p>
+        <button
+          type="button"
+          className="name-submit"
+          disabled={companion === 'none' || playCooling}
+          onClick={() => {
+            if (playWithCompanion()) setOverlay('none')
+          }}
+        >
+          {playCooling ? t('companions.play.cool') : t('companions.play')}
+        </button>
+        <p className="hint">{t('companions.hint')}</p>
       </div>
     </div>
   )
@@ -465,11 +516,15 @@ export function EventPanel() {
   const overlay = useGameStore((s) => s.overlay)
   const setOverlay = useGameStore((s) => s.setOverlay)
   const claimEventBonus = useGameStore((s) => s.claimEventBonus)
+  const doEventActivity = useGameStore((s) => s.doEventActivity)
   const eventClaimDate = useGameStore((s) => s.eventClaimDate)
+  const eventActivityDate = useGameStore((s) => s.eventActivityDate)
+  const { t } = useLocale()
   const event = getActiveEvent()
   if (overlay !== 'event' || !event) return null
   const today = todayKey()
   const claimed = eventClaimDate === today
+  const activityDone = eventActivityDate === today
   return (
     <div className="shop-overlay" role="dialog" aria-label="Event">
       <div className="shop-panel">
@@ -486,8 +541,23 @@ export function EventPanel() {
           disabled={claimed}
           onClick={() => claimEventBonus()}
         >
-          {claimed ? 'Bonus claimed today' : `Claim +${event.loginBonus} coins`}
+          {claimed ? t('event.claimed') : `${t('event.claim')} +${event.loginBonus}c`}
         </button>
+        {event.activityKind ? (
+          <button
+            type="button"
+            className="hub-card event-activity"
+            disabled={activityDone}
+            onClick={() => doEventActivity()}
+          >
+            <strong>{event.activityLabel ?? t('event.activity')}</strong>
+            <span>
+              {activityDone
+                ? t('event.activity.done')
+                : `+${event.activityBonus ?? 10}c · ${event.activityKind}`}
+            </span>
+          </button>
+        ) : null}
       </div>
     </div>
   )

@@ -65,6 +65,93 @@ export function getCard(id: CardId): CardDef {
   return CARDS.find((c) => c.id === id) ?? CARDS[0]
 }
 
+export type CardSetId = 'worlds' | 'arcade' | 'care' | 'legend'
+
+export interface CardSetDef {
+  id: CardSetId
+  name: string
+  blurb: string
+  cards: CardId[]
+  rewardCoins: number
+  rewardStars: number
+  rewardFuel: number
+}
+
+/** MTT2-style album set completion bonuses. */
+export const CARD_SETS: CardSetDef[] = [
+  {
+    id: 'worlds',
+    name: 'World Traveler',
+    blurb: 'Collect a souvenir from every plane destination.',
+    cards: [
+      'beach_shell',
+      'forest_leaf',
+      'candy_swirl',
+      'pirate_map',
+      'coral_gem',
+      'cyber_chip',
+      'dragon_scale',
+      'alien_orb',
+    ],
+    rewardCoins: 45,
+    rewardStars: 2,
+    rewardFuel: 2,
+  },
+  {
+    id: 'arcade',
+    name: 'Arcade Ace',
+    blurb: 'Clear every offline mini-game card.',
+    cards: ['sky_medal', 'dunk_star', 'trail_comet', 'plane_blueprint', 'comet_core'],
+    rewardCoins: 35,
+    rewardStars: 1,
+    rewardFuel: 1,
+  },
+  {
+    id: 'care',
+    name: 'Care Champion',
+    blurb: 'Home-care keepsakes from rooms and routines.',
+    cards: [
+      'yard_balloon',
+      'photo_flash',
+      'brush_sparkle',
+      'sofa_cushion',
+      'stove_spark',
+      'lamp_glow',
+      'swing_ticket',
+      'fountain_splash',
+      'mission_ribbon',
+    ],
+    rewardCoins: 30,
+    rewardStars: 1,
+    rewardFuel: 2,
+  },
+  {
+    id: 'legend',
+    name: 'Legend Album',
+    blurb: 'Gather every epic rarity card.',
+    cards: [
+      'cyber_chip',
+      'dragon_scale',
+      'alien_orb',
+      'golden_paw',
+      'midnight_star',
+      'comet_core',
+    ],
+    rewardCoins: 60,
+    rewardStars: 3,
+    rewardFuel: 3,
+  },
+]
+
+export function getCardSet(id: CardSetId): CardSetDef {
+  return CARD_SETS.find((s) => s.id === id) ?? CARD_SETS[0]
+}
+
+export function setProgress(owned: CardId[], set: CardSetDef): { owned: number; total: number; complete: boolean } {
+  const have = set.cards.filter((c) => owned.includes(c)).length
+  return { owned: have, total: set.cards.length, complete: have >= set.cards.length }
+}
+
 export const WORLD_CARDS: Record<string, CardId> = {
   beach: 'beach_shell',
   forest: 'forest_leaf',

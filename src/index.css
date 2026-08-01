@@ -1780,11 +1780,72 @@ input {
   gap: 8px;
 }
 
+.card-sets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.card-set {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff8ef 0%, #e8f7f0 100%);
+  border: 1px solid rgba(26, 42, 34, 0.12);
+}
+
+.card-set.ready {
+  border-color: #2a9d8f;
+  box-shadow: inset 0 0 0 1px rgba(42, 157, 143, 0.25);
+}
+
+.card-set.claimed {
+  opacity: 0.7;
+}
+
+.card-set-copy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.card-set-copy strong {
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+.card-set-copy span,
+.card-set-copy em {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.card-set-copy em {
+  font-style: normal;
+}
+
+.event-activity {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.plane-stats {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1a2a22;
+  opacity: 0.85;
+}
+
 .card-album {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  max-height: 55vh;
+  max-height: 45vh;
   overflow: auto;
   padding-bottom: 8px;
 }

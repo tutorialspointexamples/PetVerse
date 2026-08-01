@@ -7,33 +7,42 @@ type PartId = 'nose' | 'wings' | 'engine' | 'paint'
 interface PartOption {
   id: string
   label: string
+  /** Flat coin/build score contribution. */
   bonus: number
+  /** Flight scroll speed multiplier contribution. */
+  speed: number
+  /** Pointer steering responsiveness. */
+  handling: number
+  /** Cloud hit forgiveness (higher = less penalty / smaller hitbox). */
+  armor: number
+  /** Tradeoff note shown in UI. */
+  tradeoff: string
 }
 
 const PARTS: Record<PartId, PartOption[]> = {
   nose: [
-    { id: 'round', label: 'Round', bonus: 2 },
-    { id: 'sharp', label: 'Sharp', bonus: 4 },
-    { id: 'bubble', label: 'Bubble', bonus: 3 },
-    { id: 'jet', label: 'Jet Cone', bonus: 5 },
+    { id: 'round', label: 'Round', bonus: 2, speed: 0, handling: 0.08, armor: 0.1, tradeoff: 'Stable · slower tip' },
+    { id: 'sharp', label: 'Sharp', bonus: 4, speed: 0.12, handling: 0.02, armor: -0.05, tradeoff: 'Faster · fragile' },
+    { id: 'bubble', label: 'Bubble', bonus: 3, speed: -0.04, handling: 0.12, armor: 0.18, tradeoff: 'Tanky · sluggish' },
+    { id: 'jet', label: 'Jet Cone', bonus: 5, speed: 0.18, handling: -0.04, armor: -0.08, tradeoff: 'Top speed · twitchy' },
   ],
   wings: [
-    { id: 'short', label: 'Short', bonus: 2 },
-    { id: 'wide', label: 'Wide', bonus: 4 },
-    { id: 'delta', label: 'Delta', bonus: 5 },
-    { id: 'biplane', label: 'Biplane', bonus: 6 },
+    { id: 'short', label: 'Short', bonus: 2, speed: 0.06, handling: -0.02, armor: 0, tradeoff: 'Nimble tip · less lift' },
+    { id: 'wide', label: 'Wide', bonus: 4, speed: -0.02, handling: 0.14, armor: 0.08, tradeoff: 'Glides · slower' },
+    { id: 'delta', label: 'Delta', bonus: 5, speed: 0.1, handling: 0.06, armor: 0, tradeoff: 'Balanced racer' },
+    { id: 'biplane', label: 'Biplane', bonus: 6, speed: -0.06, handling: 0.18, armor: 0.16, tradeoff: 'Max control · drag' },
   ],
   engine: [
-    { id: 'putt', label: 'Putt', bonus: 2 },
-    { id: 'turbo', label: 'Turbo', bonus: 5 },
-    { id: 'rocket', label: 'Rocket', bonus: 6 },
-    { id: 'twin', label: 'Twin Jet', bonus: 7 },
+    { id: 'putt', label: 'Putt', bonus: 2, speed: 0, handling: 0.06, armor: 0.12, tradeoff: 'Reliable · modest' },
+    { id: 'turbo', label: 'Turbo', bonus: 5, speed: 0.16, handling: 0, armor: -0.04, tradeoff: 'Punchy · hot' },
+    { id: 'rocket', label: 'Rocket', bonus: 6, speed: 0.24, handling: -0.08, armor: -0.1, tradeoff: 'Blazing · hard turns' },
+    { id: 'twin', label: 'Twin Jet', bonus: 7, speed: 0.14, handling: 0.04, armor: 0.04, tradeoff: 'Power with grip' },
   ],
   paint: [
-    { id: 'sky', label: 'Sky', bonus: 1 },
-    { id: 'candy', label: 'Candy', bonus: 3 },
-    { id: 'neon', label: 'Neon', bonus: 4 },
-    { id: 'camo', label: 'Camo', bonus: 5 },
+    { id: 'sky', label: 'Sky', bonus: 1, speed: 0, handling: 0.02, armor: 0.04, tradeoff: 'Calm finish' },
+    { id: 'candy', label: 'Candy', bonus: 3, speed: 0.02, handling: 0.06, armor: 0, tradeoff: 'Sweet handling' },
+    { id: 'neon', label: 'Neon', bonus: 4, speed: 0.08, handling: 0, armor: -0.02, tradeoff: 'Flashy speed' },
+    { id: 'camo', label: 'Camo', bonus: 5, speed: 0, handling: 0.04, armor: 0.14, tradeoff: 'Tough hide' },
   ],
 }
 
@@ -42,14 +51,43 @@ const FLIGHT_SECONDS = 16
 
 type Phase = 'build' | 'flight' | 'done'
 
-/** Craft a plane, then flight-test it — Build Your Plane analogue. */
+interface BuildStats {
+  bonus: number
+  speed: number
+  handling: number
+  armor: number
+}
+
+function statsFromPicks(picks: Partial<Record<PartId, string>>): BuildStats {
+  let bonus = 8
+  let speed = 1
+  let handling = 1
+  let armor = 1
+  for (const id of ORDER) {
+    const choice = picks[id]
+    const opt = PARTS[id].find((o) => o.id === choice)
+    if (!opt) continue
+    bonus += opt.bonus
+    speed += opt.speed
+    handling += opt.handling
+    armor += opt.armor
+  }
+  return {
+    bonus,
+    speed: Math.max(0.7, Math.min(1.6, speed)),
+    handling: Math.max(0.6, Math.min(1.7, handling)),
+    armor: Math.max(0.6, Math.min(1.6, armor)),
+  }
+}
+
+/** Craft a plane, then flight-test it — Build Your Plane analogue with part tradeoffs. */
 export function BuildPlaneGame() {
   const grant = useGameStore((s) => s.grantMinigameReward)
   const setOverlay = useGameStore((s) => s.setOverlay)
   const [phase, setPhase] = useState<Phase>('build')
   const [step, setStep] = useState(0)
   const [picks, setPicks] = useState<Partial<Record<PartId, string>>>({})
-  const [buildBonus, setBuildBonus] = useState(0)
+  const [stats, setStats] = useState<BuildStats>({ bonus: 8, speed: 1, handling: 1, armor: 1 })
   const [flightScore, setFlightScore] = useState(0)
   const [reward, setReward] = useState(0)
   const hostRef = useRef<HTMLDivElement>(null)
@@ -80,13 +118,8 @@ export function BuildPlaneGame() {
       setStep(step + 1)
       return
     }
-    let bonus = 8
-    for (const id of ORDER) {
-      const choice = next[id]
-      const opt = PARTS[id].find((o) => o.id === choice)
-      bonus += opt?.bonus ?? 0
-    }
-    setBuildBonus(bonus)
+    const nextStats = statsFromPicks(next)
+    setStats(nextStats)
     setPhase('flight')
   }
 
@@ -112,13 +145,12 @@ export function BuildPlaneGame() {
     let planeY = 0
     let planeVy = 0
     let pointerY: number | null = null
-    const handling = { speed: 1 + buildBonus / 40 }
 
     const finish = (finalScore: number) => {
       if (!living) return
       living = false
       setFlightScore(finalScore)
-      const coins = Math.max(10, buildBonus + Math.floor(finalScore * 1.4))
+      const coins = Math.max(10, stats.bonus + Math.floor(finalScore * 1.4))
       setReward(coins)
       setPhase('done')
       if (!grantedRef.current) {
@@ -161,7 +193,7 @@ export function BuildPlaneGame() {
 
         if (pointerY != null) {
           const target = pointerY
-          planeY += (target - planeY) * Math.min(1, dt * 8)
+          planeY += (target - planeY) * Math.min(1, dt * 5 * stats.handling)
         } else {
           planeVy += Math.sin(elapsed * 3) * 20 * dt
           planeY += planeVy * dt
@@ -182,20 +214,21 @@ export function BuildPlaneGame() {
         }
 
         const px = w * 0.22
-        const speed = (160 + buildBonus * 2) * handling.speed
+        const speed = (160 + stats.bonus * 2) * stats.speed
         for (let i = objs.length - 1; i >= 0; i--) {
           const o = objs[i]
           o.x -= speed * dt
           o.y += o.vy * dt
           const dx = o.x - px
           const dy = o.y - planeY
-          const hitR = o.kind === 'star' ? 22 : o.r * 0.7
+          const hitR = o.kind === 'star' ? 22 : o.r * (0.85 - stats.armor * 0.15)
           if (dx * dx + dy * dy < hitR * hitR) {
             if (o.kind === 'star') {
               score += 1
             } else {
-              score = Math.max(0, score - 1)
-              planeY += (Math.random() - 0.5) * 30
+              const penalty = stats.armor >= 1.2 ? 0 : 1
+              score = Math.max(0, score - penalty)
+              planeY += (Math.random() - 0.5) * (36 - stats.armor * 10)
             }
             objs.splice(i, 1)
             continue
@@ -203,10 +236,9 @@ export function BuildPlaneGame() {
           if (o.x < -40) objs.splice(i, 1)
         }
 
-        label.text = `Flight · ${remain.toFixed(1)}s · stars ${score} · build +${buildBonus}`
+        label.text = `Flight · ${remain.toFixed(1)}s · stars ${score} · spd ${stats.speed.toFixed(2)} · hnd ${stats.handling.toFixed(2)} · arm ${stats.armor.toFixed(2)}`
 
         gfx.clear()
-        // Sky
         gfx.rect(0, 0, w, h)
         gfx.fill(0x5b8fa8)
         gfx.rect(0, h * 0.7, w, h * 0.3)
@@ -217,7 +249,6 @@ export function BuildPlaneGame() {
           gfx.fill({ color: 0xffffff, alpha: 0.18 })
         }
 
-        // Plane from build picks
         const colorNum =
           preview.paint === 'candy'
             ? 0xff85a1
@@ -282,8 +313,9 @@ export function BuildPlaneGame() {
         /* ignore */
       }
     }
-  }, [phase, buildBonus, grant, preview.engine, preview.nose, preview.paint, preview.wings])
+  }, [phase, stats, grant, preview.engine, preview.nose, preview.paint, preview.wings])
 
+  const liveStats = statsFromPicks(picks)
   const title =
     phase === 'build'
       ? `Pick ${partId} (${step + 1}/${ORDER.length})`
@@ -319,11 +351,21 @@ export function BuildPlaneGame() {
               <div className={`plane-nose nose-${preview.nose}`} />
               <div className={`plane-engine engine-${preview.engine}`} />
             </div>
+            <p className="plane-stats">
+              Build +{liveStats.bonus} · Spd {liveStats.speed.toFixed(2)} · Hnd {liveStats.handling.toFixed(2)} · Arm{' '}
+              {liveStats.armor.toFixed(2)}
+            </p>
             <div className="plane-options">
               {options.map((o) => (
                 <button key={o.id} type="button" className="hub-card" onClick={() => choose(o.id)}>
                   <strong>{o.label}</strong>
-                  <span>+{o.bonus} build bonus</span>
+                  <span>
+                    +{o.bonus} · spd {o.speed >= 0 ? '+' : ''}
+                    {o.speed.toFixed(2)} · hnd {o.handling >= 0 ? '+' : ''}
+                    {o.handling.toFixed(2)} · arm {o.armor >= 0 ? '+' : ''}
+                    {o.armor.toFixed(2)}
+                  </span>
+                  <span className="hub-blurb">{o.tradeoff}</span>
                 </button>
               ))}
             </div>
@@ -333,7 +375,7 @@ export function BuildPlaneGame() {
         {phase === 'done' ? (
           <div className="minigame-end">
             <p className="dunk-msg">
-              Build +{buildBonus} · Flight stars {flightScore} · Banked {reward} coins
+              Build +{stats.bonus} · Spd {stats.speed.toFixed(2)} · Flight stars {flightScore} · Banked {reward} coins
             </p>
             <div className="minigame-actions">
               <button
@@ -344,7 +386,7 @@ export function BuildPlaneGame() {
                   setPhase('build')
                   setStep(0)
                   setPicks({})
-                  setBuildBonus(0)
+                  setStats({ bonus: 8, speed: 1, handling: 1, armor: 1 })
                   setFlightScore(0)
                   setReward(0)
                 }}

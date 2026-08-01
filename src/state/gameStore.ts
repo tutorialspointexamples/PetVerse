@@ -35,7 +35,14 @@ import type { RoomId } from '../game/rooms'
 import type { FoodId } from '../game/foods'
 import { getFood } from '../game/foods'
 import { clampNeed } from '../game/needs'
-import { MINIGAME_CARDS, WORLD_CARDS, type CardId } from '../game/cards'
+import {
+  getCardSet,
+  MINIGAME_CARDS,
+  setProgress,
+  WORLD_CARDS,
+  type CardId,
+  type CardSetId,
+} from '../game/cards'
 import {
   emptyMissionProgress,
   missionsForDay,
@@ -123,11 +130,14 @@ export interface GameState extends SaveData {
   setCompanion: (id: CompanionId) => void
   practiceSkill: (id: SkillId) => boolean
   claimEventBonus: () => boolean
+  doEventActivity: () => boolean
   grantMinigameReward: (coins: number, fuel?: number, keepOpen?: boolean) => void
   applyRewardedBoost: () => void
   setRoom: (id: RoomId) => void
   feedFood: (id: FoodId) => boolean
   collectCard: (id: CardId) => boolean
+  claimCardSet: (id: CardSetId) => boolean
+  playWithCompanion: () => boolean
   trackMission: (kind: MissionKind, amount?: number) => void
   claimMission: (id: string) => boolean
   ensureMissions: () => void
@@ -135,6 +145,7 @@ export interface GameState extends SaveData {
   mood: () => Mood
   shopOpen: boolean
   toggleShop: () => void
+  companionPlayUntil: number
 }
 
 function sliceSave(state: GameState): SaveData {
@@ -166,10 +177,12 @@ function sliceSave(state: GameState): SaveData {
     unlockedSkills,
     eventClaimDate,
     claimedEventIds,
+    eventActivityDate,
     sleeping,
     room,
     favoriteFood,
     ownedCards,
+    claimedCardSets,
     missionDate,
     missionProgress,
     claimedMissions,
@@ -202,10 +215,12 @@ function sliceSave(state: GameState): SaveData {
     unlockedSkills,
     eventClaimDate,
     claimedEventIds,
+    eventActivityDate,
     sleeping,
     room,
     favoriteFood,
     ownedCards,
+    claimedCardSets,
     missionDate,
     missionProgress,
     claimedMissions,
@@ -249,6 +264,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   worldVisitCollected: [],
   lastMinigameReward: 0,
   shopOpen: false,
+  companionPlayUntil: 0,
 
   hydrate: () => {
     const data = loadSave()
@@ -426,6 +442,33 @@ export const useGameStore = create<GameState>((set, get) => ({
       coins: state.coins + 2,
     })
     get().save()
+  },
+
+  playWithCompanion: () => {
+    const state = get()
+    if (state.companion === 'none') return false
+    const now = Date.now()
+    if (state.companionPlayUntil > now) return false
+    playCompanionVoice(state.companion)
+    set({
+      companionPlayUntil: now + 8000,
+      sleeping: false,
+      reaction: 'play',
+      needs: {
+        ...state.needs,
+        happiness: Math.min(100, state.needs.happiness + 16),
+        energy: Math.max(0, state.needs.energy - 4),
+      },
+      coins: state.coins + 6,
+      xp: state.xp + 4,
+      fuel: Math.min(20, state.fuel + 1),
+    })
+    get().save()
+    get().trackMission('play')
+    window.setTimeout(() => {
+      if (get().reaction === 'play') set({ reaction: 'idle' })
+    }, 1600)
+    return true
   },
 
   setTalking: (talking) => {
@@ -693,7 +736,25 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedColors,
       ownedHats,
       ownedCards,
-      overlay: 'none',
+      // Keep event panel open so daily activity can still be played.
+      overlay: 'event',
+    })
+    get().save()
+    return true
+  },
+
+  doEventActivity: () => {
+    const event = getActiveEvent()
+    if (!event?.activityKind) return false
+    const today = todayKey()
+    if (get().eventActivityDate === today) return false
+    if (!get().doCare(event.activityKind)) return false
+    const bonus = event.activityBonus ?? 10
+    set({
+      coins: get().coins + bonus,
+      xp: get().xp + 5,
+      eventActivityDate: today,
+      overlay: 'event',
     })
     get().save()
     return true
@@ -723,6 +784,23 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get()
     if (state.ownedCards.includes(id)) return false
     set({ ownedCards: [...state.ownedCards, id] })
+    get().save()
+    return true
+  },
+
+  claimCardSet: (id) => {
+    const state = get()
+    if (state.claimedCardSets.includes(id)) return false
+    const cardSet = getCardSet(id)
+    const progress = setProgress(state.ownedCards, cardSet)
+    if (!progress.complete) return false
+    set({
+      claimedCardSets: [...state.claimedCardSets, id],
+      coins: state.coins + cardSet.rewardCoins,
+      stars: state.stars + cardSet.rewardStars,
+      fuel: Math.min(20, state.fuel + cardSet.rewardFuel),
+      xp: state.xp + 12,
+    })
     get().save()
     return true
   },

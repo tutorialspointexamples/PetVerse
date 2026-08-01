@@ -12,7 +12,7 @@ import type { WorldId } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
 import type { RoomId } from '../game/rooms'
 import type { FoodId } from '../game/foods'
-import type { CardId } from '../game/cards'
+import type { CardId, CardSetId } from '../game/cards'
 import { DEFAULT_NEEDS } from '../game/needs'
 
 const SAVE_KEY = 'petverse-save-v4'
@@ -45,10 +45,13 @@ export interface SaveData {
   unlockedSkills: SkillId[]
   eventClaimDate: string | null
   claimedEventIds: string[]
+  /** YYYY-MM-DD when seasonal event activity was completed */
+  eventActivityDate: string | null
   sleeping: boolean
   room: RoomId
   favoriteFood: FoodId
   ownedCards: CardId[]
+  claimedCardSets: CardSetId[]
   /** YYYY-MM-DD for the active daily mission set */
   missionDate: string | null
   missionProgress: Record<string, number>
@@ -85,10 +88,12 @@ export function defaultSave(): SaveData {
     unlockedSkills: ['drums'],
     eventClaimDate: null,
     claimedEventIds: [],
+    eventActivityDate: null,
     sleeping: false,
     room: 'living',
     favoriteFood: 'kibble',
     ownedCards: [],
+    claimedCardSets: [],
     missionDate: null,
     missionProgress: {},
     claimedMissions: [],
@@ -123,9 +128,11 @@ export function loadSave(): SaveData {
       ownedCompanions: parsed.ownedCompanions?.length ? parsed.ownedCompanions : base.ownedCompanions,
       unlockedSkills: parsed.unlockedSkills?.length ? parsed.unlockedSkills : base.unlockedSkills,
       claimedEventIds: parsed.claimedEventIds ?? base.claimedEventIds,
+      eventActivityDate: parsed.eventActivityDate ?? base.eventActivityDate,
       room: parsed.room ?? base.room,
       favoriteFood: parsed.favoriteFood ?? base.favoriteFood,
       ownedCards: parsed.ownedCards ?? base.ownedCards,
+      claimedCardSets: parsed.claimedCardSets ?? base.claimedCardSets,
       missionDate: parsed.missionDate ?? base.missionDate,
       missionProgress: parsed.missionProgress ?? base.missionProgress,
       claimedMissions: parsed.claimedMissions ?? base.claimedMissions,
