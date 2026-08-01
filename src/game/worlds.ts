@@ -125,6 +125,8 @@ export function getWorld(id: WorldId): WorldDef {
   return WORLDS.find((w) => w.id === id) ?? WORLDS[0]
 }
 
+export type WorldSpotActivityKind = 'timing' | 'tap' | 'chase'
+
 /** Interactive hotspots while visiting a destination (MTT2 plane-world explore loop). */
 export interface WorldSpot {
   id: string
@@ -134,48 +136,49 @@ export interface WorldSpot {
   happiness: number
   x: number
   y: number
+  activity: WorldSpotActivityKind
 }
 
 export const WORLD_SPOTS: Record<WorldId, WorldSpot[]> = {
   candy: [
-    { id: 'gumdrop', label: 'Gumdrop Trail', blurb: 'Bounce along sugary paths.', rewardCoins: 8, happiness: 6, x: 18, y: 62 },
-    { id: 'sugar_tower', label: 'Sugar Tower', blurb: 'Peek from a candy spire.', rewardCoins: 10, happiness: 8, x: 52, y: 28 },
-    { id: 'candy_cart', label: 'Candy Cart', blurb: 'Snack from a rolling cart.', rewardCoins: 12, happiness: 10, x: 78, y: 58 },
+    { id: 'gumdrop', label: 'Gumdrop Trail', blurb: 'Bounce along sugary paths.', rewardCoins: 8, happiness: 6, x: 18, y: 62, activity: 'tap' },
+    { id: 'sugar_tower', label: 'Sugar Tower', blurb: 'Peek from a candy spire.', rewardCoins: 10, happiness: 8, x: 52, y: 28, activity: 'timing' },
+    { id: 'candy_cart', label: 'Candy Cart', blurb: 'Snack from a rolling cart.', rewardCoins: 12, happiness: 10, x: 78, y: 58, activity: 'chase' },
   ],
   pirate: [
-    { id: 'treasure', label: 'Buried Chest', blurb: 'Dig where X marks the spot.', rewardCoins: 10, happiness: 8, x: 22, y: 68 },
-    { id: 'cannon', label: 'Deck Cannon', blurb: 'Fire a confetti blast.', rewardCoins: 9, happiness: 7, x: 70, y: 36 },
-    { id: 'parrot', label: 'Parrot Perch', blurb: 'Chat with a salty bird.', rewardCoins: 11, happiness: 9, x: 48, y: 22 },
+    { id: 'treasure', label: 'Buried Chest', blurb: 'Dig where X marks the spot.', rewardCoins: 10, happiness: 8, x: 22, y: 68, activity: 'chase' },
+    { id: 'cannon', label: 'Deck Cannon', blurb: 'Fire a confetti blast.', rewardCoins: 9, happiness: 7, x: 70, y: 36, activity: 'timing' },
+    { id: 'parrot', label: 'Parrot Perch', blurb: 'Chat with a salty bird.', rewardCoins: 11, happiness: 9, x: 48, y: 22, activity: 'tap' },
   ],
   underwater: [
-    { id: 'coral', label: 'Coral Garden', blurb: 'Swim through glowing reefs.', rewardCoins: 9, happiness: 8, x: 20, y: 55 },
-    { id: 'bubble', label: 'Bubble Ring', blurb: 'Pop a shimmering ring.', rewardCoins: 8, happiness: 6, x: 55, y: 30 },
-    { id: 'chest_sea', label: 'Sea Chest', blurb: 'Open a barnacled stash.', rewardCoins: 12, happiness: 10, x: 78, y: 64 },
+    { id: 'coral', label: 'Coral Garden', blurb: 'Swim through glowing reefs.', rewardCoins: 9, happiness: 8, x: 20, y: 55, activity: 'chase' },
+    { id: 'bubble', label: 'Bubble Ring', blurb: 'Pop a shimmering ring.', rewardCoins: 8, happiness: 6, x: 55, y: 30, activity: 'tap' },
+    { id: 'chest_sea', label: 'Sea Chest', blurb: 'Open a barnacled stash.', rewardCoins: 12, happiness: 10, x: 78, y: 64, activity: 'timing' },
   ],
   beach: [
-    { id: 'shells', label: 'Shell Shore', blurb: 'Collect shiny shells.', rewardCoins: 7, happiness: 6, x: 16, y: 70 },
-    { id: 'surf', label: 'Surfboard', blurb: 'Ride a tiny wave.', rewardCoins: 10, happiness: 9, x: 50, y: 40 },
-    { id: 'sandcastle', label: 'Sandcastle', blurb: 'Build a crumbly fort.', rewardCoins: 9, happiness: 8, x: 82, y: 60 },
+    { id: 'shells', label: 'Shell Shore', blurb: 'Collect shiny shells.', rewardCoins: 7, happiness: 6, x: 16, y: 70, activity: 'tap' },
+    { id: 'surf', label: 'Surfboard', blurb: 'Ride a tiny wave.', rewardCoins: 10, happiness: 9, x: 50, y: 40, activity: 'timing' },
+    { id: 'sandcastle', label: 'Sandcastle', blurb: 'Build a crumbly fort.', rewardCoins: 9, happiness: 8, x: 82, y: 60, activity: 'chase' },
   ],
   forest: [
-    { id: 'mushroom', label: 'Glow Mushroom', blurb: 'Tap a mossy lantern.', rewardCoins: 8, happiness: 7, x: 24, y: 58 },
-    { id: 'firefly', label: 'Firefly Grove', blurb: 'Chase soft lights.', rewardCoins: 10, happiness: 9, x: 58, y: 26 },
-    { id: 'hollow', label: 'Tree Hollow', blurb: 'Peek into a cozy nook.', rewardCoins: 11, happiness: 8, x: 80, y: 52 },
+    { id: 'mushroom', label: 'Glow Mushroom', blurb: 'Tap a mossy lantern.', rewardCoins: 8, happiness: 7, x: 24, y: 58, activity: 'tap' },
+    { id: 'firefly', label: 'Firefly Grove', blurb: 'Chase soft lights.', rewardCoins: 10, happiness: 9, x: 58, y: 26, activity: 'chase' },
+    { id: 'hollow', label: 'Tree Hollow', blurb: 'Peek into a cozy nook.', rewardCoins: 11, happiness: 8, x: 80, y: 52, activity: 'timing' },
   ],
   cyber: [
-    { id: 'terminal', label: 'Neon Terminal', blurb: 'Hack a friendly kiosk.', rewardCoins: 12, happiness: 8, x: 20, y: 42 },
-    { id: 'drone', label: 'Hover Drone', blurb: 'Race a buzzing scout.', rewardCoins: 11, happiness: 9, x: 55, y: 22 },
-    { id: 'grid', label: 'Grid Pad', blurb: 'Dance on light tiles.', rewardCoins: 10, happiness: 7, x: 78, y: 60 },
+    { id: 'terminal', label: 'Neon Terminal', blurb: 'Hack a friendly kiosk.', rewardCoins: 12, happiness: 8, x: 20, y: 42, activity: 'timing' },
+    { id: 'drone', label: 'Hover Drone', blurb: 'Race a buzzing scout.', rewardCoins: 11, happiness: 9, x: 55, y: 22, activity: 'chase' },
+    { id: 'grid', label: 'Grid Pad', blurb: 'Dance on light tiles.', rewardCoins: 10, happiness: 7, x: 78, y: 60, activity: 'tap' },
   ],
   dragon: [
-    { id: 'egg', label: 'Warm Egg', blurb: 'Guard a glowing egg.', rewardCoins: 12, happiness: 9, x: 28, y: 64 },
-    { id: 'hoard', label: 'Gold Hoard', blurb: 'Count shiny coins.', rewardCoins: 14, happiness: 8, x: 62, y: 34 },
-    { id: 'ember', label: 'Ember Pit', blurb: 'Toast marshmallows safely.', rewardCoins: 11, happiness: 10, x: 82, y: 58 },
+    { id: 'egg', label: 'Warm Egg', blurb: 'Guard a glowing egg.', rewardCoins: 12, happiness: 9, x: 28, y: 64, activity: 'tap' },
+    { id: 'hoard', label: 'Gold Hoard', blurb: 'Count shiny coins.', rewardCoins: 14, happiness: 8, x: 62, y: 34, activity: 'chase' },
+    { id: 'ember', label: 'Ember Pit', blurb: 'Toast marshmallows safely.', rewardCoins: 11, happiness: 10, x: 82, y: 58, activity: 'timing' },
   ],
   alien: [
-    { id: 'crystal', label: 'Moon Crystal', blurb: 'Tune a violet crystal.', rewardCoins: 13, happiness: 9, x: 22, y: 48 },
-    { id: 'flora', label: 'Strange Flora', blurb: 'Pet a wiggly plant.', rewardCoins: 10, happiness: 8, x: 50, y: 24 },
-    { id: 'pod', label: 'Landing Pod', blurb: 'Scan a humming pod.', rewardCoins: 12, happiness: 10, x: 78, y: 62 },
+    { id: 'crystal', label: 'Moon Crystal', blurb: 'Tune a violet crystal.', rewardCoins: 13, happiness: 9, x: 22, y: 48, activity: 'timing' },
+    { id: 'flora', label: 'Strange Flora', blurb: 'Pet a wiggly plant.', rewardCoins: 10, happiness: 8, x: 50, y: 24, activity: 'tap' },
+    { id: 'pod', label: 'Landing Pod', blurb: 'Scan a humming pod.', rewardCoins: 12, happiness: 10, x: 78, y: 62, activity: 'chase' },
   ],
 }
 

@@ -123,7 +123,7 @@ export function BuildPlaneGame() {
       setPhase('done')
       if (!grantedRef.current) {
         grantedRef.current = true
-        grant(coins, finalScore >= 10 ? 3 : 2)
+        grant(coins, finalScore >= 10 ? 3 : 2, true)
       }
     }
 
@@ -335,9 +335,26 @@ export function BuildPlaneGame() {
             <p className="dunk-msg">
               Build +{buildBonus} · Flight stars {flightScore} · Banked {reward} coins
             </p>
-            <button type="button" className="primary-btn" onClick={() => setOverlay('none')}>
-              Back to pet
-            </button>
+            <div className="minigame-actions">
+              <button
+                type="button"
+                className="name-submit"
+                onClick={() => {
+                  grantedRef.current = false
+                  setPhase('build')
+                  setStep(0)
+                  setPicks({})
+                  setBuildBonus(0)
+                  setFlightScore(0)
+                  setReward(0)
+                }}
+              >
+                Play again
+              </button>
+              <button type="button" className="name-submit" onClick={() => setOverlay('none')}>
+                Back to pet
+              </button>
+            </div>
           </div>
         ) : null}
       </div>

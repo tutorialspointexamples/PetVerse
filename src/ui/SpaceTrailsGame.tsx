@@ -34,6 +34,7 @@ export function SpaceTrailsGame() {
   const [endSummary, setEndSummary] = useState('')
   const [skinName, setSkinName] = useState<SnakeSkin>('solar')
   const [status, setStatus] = useState('Shield · Magnet · Waves · Boss')
+  const [runKey, setRunKey] = useState(0)
 
   useEffect(() => {
     const host = hostRef.current
@@ -63,6 +64,7 @@ export function SpaceTrailsGame() {
     const cell = 24
     let dir = { x: 1, y: 0 }
     let nextDir = { x: 1, y: 0 }
+    const dirQueue: Array<{ x: number; y: number }> = []
     let snake: Cell[] = [
       { x: 6, y: 8 },
       { x: 5, y: 8 },
@@ -75,6 +77,12 @@ export function SpaceTrailsGame() {
     let stepEvery = 0.18
     let animTime = 0
     let pointerDown: { x: number; y: number } | null = null
+    let swipeHint: { x: number; y: number; nx: number; ny: number; life: number } | null = null
+    type BossPhase = 'chase' | 'dash' | 'volley' | 'vulnerable'
+    let bossPhase: BossPhase = 'chase'
+    let bossPhaseT = 0
+    let bossDash: { x: number; y: number } | null = null
+    let bossTelegraph: Cell | null = null
     const bursts: Array<{ x: number; y: number; life: number; color: number }> = []
     const trailSparks: Array<{ x: number; y: number; life: number; vx: number; vy: number }> = []
 
@@ -103,9 +111,6 @@ export function SpaceTrailsGame() {
         : `Trail ended · Wave ${waveLocal} · +${coins}c`
       setEndSummary(summary)
       setStatus(summary)
-      window.setTimeout(() => {
-        if (!disposed) setOverlay('none')
-      }, didClear ? 2000 : 900)
     }
 
     const spawnBoss = (cols: number, rows: number) => {
@@ -113,8 +118,12 @@ export function SpaceTrailsGame() {
       bossHpLocal = 3
       bossStep = 0
       bossDefeated = false
+      bossPhase = 'chase'
+      bossPhaseT = 2.4
+      bossDash = null
+      bossTelegraph = null
       setBossHp(bossHpLocal)
-      setStatus('BOSS — shield bash the comet serpent!')
+      setStatus('BOSS — chase · dash · volley · bash when glowing!')
       bursts.push({
         x: boss.x * cell + cell / 2,
         y: boss.y * cell + cell / 2,
@@ -217,9 +226,13 @@ export function SpaceTrailsGame() {
 
     const queueDir = (nx: number, ny: number) => {
       if (!living) return
-      if (nx === -dir.x && ny === -dir.y) return
       if (nx === 0 && ny === 0) return
-      nextDir = { x: nx, y: ny }
+      const base = dirQueue.length ? dirQueue[dirQueue.length - 1] : nextDir
+      if (nx === -base.x && ny === -base.y) return
+      if (nx === base.x && ny === base.y) return
+      if (dirQueue.length >= 2) dirQueue.shift()
+      dirQueue.push({ x: nx, y: ny })
+      if (dirQueue.length === 1) nextDir = dirQueue[0]
     }
 
     void (async () => {
@@ -267,7 +280,35 @@ export function SpaceTrailsGame() {
       placePickup(cols0, rows0)
       setStatus(`Wave 1 — goal ${WAVE_GOALS[0]} stars`)
 
+      const applySwipe = (dx: number, dy: number, x: number, y: number) => {
+        const absX = Math.abs(dx)
+        const absY = Math.abs(dy)
+        let nx = 0
+        let ny = 0
+        if (absX > 12 || absY > 12) {
+          if (absX > absY) nx = dx > 0 ? 1 : -1
+          else ny = dy > 0 ? 1 : -1
+        } else {
+          const head = snake[0]
+          const gx = Math.floor(x / cell)
+          const gy = Math.floor(y / cell)
+          const tdx = gx - head.x
+          const tdy = gy - head.y
+          if (Math.abs(tdx) > Math.abs(tdy)) nx = tdx > 0 ? 1 : -1
+          else if (tdy !== 0) ny = tdy > 0 ? 1 : -1
+        }
+        if (nx || ny) {
+          queueDir(nx, ny)
+          swipeHint = { x, y, nx, ny, life: 0.28 }
+        }
+      }
+
       const onPointerDown = (e: PointerEvent) => {
+        try {
+          app.canvas.setPointerCapture(e.pointerId)
+        } catch {
+          /* ignore */
+        }
         const rect = app.canvas.getBoundingClientRect()
         pointerDown = { x: e.clientX - rect.left, y: e.clientY - rect.top }
       }
@@ -280,33 +321,42 @@ export function SpaceTrailsGame() {
         const rect = app.canvas.getBoundingClientRect()
         const x = e.clientX - rect.left
         const y = e.clientY - rect.top
+        applySwipe(x - pointerDown.x, y - pointerDown.y, x, y)
+        pointerDown = null
+      }
+
+      const onPointerMove = (e: PointerEvent) => {
+        if (!pointerDown || !living) return
+        const rect = app.canvas.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
         const dx = x - pointerDown.x
         const dy = y - pointerDown.y
-        pointerDown = null
-        const absX = Math.abs(dx)
-        const absY = Math.abs(dy)
-        if (absX > 14 || absY > 14) {
-          if (absX > absY) queueDir(dx > 0 ? 1 : -1, 0)
-          else queueDir(0, dy > 0 ? 1 : -1)
-        } else {
-          const head = snake[0]
-          const gx = Math.floor(x / cell)
-          const gy = Math.floor(y / cell)
-          const tdx = gx - head.x
-          const tdy = gy - head.y
-          if (Math.abs(tdx) > Math.abs(tdy)) queueDir(tdx > 0 ? 1 : -1, 0)
-          else if (tdy !== 0) queueDir(0, tdy > 0 ? 1 : -1)
+        if (Math.abs(dx) > 28 || Math.abs(dy) > 28) {
+          applySwipe(dx, dy, x, y)
+          pointerDown = { x, y }
         }
       }
 
       const onKey = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowLeft' || e.key === 'a') queueDir(-1, 0)
-        else if (e.key === 'ArrowRight' || e.key === 'd') queueDir(1, 0)
-        else if (e.key === 'ArrowUp' || e.key === 'w') queueDir(0, -1)
-        else if (e.key === 'ArrowDown' || e.key === 's') queueDir(0, 1)
+        const map: Record<string, [number, number]> = {
+          ArrowLeft: [-1, 0],
+          a: [-1, 0],
+          ArrowRight: [1, 0],
+          d: [1, 0],
+          ArrowUp: [0, -1],
+          w: [0, -1],
+          ArrowDown: [0, 1],
+          s: [0, 1],
+        }
+        const next = map[e.key]
+        if (!next) return
+        e.preventDefault()
+        queueDir(next[0], next[1])
       }
 
       app.canvas.addEventListener('pointerdown', onPointerDown)
+      app.canvas.addEventListener('pointermove', onPointerMove)
       app.canvas.addEventListener('pointerup', onPointerUp)
       app.canvas.addEventListener('pointercancel', () => {
         pointerDown = null
@@ -349,8 +399,52 @@ export function SpaceTrailsGame() {
 
         stepEvery = Math.max(0.065, (boosted ? 0.1 : 0.18) - scoreLocal * 0.003 - (waveLocal - 1) * 0.006)
         stepAcc += dt
+        if (swipeHint) {
+          swipeHint.life -= dt
+          if (swipeHint.life <= 0) swipeHint = null
+        }
+        if (boss && bossHpLocal > 0) {
+          bossPhaseT -= dt
+          if (bossPhaseT <= 0) {
+            const cycle: BossPhase[] = ['chase', 'dash', 'volley', 'vulnerable']
+            const idx = (cycle.indexOf(bossPhase) + 1) % cycle.length
+            bossPhase = cycle[idx]
+            bossPhaseT = bossPhase === 'vulnerable' ? 2.2 : bossPhase === 'dash' ? 1.4 : 2.6
+            bossDash = null
+            bossTelegraph = null
+            if (bossPhase === 'dash') {
+              const hx = snake[0].x
+              const hy = snake[0].y
+              bossDash =
+                Math.abs(hx - boss.x) >= Math.abs(hy - boss.y)
+                  ? { x: hx > boss.x ? 1 : -1, y: 0 }
+                  : { x: 0, y: hy > boss.y ? 1 : -1 }
+              bossTelegraph = {
+                x: (boss.x + bossDash.x * 3 + cols) % cols,
+                y: (boss.y + bossDash.y * 3 + rows) % rows,
+              }
+              setStatus('BOSS dash — dodge the lane!')
+            } else if (bossPhase === 'volley') {
+              setStatus('BOSS volley — rocks incoming!')
+              for (let n = 0; n < 3; n++) {
+                const ax = (boss.x + (n - 1) + cols) % cols
+                const ay = (boss.y + (n % 2 === 0 ? 1 : -1) + rows) % rows
+                if (!snake.some((s) => s.x === ax && s.y === ay)) asteroids.push({ x: ax, y: ay })
+              }
+            } else if (bossPhase === 'vulnerable') {
+              shieldTimer = Math.max(shieldTimer, 1.6)
+              setStatus('BOSS open — shield bash now!')
+            } else {
+              setStatus('BOSS chase')
+            }
+          }
+        }
+
         while (stepAcc >= stepEvery) {
           stepAcc -= stepEvery
+          if (dirQueue.length) {
+            nextDir = dirQueue.shift()!
+          }
           dir = nextDir
           let nx = snake[0].x + dir.x
           let ny = snake[0].y + dir.y
@@ -414,8 +508,9 @@ export function SpaceTrailsGame() {
             }
           }
           if (boss && bossHpLocal > 0 && head.x === boss.x && head.y === boss.y) {
-            if (shielded) {
-              shieldTimer = 0
+            const canBash = shielded || bossPhase === 'vulnerable'
+            if (canBash) {
+              if (shielded) shieldTimer = 0
               bossHpLocal -= 1
               setBossHp(bossHpLocal)
               scoreLocal += 4
@@ -428,6 +523,8 @@ export function SpaceTrailsGame() {
               })
               boss.x = Math.min(cols - 2, Math.max(1, boss.x + (Math.random() < 0.5 ? 2 : -2)))
               boss.y = Math.min(rows - 2, Math.max(1, boss.y + (Math.random() < 0.5 ? 2 : -2)))
+              bossPhase = 'chase'
+              bossPhaseT = 1.8
               if (bossHpLocal <= 0) {
                 bossDefeated = true
                 boss = null
@@ -558,21 +655,28 @@ export function SpaceTrailsGame() {
           }
           if (boss && bossHpLocal > 0) {
             bossStep += 1
-            if (bossStep % 2 === 0) {
+            const moveEvery = bossPhase === 'dash' ? 1 : bossPhase === 'vulnerable' ? 3 : 2
+            if (bossStep % moveEvery === 0) {
               const hx = snake[0].x
               const hy = snake[0].y
               let bx = boss.x
               let by = boss.y
-              if (Math.abs(hx - bx) >= Math.abs(hy - by)) bx += hx > bx ? 1 : hx < bx ? -1 : 0
-              else by += hy > by ? 1 : hy < by ? -1 : 0
+              if (bossPhase === 'dash' && bossDash) {
+                bx += bossDash.x * 2
+                by += bossDash.y * 2
+              } else if (bossPhase !== 'vulnerable') {
+                if (Math.abs(hx - bx) >= Math.abs(hy - by)) bx += hx > bx ? 1 : hx < bx ? -1 : 0
+                else by += hy > by ? 1 : hy < by ? -1 : 0
+              }
               bx = (bx + cols) % cols
               by = (by + rows) % rows
-              if (!snake.some((s) => s.x === bx && s.y === by)) {
+              if (!snake.some((s) => s.x === bx && s.y === by) || bossPhase === 'dash') {
                 boss = { x: bx, y: by }
               }
               if (boss.x === snake[0].x && boss.y === snake[0].y) {
-                if (shieldTimer > 0) {
-                  shieldTimer = 0
+                const canBash = shieldTimer > 0 || bossPhase === 'vulnerable'
+                if (canBash) {
+                  if (shieldTimer > 0) shieldTimer = 0
                   bossHpLocal -= 1
                   setBossHp(bossHpLocal)
                   setStatus(bossHpLocal <= 0 ? 'Boss defeated!' : `Boss HP ${bossHpLocal}`)
@@ -612,7 +716,7 @@ export function SpaceTrailsGame() {
           (magnetOn ? 'MAGNET · ' : '') +
           (boosted ? 'BOOST · ' : '') +
           `${waveStars}/${goal}` +
-          (bossHpLocal > 0 ? ` · BOSS ${bossHpLocal}` : bossDefeated ? ' · BOSS DOWN' : '') +
+          (bossHpLocal > 0 ? ` · BOSS ${bossHpLocal} ${bossPhase.toUpperCase()}` : bossDefeated ? ' · BOSS DOWN' : '') +
           (comboLocal >= 2 ? ` · Combo x${1 + Math.min(4, Math.floor(comboLocal / 3))}` : '')
         gfx.clear()
 
@@ -679,14 +783,26 @@ export function SpaceTrailsGame() {
           gfx.fill({ color: 0x343a40, alpha: 0.6 })
         }
 
+        if (bossTelegraph && bossPhase === 'dash') {
+          gfx.roundRect(
+            bossTelegraph.x * cell + 2,
+            bossTelegraph.y * cell + 2,
+            cell - 4,
+            cell - 4,
+            6,
+          )
+          gfx.fill({ color: 0xff006e, alpha: 0.22 + Math.abs(Math.sin(animTime * 10)) * 0.25 })
+        }
         if (boss && bossHpLocal > 0) {
           const bx = boss.x * cell + cell / 2
           const by = boss.y * cell + cell / 2
           const throb = 16 + Math.sin(animTime * 7) * 3
-          gfx.circle(bx, by, throb + 8)
-          gfx.fill({ color: 0xff006e, alpha: 0.22 })
+          const aura =
+            bossPhase === 'vulnerable' ? 0xffbe0b : bossPhase === 'dash' ? 0xff006e : bossPhase === 'volley' ? 0x9b5de5 : 0xff85a1
+          gfx.circle(bx, by, throb + 10)
+          gfx.fill({ color: aura, alpha: bossPhase === 'vulnerable' ? 0.35 : 0.2 })
           gfx.circle(bx, by, throb)
-          gfx.fill(0x9b2226)
+          gfx.fill(bossPhase === 'vulnerable' ? 0xe76f51 : 0x9b2226)
           gfx.circle(bx - 5, by - 4, 4)
           gfx.fill(0xffbe0b)
           gfx.circle(bx + 5, by - 4, 4)
@@ -698,6 +814,14 @@ export function SpaceTrailsGame() {
             gfx.circle(bx - 10 + h * 10, by - throb - 6, 3.5)
             gfx.fill(0xff85a1)
           }
+        }
+        if (swipeHint) {
+          const a = Math.max(0, swipeHint.life / 0.28)
+          gfx.circle(swipeHint.x, swipeHint.y, 10)
+          gfx.stroke({ width: 2, color: 0xffffff, alpha: a * 0.7 })
+          gfx.moveTo(swipeHint.x, swipeHint.y)
+          gfx.lineTo(swipeHint.x + swipeHint.nx * 28, swipeHint.y + swipeHint.ny * 28)
+          gfx.stroke({ width: 3, color: 0x00f5d4, alpha: a })
         }
 
         const pcx = pickup.x * cell + cell / 2
@@ -803,6 +927,7 @@ export function SpaceTrailsGame() {
 
       ;(app as Application & { __cleanup?: () => void }).__cleanup = () => {
         app.canvas.removeEventListener('pointerdown', onPointerDown)
+        app.canvas.removeEventListener('pointermove', onPointerMove)
         app.canvas.removeEventListener('pointerup', onPointerUp)
         window.removeEventListener('keydown', onKey)
       }
@@ -819,7 +944,7 @@ export function SpaceTrailsGame() {
         /* ignore */
       }
     }
-  }, [grant, collectCard, setOverlay])
+  }, [grant, collectCard, runKey])
 
   return (
     <div className="minigame-overlay">
@@ -837,9 +962,31 @@ export function SpaceTrailsGame() {
         </div>
         <div className="minigame-canvas" ref={hostRef} />
         {!alive ? (
-          <p className={`minigame-end ${stageClear ? 'clear' : ''}`}>
-            {endSummary || (stageClear ? 'Stage clear — rewards saved' : 'Trail ended — rewards saved')}
-          </p>
+          <div className={`minigame-end ${stageClear ? 'clear' : ''}`}>
+            <p>{endSummary || (stageClear ? 'Stage clear — rewards saved' : 'Trail ended — rewards saved')}</p>
+            <div className="minigame-actions">
+              <button
+                type="button"
+                className="name-submit"
+                onClick={() => {
+                  setAlive(true)
+                  setStageClear(false)
+                  setBossHp(0)
+                  setScore(0)
+                  setCombo(0)
+                  setWave(1)
+                  setEndSummary('')
+                  setStatus('Shield · Magnet · Waves · Boss')
+                  setRunKey((k) => k + 1)
+                }}
+              >
+                Play again
+              </button>
+              <button type="button" className="name-submit" onClick={() => setOverlay('none')}>
+                Back to pet
+              </button>
+            </div>
+          </div>
         ) : null}
       </div>
     </div>

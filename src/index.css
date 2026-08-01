@@ -841,6 +841,7 @@ input {
 }
 
 .world-visit.interactive {
+  position: relative;
   width: min(520px, 100%);
   max-height: min(92vh, 720px);
   overflow: auto;
@@ -1094,6 +1095,122 @@ input {
 .minigame-canvas {
   min-height: 280px;
   height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+
+.spot-activity {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(10, 18, 16, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.spot-activity-card {
+  width: min(360px, 100%);
+  padding: 12px 14px 16px;
+  border-radius: 18px;
+  border: 3px solid #f4d35e;
+  background: rgba(255, 255, 255, 0.94);
+  color: #122820;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+  animation: world-clear-pop 0.35s ease-out;
+}
+
+.spot-activity-card h3 {
+  margin: 0;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+.spot-mini {
+  display: grid;
+  gap: 10px;
+}
+
+.spot-meter {
+  position: relative;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(18, 40, 32, 0.12);
+  overflow: hidden;
+}
+
+.spot-meter-zone {
+  position: absolute;
+  left: 38%;
+  width: 24%;
+  top: 0;
+  bottom: 0;
+  background: rgba(46, 196, 128, 0.55);
+}
+
+.spot-meter-needle {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 8px;
+  margin-left: -4px;
+  border-radius: 4px;
+  background: #e63946;
+}
+
+.spot-tap-target {
+  width: 120px;
+  height: 120px;
+  margin: 8px auto;
+  border: 0;
+  border-radius: 50%;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #122820;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--spot-accent, #f4d35e));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+
+.spot-tap-target:active {
+  transform: scale(0.94);
+}
+
+.spot-tap-target.fail {
+  background: #ffb4a2;
+}
+
+.spot-chase-arena {
+  position: relative;
+  height: 160px;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.35), transparent 40%),
+    linear-gradient(160deg, rgba(18, 40, 32, 0.08), rgba(18, 40, 32, 0.16));
+  overflow: hidden;
+}
+
+.spot-chase-target {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.55), 0 8px 16px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  animation: world-spot-pulse 1.2s ease-in-out infinite;
+}
+
+.minigame-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 8px 10px;
 }
 
 .minigame-end {

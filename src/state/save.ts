@@ -118,7 +118,7 @@ export function loadSave(): SaveData {
       ownedShoes: parsed.ownedShoes?.length ? parsed.ownedShoes : base.ownedShoes,
       shoes: parsed.shoes ?? base.shoes,
       ownedFurniture: parsed.ownedFurniture?.length ? parsed.ownedFurniture : base.ownedFurniture,
-      placedFurniture: parsed.placedFurniture?.length ? parsed.placedFurniture : base.placedFurniture,
+      placedFurniture: Array.isArray(parsed.placedFurniture) ? parsed.placedFurniture : base.placedFurniture,
       visitedWorlds: parsed.visitedWorlds ?? base.visitedWorlds,
       ownedCompanions: parsed.ownedCompanions?.length ? parsed.ownedCompanions : base.ownedCompanions,
       unlockedSkills: parsed.unlockedSkills?.length ? parsed.unlockedSkills : base.unlockedSkills,

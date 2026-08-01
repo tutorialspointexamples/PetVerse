@@ -135,9 +135,31 @@ export function DunkTossGame() {
       setCoinsEarned(coins)
       window.setTimeout(() => {
         running.current = false
-        grant(coins, nextHits >= 3 ? 2 : 1)
+        grant(coins, nextHits >= 3 ? 2 : 1, true)
       }, 750)
     }
+  }
+
+  const replay = () => {
+    running.current = true
+    setMeter(0)
+    setDir(1)
+    setThrows(0)
+    setHits(0)
+    setStreak(0)
+    setBestStreak(0)
+    setDone(false)
+    setMsg('Tap when the bar is in the green zone')
+    setPhase('aim')
+    setFlight(0)
+    setLastPerfect(false)
+    setShotKind(null)
+    setPopup(null)
+    setCrowd(0.35)
+    setShake(0)
+    setNetSwish(false)
+    setCoinsEarned(0)
+    flightRef.current = 0
   }
 
   const rimWobble = shotKind === 'rim' ? Math.sin(flight * Math.PI * 6) * 18 : 0
@@ -193,9 +215,20 @@ export function DunkTossGame() {
           <div className="dunk-needle" style={{ left: `${meter * 100}%` }} />
         </div>
         <p className="dunk-msg">{done ? `Game over · +${coinsEarned}c` : msg}</p>
-        <button type="button" className="name-submit" disabled={done || phase !== 'aim'} onClick={toss}>
-          {done ? 'Rewards saved' : phase === 'flying' ? '…' : 'Toss'}
-        </button>
+        {done ? (
+          <div className="minigame-actions">
+            <button type="button" className="name-submit" onClick={replay}>
+              Play again
+            </button>
+            <button type="button" className="name-submit" onClick={() => setOverlay('none')}>
+              Back to pet
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="name-submit" disabled={phase !== 'aim'} onClick={toss}>
+            {phase === 'flying' ? '…' : 'Toss'}
+          </button>
+        )}
       </div>
     </div>
   )

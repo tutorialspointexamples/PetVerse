@@ -21,6 +21,8 @@ export function SkyDashGame() {
   const [score, setScore] = useState(0)
   const [combo, setCombo] = useState(0)
   const [alive, setAlive] = useState(true)
+  const [endCoins, setEndCoins] = useState(0)
+  const [runKey, setRunKey] = useState(0)
 
   useEffect(() => {
     const host = hostRef.current
@@ -41,7 +43,8 @@ export function SkyDashGame() {
       setAlive(false)
       const coins = Math.min(48, 5 + Math.floor(finalScore / 2.5))
       const fuel = finalScore >= 30 ? 2 : 1
-      grant(coins, fuel)
+      grant(coins, fuel, true)
+      setEndCoins(coins)
     }
 
     void (async () => {
@@ -272,7 +275,7 @@ export function SkyDashGame() {
         /* ignore */
       }
     }
-  }, [grant])
+  }, [grant, runKey])
 
   return (
     <div className="minigame-overlay">
@@ -288,7 +291,29 @@ export function SkyDashGame() {
           </button>
         </div>
         <div className="minigame-canvas" ref={hostRef} />
-        {!alive ? <p className="minigame-end">Run over — rewards saved</p> : null}
+        {!alive ? (
+          <div className="minigame-end">
+            <p>Run over · +{endCoins}c</p>
+            <div className="minigame-actions">
+              <button
+                type="button"
+                className="name-submit"
+                onClick={() => {
+                  setAlive(true)
+                  setScore(0)
+                  setCombo(0)
+                  setEndCoins(0)
+                  setRunKey((k) => k + 1)
+                }}
+              >
+                Play again
+              </button>
+              <button type="button" className="name-submit" onClick={() => setOverlay('none')}>
+                Back to pet
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

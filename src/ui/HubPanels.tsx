@@ -1,4 +1,4 @@
-import { WORLDS, getWorldSpots } from '../game/worlds'
+import { WORLDS, getWorldSpots, type WorldSpot } from '../game/worlds'
 import { getActiveEvent } from '../game/events'
 import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
 import { FOODS } from '../game/foods'
@@ -7,9 +7,10 @@ import { CARDS } from '../game/cards'
 import { missionsForDay, todayKey } from '../game/missions'
 import { IAP_PRODUCTS, purchaseIap, showRewardedAd } from '../monetization/stubs'
 import { useGameStore } from '../state/gameStore'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { LOCALES } from '../i18n/strings'
 import { useLocale } from '../i18n/useLocale'
+import { WorldSpotActivity } from './WorldSpotActivity'
 
 export function GamesHub() {
   const overlay = useGameStore((s) => s.overlay)
@@ -76,12 +77,12 @@ export function TravelPanel() {
               disabled={fuel < w.fuelCost}
               onClick={() => travelTo(w.id)}
             >
-              <strong>{w.name}</strong>
+              <strong>{t(`world.${w.id}.name`)}</strong>
               <span>
                 {w.fuelCost} {t('travel.fuel')} · +{w.rewardCoins}c
                 {visitedWorlds.includes(w.id) ? ` · ${t('travel.visited')}` : ` · ${t('travel.new')}`}
               </span>
-              <span className="hub-blurb">{w.blurb}</span>
+              <span className="hub-blurb">{t(`world.${w.id}.blurb`)}</span>
             </button>
           ))}
         </div>
@@ -97,6 +98,7 @@ export function WorldVisitPanel() {
   const collectWorldSpot = useGameStore((s) => s.collectWorldSpot)
   const clearWorldVisit = useGameStore((s) => s.clearWorldVisit)
   const { t } = useLocale()
+  const [activeSpot, setActiveSpot] = useState<WorldSpot | null>(null)
   if (overlay !== 'worldVisit' || !activeWorld) return null
   const world = WORLDS.find((w) => w.id === activeWorld)
   if (!world) return null
@@ -113,7 +115,7 @@ export function WorldVisitPanel() {
         }}
       >
         <div className="shop-header">
-          <h2>{world.name}</h2>
+          <h2>{t(`world.${world.id}.name`)}</h2>
           <p className="shop-coins">
             {found}/{spots.length} {t('travel.spots')}
           </p>
@@ -122,7 +124,7 @@ export function WorldVisitPanel() {
           </button>
         </div>
         <p className="panel-note">
-          {world.blurb} {t('travel.explore')}
+          {t(`world.${world.id}.blurb`)} {t('travel.explore')}
         </p>
         <div className="world-stage" aria-label={t('travel.explore')}>
           <div className="world-pet" aria-hidden />
@@ -135,10 +137,10 @@ export function WorldVisitPanel() {
                 className={`world-spot ${taken ? 'collected' : ''}`}
                 style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
                 disabled={taken}
-                onClick={() => collectWorldSpot(spot.id)}
-                title={spot.blurb}
+                onClick={() => setActiveSpot(spot)}
+                title={t(`spot.${world.id}.${spot.id}.blurb`)}
               >
-                <strong>{spot.label}</strong>
+                <strong>{t(`spot.${world.id}.${spot.id}.label`)}</strong>
                 <span>{taken ? t('travel.collected') : `+${spot.rewardCoins}c`}</span>
               </button>
             )
@@ -148,6 +150,21 @@ export function WorldVisitPanel() {
         <button type="button" className="name-submit" onClick={clearWorldVisit}>
           {t('travel.home')}
         </button>
+        {activeSpot ? (
+          <WorldSpotActivity
+            spot={{
+              ...activeSpot,
+              label: t(`spot.${world.id}.${activeSpot.id}.label`),
+              blurb: t(`spot.${world.id}.${activeSpot.id}.blurb`),
+            }}
+            accent={world.accent}
+            onCancel={() => setActiveSpot(null)}
+            onSuccess={() => {
+              collectWorldSpot(activeSpot.id)
+              setActiveSpot(null)
+            }}
+          />
+        ) : null}
       </div>
     </div>
   )
@@ -173,7 +190,7 @@ export function FlightPanel() {
         <div className="flight-sky" />
         <div className="flight-plane" aria-hidden />
         <p className="flight-label">
-          {t('travel.flying')} {world.name}…
+          {t('travel.flying')} {t(`world.${world.id}.name`)}…
         </p>
         <button type="button" className="name-submit" onClick={finishFlight}>
           {t('travel.skip')}
@@ -212,11 +229,11 @@ export function FoodPanel() {
             onClick={() => feedFood(food.id)}
           >
             <strong>
-              {food.name}
+              {t(`food.${food.id}.name`)}
               {favoriteFood === food.id ? ` · ${t('food.fav')}` : ''}
             </strong>
             <span>
-              +{food.hunger} hunger · +{food.happiness} happy
+              +{food.hunger} {t('food.hunger')} · +{food.happiness} {t('food.happy')}
               {food.price ? ` · ${food.price}c` : ` · ${t('food.free')}`}
             </span>
           </button>
