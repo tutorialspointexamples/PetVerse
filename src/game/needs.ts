@@ -1,16 +1,17 @@
-export type NeedKey = 'hunger' | 'energy' | 'happiness' | 'cleanliness'
+export type NeedKey = 'hunger' | 'energy' | 'happiness' | 'cleanliness' | 'health'
 
 export type Needs = Record<NeedKey, number>
 
-export type CareAction = 'feed' | 'sleep' | 'bath' | 'play' | 'brush' | 'potty'
+export type CareAction = 'feed' | 'sleep' | 'bath' | 'play' | 'brush' | 'potty' | 'cure'
 
-export const NEED_KEYS: NeedKey[] = ['hunger', 'energy', 'happiness', 'cleanliness']
+export const NEED_KEYS: NeedKey[] = ['hunger', 'energy', 'happiness', 'cleanliness', 'health']
 
 export const NEED_LABELS: Record<NeedKey, string> = {
   hunger: 'Hunger',
   energy: 'Energy',
-  happiness: 'Happiness',
+  happiness: 'Happy',
   cleanliness: 'Clean',
+  health: 'Health',
 }
 
 /** Decay per second while awake (tab open). Tuned for longer play sessions. */
@@ -19,6 +20,7 @@ export const DECAY_PER_SEC: Needs = {
   energy: 0.12,
   happiness: 0.15,
   cleanliness: 0.1,
+  health: 0.04,
 }
 
 /** Slower decay while sleeping; energy recovers. */
@@ -27,6 +29,7 @@ export const SLEEP_DECAY_PER_SEC: Needs = {
   energy: -1.2,
   happiness: 0.05,
   cleanliness: 0.04,
+  health: 0.02,
 }
 
 export const CARE_EFFECTS: Record<
@@ -39,6 +42,7 @@ export const CARE_EFFECTS: Record<
   play: { happiness: 22, energy: -8, hunger: -5, coins: 6, cooldownMs: 2000 },
   brush: { cleanliness: 18, happiness: 10, coins: 4, cooldownMs: 3000 },
   potty: { cleanliness: 22, happiness: 6, hunger: -3, coins: 3, cooldownMs: 3500 },
+  cure: { health: 40, happiness: 10, coins: 5, cooldownMs: 5000 },
 }
 
 export function clampNeed(value: number): number {
@@ -47,11 +51,16 @@ export function clampNeed(value: number): number {
 
 export function applyDecay(needs: Needs, dtSec: number, sleeping: boolean): Needs {
   const rates = sleeping ? SLEEP_DECAY_PER_SEC : DECAY_PER_SEC
+  let healthRate = rates.health
+  // Neglected hunger/cleanliness drains health faster (MTT2 sick loop)
+  if (needs.hunger < 20) healthRate += 0.12
+  if (needs.cleanliness < 20) healthRate += 0.1
   return {
     hunger: clampNeed(needs.hunger - rates.hunger * dtSec),
     energy: clampNeed(needs.energy - rates.energy * dtSec),
     happiness: clampNeed(needs.happiness - rates.happiness * dtSec),
     cleanliness: clampNeed(needs.cleanliness - rates.cleanliness * dtSec),
+    health: clampNeed(needs.health - healthRate * dtSec),
   }
 }
 
@@ -62,17 +71,21 @@ export function applyCare(needs: Needs, action: CareAction): Needs {
     energy: clampNeed(needs.energy + (effect.energy ?? 0)),
     happiness: clampNeed(needs.happiness + (effect.happiness ?? 0)),
     cleanliness: clampNeed(needs.cleanliness + (effect.cleanliness ?? 0)),
+    health: clampNeed(needs.health + (effect.health ?? 0)),
   }
 }
 
-export type Mood = 'happy' | 'okay' | 'hungry' | 'tired' | 'dirty' | 'sad'
+export type Mood = 'happy' | 'okay' | 'hungry' | 'tired' | 'dirty' | 'sad' | 'sick'
 
 export function deriveMood(needs: Needs): Mood {
+  if (needs.health < 30) return 'sick'
   if (needs.energy < 25) return 'tired'
   if (needs.hunger < 25) return 'hungry'
   if (needs.cleanliness < 25) return 'dirty'
   if (needs.happiness < 30) return 'sad'
-  if (needs.happiness > 70 && needs.hunger > 50 && needs.energy > 50) return 'happy'
+  if (needs.happiness > 70 && needs.hunger > 50 && needs.energy > 50 && needs.health > 50) {
+    return 'happy'
+  }
   return 'okay'
 }
 
@@ -81,4 +94,5 @@ export const DEFAULT_NEEDS: Needs = {
   energy: 80,
   happiness: 68,
   cleanliness: 75,
+  health: 85,
 }

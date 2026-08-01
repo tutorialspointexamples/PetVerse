@@ -32,8 +32,8 @@ import type { CompanionId, SkillId } from '../game/progress'
 import { getCompanion, getSkill, levelFromXp } from '../game/progress'
 import { getActiveEvent } from '../game/events'
 import type { RoomId } from '../game/rooms'
-import type { FoodId } from '../game/foods'
-import { getFood } from '../game/foods'
+import type { FoodId, FoodTag } from '../game/foods'
+import { eatReactionForTag, getFood } from '../game/foods'
 import { clampNeed } from '../game/needs'
 import {
   getCardSet,
@@ -56,9 +56,14 @@ export type Reaction =
   | 'laugh'
   | 'annoyed'
   | 'eat'
+  | 'eat_spicy'
+  | 'eat_sweet'
+  | 'eat_messy'
+  | 'eat_healthy'
   | 'bath'
   | 'brush'
   | 'potty'
+  | 'cure'
   | 'sleep'
   | 'talk'
   | 'play'
@@ -100,6 +105,8 @@ export interface GameState extends SaveData {
   /** Spot ids collected during the current world visit (session-only). */
   worldVisitCollected: string[]
   lastMinigameReward: number
+  /** Last snack tag for pet eat VFX (session-only). */
+  lastFoodTag: FoodTag | null
   hydrate: () => void
   save: () => void
   setPetName: (name: string) => void
@@ -263,6 +270,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   activeWorld: null,
   worldVisitCollected: [],
   lastMinigameReward: 0,
+  lastFoodTag: null,
   shopOpen: false,
   companionPlayUntil: 0,
 
@@ -376,6 +384,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       play: 'play',
       brush: 'brush',
       potty: 'potty',
+      cure: 'cure',
     }
 
     const nextXp = state.xp + 3
@@ -400,12 +409,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedCards,
     })
     get().save()
-    if (action === 'feed' || action === 'bath' || action === 'play' || action === 'brush') {
+    if (
+      action === 'feed' ||
+      action === 'bath' ||
+      action === 'play' ||
+      action === 'brush' ||
+      action === 'cure'
+    ) {
       get().trackMission(action)
     }
     window.setTimeout(() => {
       if (get().reaction === reactionMap[action]) set({ reaction: 'idle' })
-    }, 1200)
+    }, action === 'cure' ? 1600 : 1200)
     return true
   },
 
@@ -631,15 +646,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     const food = getFood(id)
     if (food.price > 0 && state.coins < food.price) return false
     const happyBonus = state.favoriteFood === id ? 6 : 0
+    const reaction = eatReactionForTag(food.tag)
+    const messyClean = food.tag === 'messy' || food.tag === 'junk' ? -4 : 0
+    const healthyEnergy = food.tag === 'healthy' ? 4 : 0
     set({
       coins: state.coins - food.price + food.coins,
       needs: {
         ...state.needs,
         hunger: clampNeed(state.needs.hunger + food.hunger),
         happiness: clampNeed(state.needs.happiness + food.happiness + happyBonus),
+        health: clampNeed(state.needs.health + food.healthDelta),
+        cleanliness: clampNeed(state.needs.cleanliness + messyClean),
+        energy: clampNeed(state.needs.energy + healthyEnergy),
       },
       xp: state.xp + 3,
-      reaction: 'eat',
+      reaction,
+      lastFoodTag: food.tag,
       favoriteFood: id,
       cooldowns: { ...state.cooldowns, feed: now + CARE_EFFECTS.feed.cooldownMs },
       overlay: 'none',
@@ -648,8 +670,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().save()
     get().trackMission('feed')
     window.setTimeout(() => {
-      if (get().reaction === 'eat') set({ reaction: 'idle' })
-    }, 1200)
+      const r = get().reaction
+      if (r === reaction || r.startsWith('eat')) set({ reaction: 'idle' })
+    }, 1400)
     return true
   },
 

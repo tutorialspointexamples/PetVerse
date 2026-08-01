@@ -234,6 +234,10 @@ export function FoodPanel() {
             </strong>
             <span>
               +{food.hunger} {t('food.hunger')} · +{food.happiness} {t('food.happy')}
+              {food.healthDelta !== 0
+                ? ` · ${food.healthDelta > 0 ? '+' : ''}${food.healthDelta} ${t('food.health')}`
+                : ''}
+              {` · ${t(`food.tag.${food.tag}`)}`}
               {food.price ? ` · ${food.price}c` : ` · ${t('food.free')}`}
             </span>
           </button>

@@ -46,6 +46,7 @@ export type PokeZone =
   | 'bath_tub'
   | 'bath_sink'
   | 'bath_potty'
+  | 'bath_medicine'
   | 'bed_sleep'
   | 'bedroom_lamp'
   | 'yard_play'
@@ -63,6 +64,7 @@ export class PetScene {
   private roomPropHit = new Graphics()
   private roomPropHitB = new Graphics()
   private roomPropHitC = new Graphics()
+  private roomPropHitD = new Graphics()
   private roomPropHint = new Graphics()
   private pet = new Container()
   private shadow = new Graphics()
@@ -106,6 +108,7 @@ export class PetScene {
   private bathPulseT = 0
   private brushPulseT = 0
   private pottyPulseT = 0
+  private medicinePulseT = 0
   private swingPulseT = 0
   private tvPulseT = 0
   private sleepPulseT = 0
@@ -159,6 +162,7 @@ export class PetScene {
       this.roomPropHit,
       this.roomPropHitB,
       this.roomPropHitC,
+      this.roomPropHitD,
       this.pet,
       this.companionGfx,
       this.companionHit,
@@ -195,6 +199,8 @@ export class PetScene {
     this.roomPropHitB.cursor = 'pointer'
     this.roomPropHitC.eventMode = 'none'
     this.roomPropHitC.cursor = 'pointer'
+    this.roomPropHitD.eventMode = 'none'
+    this.roomPropHitD.cursor = 'pointer'
     this.headHit.on('pointertap', () => this.onPoke('head'))
     this.bellyHit.on('pointertap', () => this.onPoke('belly'))
     this.companionHit.on('pointertap', () => this.onPoke('companion'))
@@ -217,6 +223,9 @@ export class PetScene {
     this.roomPropHitC.on('pointertap', () => {
       if (this.props.room === 'bathroom') this.onPoke('bath_potty')
       else if (this.props.room === 'yard') this.onPoke('yard_fountain')
+    })
+    this.roomPropHitD.on('pointertap', () => {
+      if (this.props.room === 'bathroom') this.onPoke('bath_medicine')
     })
 
     parent.addEventListener('pointermove', this.onPointerMove)
@@ -280,6 +289,19 @@ export class PetScene {
       back.fill(0x90e0ef)
       back.roundRect(w * 0.77, h * 0.3, 10, 14, 3)
       back.fill(0x4cc9f0)
+      // Medicine cabinet (MTT2 cure loop)
+      back.roundRect(w * 0.7, h * 0.1, w * 0.18, h * 0.14, 6)
+      back.fill(0xe8f7ef)
+      back.roundRect(w * 0.715, h * 0.12, w * 0.06, h * 0.1, 3)
+      back.fill(0xffffff)
+      back.roundRect(w * 0.79, h * 0.12, w * 0.06, h * 0.1, 3)
+      back.fill(0xffffff)
+      back.circle(w * 0.745, h * 0.17, 5)
+      back.fill(0x5cb88a)
+      back.roundRect(w * 0.742, h * 0.14, 3, 10, 1)
+      back.fill(0xffffff)
+      back.roundRect(w * 0.738, h * 0.165, 10, 3, 1)
+      back.fill(0xffffff)
       // Tub
       back.ellipse(w * 0.2, h * 0.5, 40, 28)
       back.fill(0x48cae4)
@@ -390,14 +412,17 @@ export class PetScene {
     const hit = this.roomPropHit
     const hitB = this.roomPropHitB
     const hitC = this.roomPropHitC
+    const hitD = this.roomPropHitD
     const hint = this.roomPropHint
     hit.clear()
     hitB.clear()
     hitC.clear()
+    hitD.clear()
     hint.clear()
     hit.eventMode = 'none'
     hitB.eventMode = 'none'
     hitC.eventMode = 'none'
+    hitD.eventMode = 'none'
     const pulse = 0.35 + Math.abs(Math.sin(this.time * 2.4)) * 0.35
     const room = this.props.room
 
@@ -485,6 +510,25 @@ export class PetScene {
         hint.stroke({ width: 2, color: 0xffffff, alpha: 0.7 * swirl })
         hint.circle(w * 0.5 + Math.sin(this.time * 12) * 6, h * 0.5, 3)
         hint.fill({ color: 0x4cc9f0, alpha: 0.6 * swirl })
+      }
+      // Medicine cabinet → cure
+      hitD.roundRect(w * 0.68, h * 0.08, w * 0.22, h * 0.18, 6)
+      hitD.fill({ color: 0xffffff, alpha: 0.001 })
+      hitD.eventMode = 'static'
+      hint.roundRect(w * 0.7, h * 0.1, w * 0.18, h * 0.14, 6)
+      hint.stroke({ width: 3, color: 0x5cb88a, alpha: pulse })
+      if (this.medicinePulseT > 0) {
+        const mt = this.medicinePulseT
+        for (let i = 0; i < 6; i++) {
+          const ang = (i / 6) * Math.PI * 2 + this.time * 4
+          const r = 10 + (1 - mt / 1.4) * 18
+          hint.circle(w * 0.79 + Math.cos(ang) * r, h * 0.17 + Math.sin(ang) * r * 0.7, 3)
+          hint.fill({ color: i % 2 ? 0x5cb88a : 0xffffff, alpha: 0.55 * mt })
+        }
+        hint.roundRect(w * 0.775, h * 0.14, 8, 18, 2)
+        hint.fill({ color: 0xffffff, alpha: 0.65 * mt })
+        hint.roundRect(w * 0.765, h * 0.155, 18, 8, 2)
+        hint.fill({ color: 0xffffff, alpha: 0.65 * mt })
       }
     } else if (room === 'bedroom') {
       // Bed → sleep
@@ -1149,11 +1193,12 @@ export class PetScene {
     const g = this.body
     g.clear()
     const breath = breathIn || Math.sin(this.time * 2.1) * 2.5
+    const bodyFill = mood === 'sick' ? 0x8fbc8f : fill
     // Soft outer rim for rounded cartoon volume
     g.ellipse(0, 30 + b, 82 + breath * 0.4, 96)
     g.fill({ color: ear, alpha: 0.35 })
     g.ellipse(0, 28 + b, 78 + breath * 0.35, 92)
-    g.fill(fill)
+    g.fill(bodyFill)
     // Chest/shoulder volume planes (pseudo-3D)
     g.ellipse(-36, 8 + b, 26, 22)
     g.fill({ color: 0xffffff, alpha: 0.08 })
@@ -1180,16 +1225,27 @@ export class PetScene {
     g.fill({ color: ear, alpha: 0.2 })
 
     // Tail with tip accent — happier pets wag harder
-    const wagSpeed = mood === 'happy' ? 9 : mood === 'sad' || mood === 'tired' ? 1.4 : 2.5
-    const wagAmp = mood === 'happy' ? 16 : mood === 'sad' ? 4 : 10
+    const wagSpeed =
+      mood === 'happy' ? 9 : mood === 'sick' || mood === 'sad' || mood === 'tired' ? 1.2 : 2.5
+    const wagAmp = mood === 'happy' ? 16 : mood === 'sick' || mood === 'sad' ? 3 : 10
     const wag = Math.sin(this.time * wagSpeed) * wagAmp
     g.moveTo(70, 50 + b)
     g.quadraticCurveTo(110 + wag, 10 + b, 98 + wag * 0.4, -20 + b)
-    g.stroke({ width: 16, color: fill, cap: 'round' })
+    g.stroke({ width: 16, color: bodyFill, cap: 'round' })
     g.circle(98 + wag * 0.4, -20 + b, 9)
     g.fill(ear)
     g.circle(100 + wag * 0.4, -22 + b, 4)
     g.fill({ color: 0xffffff, alpha: 0.2 })
+
+    if (mood === 'sick') {
+      g.ellipse(0, 28 + b, 78, 92)
+      g.fill({ color: 0x70a37a, alpha: 0.22 })
+      for (let i = 0; i < 4; i++) {
+        const ang = this.time * 0.8 + i * 1.4
+        g.circle(Math.cos(ang) * 28, 20 + b + Math.sin(ang * 0.7) * 20, 5)
+        g.fill({ color: 0x5a8f66, alpha: 0.2 })
+      }
+    }
 
     if (mood === 'dirty' || this.props.needs.cleanliness < 40) {
       g.circle(-20, 50 + b, 6)
@@ -1464,7 +1520,7 @@ export class PetScene {
       g.quadraticCurveTo(18, headY + 8, 26, headY - 2)
       g.stroke({ width: 4, color: 0x243029, cap: 'round' })
     } else {
-      const eyeOpen = mood === 'tired' ? 6 : 12
+      const eyeOpen = mood === 'tired' || mood === 'sick' ? 6 : 12
       const lookX = Math.sin(this.time * 0.7) * 1.2 + this.lookTarget.x
       const lookY = Math.cos(this.time * 0.5) * 0.8 + this.lookTarget.y
       // Bigger cartoon eyes with iris rings + pointer-aware gaze
@@ -1555,14 +1611,32 @@ export class PetScene {
       const open = 4 + mouthOpen * 14
       g.ellipse(0, mouthY + 4, 12, open)
       g.fill(0x3a1f1a)
-    } else if (reaction === 'eat') {
+    } else if (
+      reaction === 'eat' ||
+      reaction === 'eat_spicy' ||
+      reaction === 'eat_sweet' ||
+      reaction === 'eat_messy' ||
+      reaction === 'eat_healthy'
+    ) {
       const chomp = Math.max(2, mouthOpen * 10)
       g.ellipse(0, mouthY + 2, 10, 4 + chomp)
       g.fill(0x3a1f1a)
+      if (reaction === 'eat_spicy') {
+        g.moveTo(-8, mouthY - 8)
+        g.lineTo(-2, mouthY - 18)
+        g.lineTo(4, mouthY - 10)
+        g.lineTo(10, mouthY - 20)
+        g.stroke({ width: 3, color: 0xe63946, cap: 'round' })
+      }
     } else if (reaction === 'laugh' || reaction === 'play' || mood === 'happy') {
       g.moveTo(-16, mouthY)
       g.quadraticCurveTo(0, mouthY + 16, 16, mouthY)
       g.stroke({ width: 4, color: 0x243029, cap: 'round' })
+    } else if (mood === 'sick') {
+      g.ellipse(0, mouthY + 4, 10, 7)
+      g.fill({ color: 0x3a1f1a, alpha: 0.85 })
+      g.ellipse(-34, headY + 10, 5, 7)
+      g.fill({ color: 0x90e0ef, alpha: 0.45 })
     } else if (mood === 'sad' || mood === 'hungry' || reaction === 'annoyed') {
       g.moveTo(-14, mouthY + 8)
       g.quadraticCurveTo(0, mouthY - 2, 14, mouthY + 8)
@@ -1601,6 +1675,37 @@ export class PetScene {
       g.fill({ color: 0xffffff, alpha: 0.55 })
       g.circle(55, -10 + b - b1 * 0.6, 8)
       g.fill({ color: 0xffffff, alpha: 0.5 })
+    }
+
+    if (reaction === 'cure') {
+      const pulse = 0.4 + Math.abs(Math.sin(this.time * 10)) * 0.4
+      g.roundRect(-8, headY - 50, 16, 28, 4)
+      g.fill({ color: 0x5cb88a, alpha: 0.85 })
+      g.roundRect(-3, headY - 44, 6, 16, 2)
+      g.fill({ color: 0xffffff, alpha: pulse })
+      g.roundRect(-8, headY - 36, 16, 6, 2)
+      g.fill({ color: 0xffffff, alpha: pulse })
+      g.circle(40, headY - 10, 4 + Math.sin(this.time * 12) * 1.5)
+      g.fill({ color: 0x5cb88a, alpha: 0.5 })
+      g.circle(-42, headY + 4, 3)
+      g.fill({ color: 0xffffff, alpha: 0.55 })
+    }
+
+    if (reaction === 'eat_sweet') {
+      g.ellipse(-34, headY + 18, 8, 5)
+      g.fill({ color: 0xff8fab, alpha: 0.45 })
+      g.ellipse(34, headY + 18, 8, 5)
+      g.fill({ color: 0xff8fab, alpha: 0.45 })
+    }
+    if (reaction === 'eat_healthy') {
+      g.ellipse(0, headY - 40, 10, 6)
+      g.fill({ color: 0x80ed99, alpha: 0.55 })
+    }
+    if (reaction === 'eat_messy') {
+      g.circle(-18, mouthY + 10, 3)
+      g.fill({ color: 0xe76f51, alpha: 0.5 })
+      g.circle(14, mouthY + 12, 2.5)
+      g.fill({ color: 0xe9b44c, alpha: 0.45 })
     }
 
     if (reaction === 'brush') {
@@ -1941,7 +2046,7 @@ export class PetScene {
 
   /** Room-toy juice — cook / bath / brush / potty / swing / tv / sleep / fountain. */
   pulseRoomProp(
-    kind: 'cook' | 'fountain' | 'bath' | 'brush' | 'potty' | 'swing' | 'tv' | 'sleep',
+    kind: 'cook' | 'fountain' | 'bath' | 'brush' | 'potty' | 'medicine' | 'swing' | 'tv' | 'sleep',
   ) {
     const w = this.app.screen.width
     const h = this.app.screen.height
@@ -1951,6 +2056,7 @@ export class PetScene {
       bath: { x: w * 0.2, y: h * 0.5, color: 0xffffff, n: 14 },
       brush: { x: w * 0.78, y: h * 0.4, color: 0x4cc9f0, n: 10 },
       potty: { x: w * 0.5, y: h * 0.48, color: 0x90e0ef, n: 8 },
+      medicine: { x: w * 0.79, y: h * 0.17, color: 0x5cb88a, n: 12 },
       swing: { x: w * 0.2, y: h * 0.55, color: 0xffbe0b, n: 10 },
       tv: { x: w * 0.8, y: h * 0.28, color: 0x9b5de5, n: 12 },
       sleep: { x: w * 0.22, y: h * 0.38, color: 0xffe066, n: 8 },
@@ -1961,6 +2067,7 @@ export class PetScene {
     else if (kind === 'bath') this.bathPulseT = 1.5
     else if (kind === 'brush') this.brushPulseT = 1.4
     else if (kind === 'potty') this.pottyPulseT = 1.2
+    else if (kind === 'medicine') this.medicinePulseT = 1.4
     else if (kind === 'swing') this.swingPulseT = 1.4
     else if (kind === 'tv') this.tvPulseT = 1.3
     else this.sleepPulseT = 1.6
@@ -1992,6 +2099,11 @@ export class PetScene {
       spread: number
     }> = []
     if (reaction === 'eat') bursts.push({ n: 10, color: 0xf4a261, kind: 'crumb', spread: 40 })
+    if (reaction === 'eat_spicy') bursts.push({ n: 12, color: 0xe63946, kind: 'spark', spread: 55 })
+    if (reaction === 'eat_sweet') bursts.push({ n: 10, color: 0xff85a1, kind: 'heart', spread: 45 })
+    if (reaction === 'eat_messy') bursts.push({ n: 12, color: 0xe9b44c, kind: 'crumb', spread: 50 })
+    if (reaction === 'eat_healthy') bursts.push({ n: 10, color: 0x80ed99, kind: 'spark', spread: 40 })
+    if (reaction === 'cure') bursts.push({ n: 14, color: 0x5cb88a, kind: 'spark', spread: 55 })
     if (reaction === 'bath') bursts.push({ n: 14, color: 0xffffff, kind: 'circle', spread: 70 })
     if (reaction === 'laugh' || reaction === 'play')
       bursts.push({ n: 8, color: 0xff85a1, kind: 'heart', spread: 50 })
@@ -2063,6 +2175,7 @@ export class PetScene {
     if (this.cookT > 0) this.cookT = Math.max(0, this.cookT - dt)
     if (this.fountainT > 0) this.fountainT = Math.max(0, this.fountainT - dt)
     if (this.bathPulseT > 0) this.bathPulseT = Math.max(0, this.bathPulseT - dt)
+    if (this.medicinePulseT > 0) this.medicinePulseT = Math.max(0, this.medicinePulseT - dt)
     if (this.brushPulseT > 0) this.brushPulseT = Math.max(0, this.brushPulseT - dt)
     if (this.pottyPulseT > 0) this.pottyPulseT = Math.max(0, this.pottyPulseT - dt)
     if (this.swingPulseT > 0) this.swingPulseT = Math.max(0, this.swingPulseT - dt)

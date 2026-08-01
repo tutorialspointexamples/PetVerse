@@ -9,6 +9,7 @@ export type MissionKind =
   | 'travel'
   | 'skill'
   | 'poke'
+  | 'cure'
 
 export interface MissionDef {
   id: string
@@ -24,6 +25,7 @@ const POOL: MissionDef[] = [
   { id: 'bath2', kind: 'bath', target: 2, rewardCoins: 20, rewardFuel: 1, label: 'Give 2 baths' },
   { id: 'brush2', kind: 'brush', target: 2, rewardCoins: 18, rewardFuel: 0, label: 'Brush teeth twice' },
   { id: 'play3', kind: 'play', target: 3, rewardCoins: 22, rewardFuel: 1, label: 'Play together 3 times' },
+  { id: 'cure1', kind: 'cure', target: 1, rewardCoins: 24, rewardFuel: 1, label: 'Use the medicine cabinet once' },
   { id: 'game1', kind: 'minigame', target: 1, rewardCoins: 30, rewardFuel: 2, label: 'Finish 1 mini-game' },
   { id: 'game2', kind: 'minigame', target: 2, rewardCoins: 45, rewardFuel: 2, label: 'Win 2 mini-games' },
   { id: 'travel1', kind: 'travel', target: 1, rewardCoins: 35, rewardFuel: 0, label: 'Fly to any world' },

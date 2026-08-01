@@ -39,7 +39,9 @@ export function derivePose(input: PetPoseInput): PetPose {
   else if (sleeping) bounce = Math.sin(time * 1.1) * 1.2
   else if (reaction === 'laugh') bounce = Math.sin(time * 20) * 10
   else if (reaction === 'play' || reaction.startsWith('skill_')) bounce = Math.sin(time * 16) * 5
-  else if (reaction === 'eat') bounce = Math.sin(time * 12) * 2
+  else if (reaction.startsWith('eat')) bounce = Math.sin(time * 12) * 2
+  else if (reaction === 'cure') bounce = Math.sin(time * 8) * 3
+  else if (mood === 'sick') bounce = Math.sin(time * 1.2) * 1.2
   else if (mood === 'happy') bounce = Math.sin(time * 3.4) * 5
 
   const landing = Math.max(0, -bounce)
@@ -50,7 +52,8 @@ export function derivePose(input: PetPoseInput): PetPose {
   let tilt = Math.sin(time * 1.4) * 0.03
   if (reaction === 'laugh') tilt = Math.sin(time * 12) * 0.14
   else if (reaction === 'play' || reaction.startsWith('skill_')) tilt = Math.sin(time * 8) * 0.1
-  else if (reaction === 'annoyed') tilt = -0.08
+  else if (reaction === 'annoyed' || reaction === 'eat_spicy') tilt = -0.08
+  else if (mood === 'sick') tilt = Math.sin(time * 0.9) * 0.05 - 0.06
   else if (sleeping) tilt = Math.sin(time * 0.8) * 0.02
 
   const limbPhase =
@@ -78,7 +81,7 @@ export function derivePose(input: PetPoseInput): PetPose {
         ? Math.min(1, yawnT) * 0.9
         : reaction === 'laugh'
           ? 0.7 + Math.sin(time * 14) * 0.2
-          : reaction === 'eat'
+          : reaction.startsWith('eat')
             ? 0.35 + Math.abs(Math.sin(time * 10)) * 0.4
             : 0.05
 

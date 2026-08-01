@@ -46,6 +46,8 @@ export function GameCanvas() {
         if (a.doCare('brush')) sceneRef.current?.pulseRoomProp('brush')
       } else if (zone === 'bath_potty') {
         if (a.doCare('potty')) sceneRef.current?.pulseRoomProp('potty')
+      } else if (zone === 'bath_medicine') {
+        if (a.doCare('cure')) sceneRef.current?.pulseRoomProp('medicine')
       } else if (zone === 'bed_sleep') {
         if (a.doCare('sleep')) sceneRef.current?.pulseRoomProp('sleep')
       } else if (zone === 'bedroom_lamp') {

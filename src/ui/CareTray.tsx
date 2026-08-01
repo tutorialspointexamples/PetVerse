@@ -15,6 +15,7 @@ const TOOLS: CareTool[] = [
   { id: 'bath', labelKey: 'care.soap', mark: 'soap', hintKey: 'care.hint.bath' },
   { id: 'brush', labelKey: 'care.brush', mark: 'brush', hintKey: 'care.hint.brush' },
   { id: 'potty', labelKey: 'care.potty', mark: 'potty', hintKey: 'care.hint.potty' },
+  { id: 'cure', labelKey: 'care.medicine', mark: 'medicine', hintKey: 'care.hint.cure' },
   { id: 'sleep', labelKey: 'care.pillow', mark: 'pillow', hintKey: 'care.hint.sleep' },
   { id: 'play', labelKey: 'care.ball', mark: 'ball', hintKey: 'care.hint.play' },
 ]
