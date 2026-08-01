@@ -889,6 +889,23 @@ export class PetScene {
     return Math.sin(this.time * 2.2) * 3
   }
 
+  /** Approximate spine squash/stretch from bounce — MTT2-like cartoon volume. */
+  private squash() {
+    const b = this.bounce()
+    const landing = Math.max(0, -b)
+    const rising = Math.max(0, b)
+    return {
+      sx: 1 + landing * 0.012 - rising * 0.008,
+      sy: 1 - landing * 0.012 + rising * 0.01,
+      tilt:
+        this.props.reaction === 'laugh'
+          ? Math.sin(this.time * 10) * 0.08
+          : this.props.reaction === 'annoyed'
+            ? -0.06
+            : Math.sin(this.time * 1.4) * 0.02,
+    }
+  }
+
   private redraw() {
     if (!this.ready || this.disposed) return
     const { needs, bodyColor, hat, glasses, scarf, shirt, shoes, reaction, sleeping, talking, petName } =
@@ -896,7 +913,9 @@ export class PetScene {
     const color = getBodyColor(bodyColor)
     const mood = deriveMood(needs)
     const scale = this.app.screen.width < 480 ? 0.82 : 1
-    this.pet.scale.set(scale)
+    const sq = this.squash()
+    this.pet.scale.set(scale * sq.sx, scale * sq.sy)
+    this.pet.rotation = sq.tilt
     this.nameTag.text = petName || 'Your Pet'
     const b = this.bounce()
 
@@ -932,18 +951,38 @@ export class PetScene {
   private drawLegs(fill: number, b: number) {
     const g = this.legs
     g.clear()
-    g.roundRect(-48, 70 + b * 0.2, 28, 42, 12)
+    const playStep =
+      this.props.reaction === 'play' || this.props.reaction.startsWith('skill_')
+        ? Math.sin(this.time * 12) * 8
+        : Math.sin(this.time * 2.2) * 2
+    const leftY = 70 + b * 0.2 + playStep * 0.35
+    const rightY = 70 + b * 0.2 - playStep * 0.35
+    // Thigh volume + shin taper for more articulated limbs
+    g.ellipse(-34, leftY + 8, 16, 20)
     g.fill(fill)
-    g.roundRect(20, 70 + b * 0.2, 28, 42, 12)
+    g.roundRect(-48, leftY, 28, 42, 12)
     g.fill(fill)
+    g.ellipse(34, rightY + 8, 16, 20)
+    g.fill(fill)
+    g.roundRect(20, rightY, 28, 42, 12)
+    g.fill(fill)
+    // Knee highlights
+    g.ellipse(-34, leftY + 14, 7, 5)
+    g.fill({ color: 0xffffff, alpha: 0.12 })
+    g.ellipse(34, rightY + 14, 7, 5)
+    g.fill({ color: 0xffffff, alpha: 0.12 })
     // Soft paw pads when barefoot
     if (this.props.shoes === 'none') {
-      g.ellipse(-34, 108 + b * 0.2, 10, 6)
+      g.ellipse(-34, leftY + 38, 10, 6)
       g.fill({ color: 0xffb4a2, alpha: 0.75 })
-      g.ellipse(34, 108 + b * 0.2, 10, 6)
+      g.ellipse(34, rightY + 38, 10, 6)
       g.fill({ color: 0xffb4a2, alpha: 0.75 })
-      for (const sx of [-40, -34, -28, 28, 34, 40]) {
-        g.circle(sx, 100 + b * 0.2, 2.4)
+      for (const sx of [-40, -34, -28]) {
+        g.circle(sx, leftY + 30, 2.4)
+        g.fill({ color: 0xffb4a2, alpha: 0.7 })
+      }
+      for (const sx of [28, 34, 40]) {
+        g.circle(sx, rightY + 30, 2.4)
         g.fill({ color: 0xffb4a2, alpha: 0.7 })
       }
     }
@@ -1034,19 +1073,27 @@ export class PetScene {
   private drawBodyLayer(fill: number, belly: number, ear: number, mood: string, b: number) {
     const g = this.body
     g.clear()
+    const breath = Math.sin(this.time * 2.1) * 2.5
     // Soft outer rim for rounded cartoon volume
-    g.ellipse(0, 30 + b, 82, 96)
+    g.ellipse(0, 30 + b, 82 + breath * 0.4, 96)
     g.fill({ color: ear, alpha: 0.35 })
-    g.ellipse(0, 28 + b, 78, 92)
+    g.ellipse(0, 28 + b, 78 + breath * 0.35, 92)
     g.fill(fill)
+    // Chest/shoulder volume planes (pseudo-3D)
+    g.ellipse(-36, 8 + b, 26, 22)
+    g.fill({ color: 0xffffff, alpha: 0.08 })
+    g.ellipse(36, 10 + b, 24, 20)
+    g.fill({ color: 0x000000, alpha: 0.05 })
     // Depth shade + highlight
     g.ellipse(18, 40 + b, 40, 70)
     g.fill({ color: 0x000000, alpha: 0.07 })
     g.ellipse(-22, 8 + b, 22, 28)
     g.fill({ color: 0xffffff, alpha: 0.1 })
-    // Cream belly patch
-    g.ellipse(0, 42 + b, 48, 58)
+    // Cream belly patch with soft bounce
+    g.ellipse(0, 42 + b + breath * 0.3, 48 + breath * 0.2, 58)
     g.fill(belly)
+    g.ellipse(-8, 30 + b, 14, 18)
+    g.fill({ color: 0xffffff, alpha: 0.12 })
     // Fur stripes (talking-pet silhouette cue)
     g.ellipse(-40, 20 + b, 8, 22)
     g.fill({ color: ear, alpha: 0.28 })
@@ -1054,6 +1101,8 @@ export class PetScene {
     g.fill({ color: ear, alpha: 0.22 })
     g.ellipse(40, 24 + b, 8, 20)
     g.fill({ color: ear, alpha: 0.24 })
+    g.ellipse(36, 58 + b, 6, 16)
+    g.fill({ color: ear, alpha: 0.2 })
 
     // Tail with tip accent — happier pets wag harder
     const wagSpeed = mood === 'happy' ? 9 : mood === 'sad' || mood === 'tired' ? 1.4 : 2.5
@@ -1064,6 +1113,8 @@ export class PetScene {
     g.stroke({ width: 16, color: fill, cap: 'round' })
     g.circle(98 + wag * 0.4, -20 + b, 9)
     g.fill(ear)
+    g.circle(100 + wag * 0.4, -22 + b, 4)
+    g.fill({ color: 0xffffff, alpha: 0.2 })
 
     if (mood === 'dirty' || this.props.needs.cleanliness < 40) {
       g.circle(-20, 50 + b, 6)
@@ -1188,10 +1239,19 @@ export class PetScene {
         : reaction === 'skill_drums'
           ? Math.sin(this.time * 18) * 10
           : Math.sin(this.time * 2) * 4
+    // Upper-arm + forearm segments for clearer articulation
+    g.ellipse(-72, 6 + b + swing * 0.1, 16, 22)
+    g.fill(fill)
+    g.ellipse(72, 6 + b - swing * 0.1, 16, 22)
+    g.fill(fill)
     g.ellipse(-78, 20 + b + swing * 0.15, 22, 36)
     g.fill(fill)
     g.ellipse(78, 20 + b - swing * 0.15, 22, 36)
     g.fill(fill)
+    g.ellipse(-74, 10 + b + swing * 0.08, 6, 8)
+    g.fill({ color: 0xffffff, alpha: 0.12 })
+    g.ellipse(74, 10 + b - swing * 0.08, 6, 8)
+    g.fill({ color: 0xffffff, alpha: 0.12 })
     // Palm pads for softer cartoon paws
     g.ellipse(-78, 48 + b + swing * 0.1, 10, 8)
     g.fill({ color: 0xffb4a2, alpha: 0.72 })
@@ -1228,6 +1288,12 @@ export class PetScene {
     const flop = this.earFlopT > 0 ? Math.sin(this.earFlopT * 14) * 14 : 0
     const earWiggle = Math.sin(this.time * 2.6) * 4 + flop
     const talkBob = this.props.talking ? Math.sin(this.time * 14) * 2 : 0
+    const browLift =
+      this.props.reaction === 'laugh'
+        ? 4
+        : this.props.reaction === 'annoyed'
+          ? -3
+          : Math.sin(this.time * 1.8) * 1.2
     // Cheek fluff for rounder talking-pet silhouette
     g.ellipse(-52, headY + 18 + talkBob, 18, 16)
     g.fill(fill)
@@ -1244,6 +1310,14 @@ export class PetScene {
     g.fill({ color: 0x000000, alpha: 0.04 })
     g.ellipse(-40, headY + 8 + talkBob, 10, 14)
     g.fill({ color: 0xffffff, alpha: 0.07 })
+    // Forehead fur tuft + brow ridges for more facial depth
+    g.moveTo(-8, headY - 52 + talkBob)
+    g.quadraticCurveTo(0, headY - 68 + talkBob + browLift, 8, headY - 52 + talkBob)
+    g.stroke({ width: 5, color: fill, cap: 'round' })
+    g.ellipse(-22, headY - 18 + talkBob + browLift, 16, 5)
+    g.fill({ color: 0x000000, alpha: 0.08 })
+    g.ellipse(22, headY - 18 + talkBob + browLift, 16, 5)
+    g.fill({ color: 0x000000, alpha: 0.08 })
     // Muzzle plate with slight depth
     g.ellipse(0, headY + 22 + talkBob, 28, 20)
     g.fill({ color: 0xffe8c8, alpha: 0.55 })

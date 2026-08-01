@@ -22,6 +22,7 @@ npm run dev
 - Collectible card album (25) from worlds, rooms, missions, and mini-games
 - Photo booth snaps, multi-language UI (EN/ES/PT/FR/DE/RU/TR/AR)
 - Companions with unique voices, skills (drums / hoop / boxing), seasonal events
+- Pet puppet squash/stretch, breathing, articulated limbs, brow/ear secondary motion
 - Optional mock rewarded ad / IAP boosts
 - Capacitor Android packaging notes in `docs/ANDROID.md`
 
