@@ -19,7 +19,7 @@ const SKIN_COLORS: Record<SnakeSkin, { head: number; a: number; b: number; glow:
 
 const WAVE_GOALS = [6, 12, 20, 30, 42]
 
-/** Snake-style trail collector — Space Trails with waves, shield/magnet, portals, skins. */
+/** Snake-style trail collector — Space Trails with waves, shield/magnet, portals, skins, boss. */
 export function SpaceTrailsGame() {
   const hostRef = useRef<HTMLDivElement>(null)
   const grant = useGameStore((s) => s.grantMinigameReward)
@@ -29,8 +29,11 @@ export function SpaceTrailsGame() {
   const [combo, setCombo] = useState(0)
   const [wave, setWave] = useState(1)
   const [alive, setAlive] = useState(true)
+  const [stageClear, setStageClear] = useState(false)
+  const [bossHp, setBossHp] = useState(0)
+  const [endSummary, setEndSummary] = useState('')
   const [skinName, setSkinName] = useState<SnakeSkin>('solar')
-  const [status, setStatus] = useState('Shield · Magnet · Waves')
+  const [status, setStatus] = useState('Shield · Magnet · Waves · Boss')
 
   useEffect(() => {
     const host = hostRef.current
@@ -46,10 +49,16 @@ export function SpaceTrailsGame() {
     let magnetTimer = 0
     let portalFlash = 0
     let waveFlash = 0
+    let clearFlash = 0
     let caughtComet = false
     let waveLocal = 1
     let waveStars = 0
     let lengthBonusClaimed = 0
+    let boss: Cell | null = null
+    let bossHpLocal = 0
+    let bossStep = 0
+    let bossDefeated = false
+    let cleared = false
     let skin: SnakeSkin = 'solar'
     const cell = 24
     let dir = { x: 1, y: 0 }
@@ -78,15 +87,52 @@ export function SpaceTrailsGame() {
       }
     }
 
-    const finish = (finalScore: number) => {
+    const finish = (finalScore: number, didClear = false) => {
       if (!living) return
       living = false
       setAlive(false)
       const waveBonus = (waveLocal - 1) * 6
-      const coins = Math.min(70, 8 + Math.floor(finalScore / 1.5) + waveBonus)
+      const clearBonus = didClear ? 20 : 0
+      const bossBonus = bossDefeated ? 12 : 0
+      const coins = Math.min(90, 8 + Math.floor(finalScore / 1.5) + waveBonus + clearBonus + bossBonus)
       if (caughtComet) collectCard('comet_core')
-      grant(coins, finalScore >= 10 ? 2 : 1)
-      setStatus(`Wave ${waveLocal} clear · +${coins}c`)
+      grant(coins, finalScore >= 10 || didClear ? 2 : 1, true)
+      setStageClear(didClear)
+      const summary = didClear
+        ? `Stage clear · Wave ${waveLocal} · Boss ${bossDefeated ? 'down' : 'skipped'} · +${coins}c`
+        : `Trail ended · Wave ${waveLocal} · +${coins}c`
+      setEndSummary(summary)
+      setStatus(summary)
+      window.setTimeout(() => {
+        if (!disposed) setOverlay('none')
+      }, didClear ? 2000 : 900)
+    }
+
+    const spawnBoss = (cols: number, rows: number) => {
+      boss = { x: cols - 3, y: Math.floor(rows / 2) }
+      bossHpLocal = 3
+      bossStep = 0
+      bossDefeated = false
+      setBossHp(bossHpLocal)
+      setStatus('BOSS — shield bash the comet serpent!')
+      bursts.push({
+        x: boss.x * cell + cell / 2,
+        y: boss.y * cell + cell / 2,
+        life: 0.8,
+        color: 0xff006e,
+      })
+    }
+
+    const tryStageClear = () => {
+      if (cleared || waveLocal < WAVE_GOALS.length) return false
+      const goal = WAVE_GOALS[WAVE_GOALS.length - 1]
+      if (waveStars < goal || bossHpLocal > 0) return false
+      cleared = true
+      clearFlash = 1.2
+      setStageClear(true)
+      setStatus('STAGE CLEAR!')
+      window.setTimeout(() => finish(scoreLocal, true), 900)
+      return true
     }
 
     const occupied = (x: number, y: number) =>
@@ -151,7 +197,16 @@ export function SpaceTrailsGame() {
       seedAsteroids(cols, rows, Math.min(14, 4 + waveLocal))
       addBoostPads(cols, rows, Math.min(5, 2 + Math.floor(waveLocal / 2)), true)
       placePickup(cols, rows)
-      setStatus(`Wave ${waveLocal} — goal ${WAVE_GOALS[Math.min(WAVE_GOALS.length - 1, waveLocal - 1)]} stars`)
+      const goal = WAVE_GOALS[Math.min(WAVE_GOALS.length - 1, waveLocal - 1)]
+      if (waveLocal >= WAVE_GOALS.length) {
+        spawnBoss(cols, rows)
+        setStatus(`Final wave — ${goal} stars + defeat boss`)
+      } else {
+        boss = null
+        bossHpLocal = 0
+        setBossHp(0)
+        setStatus(`Wave ${waveLocal} — goal ${goal} stars`)
+      }
       bursts.push({
         x: cols * cell * 0.5,
         y: rows * cell * 0.35,
@@ -268,6 +323,7 @@ export function SpaceTrailsGame() {
         magnetTimer = Math.max(0, magnetTimer - dt)
         portalFlash = Math.max(0, portalFlash - dt)
         waveFlash = Math.max(0, waveFlash - dt)
+        clearFlash = Math.max(0, clearFlash - dt)
         if (comboTimer <= 0 && comboLocal > 0) {
           comboLocal = 0
           setCombo(0)
@@ -352,6 +408,35 @@ export function SpaceTrailsGame() {
                 color: 0x4cc9f0,
               })
               setStatus('Shield smashed a rock!')
+            } else {
+              finish(scoreLocal)
+              return
+            }
+          }
+          if (boss && bossHpLocal > 0 && head.x === boss.x && head.y === boss.y) {
+            if (shielded) {
+              shieldTimer = 0
+              bossHpLocal -= 1
+              setBossHp(bossHpLocal)
+              scoreLocal += 4
+              setScore(scoreLocal)
+              bursts.push({
+                x: boss.x * cell + cell / 2,
+                y: boss.y * cell + cell / 2,
+                life: 0.65,
+                color: 0xff006e,
+              })
+              boss.x = Math.min(cols - 2, Math.max(1, boss.x + (Math.random() < 0.5 ? 2 : -2)))
+              boss.y = Math.min(rows - 2, Math.max(1, boss.y + (Math.random() < 0.5 ? 2 : -2)))
+              if (bossHpLocal <= 0) {
+                bossDefeated = true
+                boss = null
+                setBossHp(0)
+                setStatus('Boss defeated!')
+                if (tryStageClear()) return
+              } else {
+                setStatus(`Boss HP ${bossHpLocal}`)
+              }
             } else {
               finish(scoreLocal)
               return
@@ -455,6 +540,9 @@ export function SpaceTrailsGame() {
             const goal = WAVE_GOALS[Math.min(WAVE_GOALS.length - 1, waveLocal - 1)]
             if (waveStars >= goal && waveLocal < WAVE_GOALS.length) {
               advanceWave(cols, rows)
+            } else if (waveStars >= goal && waveLocal >= WAVE_GOALS.length) {
+              if (tryStageClear()) return
+              setStatus(bossHpLocal > 0 ? 'Stars done — bash the boss!' : 'STAGE CLEAR!')
             } else if (scoreLocal > 0 && scoreLocal % 8 === 0 && asteroids.length < 12 + waveLocal) {
               for (let tries = 0; tries < 30; tries++) {
                 const x = 1 + Math.floor(Math.random() * (cols - 2))
@@ -467,6 +555,39 @@ export function SpaceTrailsGame() {
             }
           } else {
             snake.pop()
+          }
+          if (boss && bossHpLocal > 0) {
+            bossStep += 1
+            if (bossStep % 2 === 0) {
+              const hx = snake[0].x
+              const hy = snake[0].y
+              let bx = boss.x
+              let by = boss.y
+              if (Math.abs(hx - bx) >= Math.abs(hy - by)) bx += hx > bx ? 1 : hx < bx ? -1 : 0
+              else by += hy > by ? 1 : hy < by ? -1 : 0
+              bx = (bx + cols) % cols
+              by = (by + rows) % rows
+              if (!snake.some((s) => s.x === bx && s.y === by)) {
+                boss = { x: bx, y: by }
+              }
+              if (boss.x === snake[0].x && boss.y === snake[0].y) {
+                if (shieldTimer > 0) {
+                  shieldTimer = 0
+                  bossHpLocal -= 1
+                  setBossHp(bossHpLocal)
+                  setStatus(bossHpLocal <= 0 ? 'Boss defeated!' : `Boss HP ${bossHpLocal}`)
+                  if (bossHpLocal <= 0) {
+                    bossDefeated = true
+                    boss = null
+                    setBossHp(0)
+                    if (tryStageClear()) return
+                  }
+                } else {
+                  finish(scoreLocal)
+                  return
+                }
+              }
+            }
           }
           if (scoreLocal > 0 && Math.random() < 0.08 + waveLocal * 0.01) {
             asteroids = asteroids.map((a, i) => {
@@ -491,6 +612,7 @@ export function SpaceTrailsGame() {
           (magnetOn ? 'MAGNET · ' : '') +
           (boosted ? 'BOOST · ' : '') +
           `${waveStars}/${goal}` +
+          (bossHpLocal > 0 ? ` · BOSS ${bossHpLocal}` : bossDefeated ? ' · BOSS DOWN' : '') +
           (comboLocal >= 2 ? ` · Combo x${1 + Math.min(4, Math.floor(comboLocal / 3))}` : '')
         gfx.clear()
 
@@ -528,6 +650,10 @@ export function SpaceTrailsGame() {
           gfx.rect(0, 0, app.screen.width, app.screen.height)
           gfx.fill({ color: 0x00f5d4, alpha: waveFlash * 0.1 })
         }
+        if (clearFlash > 0) {
+          gfx.rect(0, 0, app.screen.width, app.screen.height)
+          gfx.fill({ color: 0xffbe0b, alpha: clearFlash * 0.16 })
+        }
 
         for (const pad of boostPads) {
           const cx = pad.x * cell + cell / 2
@@ -551,6 +677,27 @@ export function SpaceTrailsGame() {
           gfx.fill(0x6c757d)
           gfx.circle(cx - 3 + wob, cy - 2, 3)
           gfx.fill({ color: 0x343a40, alpha: 0.6 })
+        }
+
+        if (boss && bossHpLocal > 0) {
+          const bx = boss.x * cell + cell / 2
+          const by = boss.y * cell + cell / 2
+          const throb = 16 + Math.sin(animTime * 7) * 3
+          gfx.circle(bx, by, throb + 8)
+          gfx.fill({ color: 0xff006e, alpha: 0.22 })
+          gfx.circle(bx, by, throb)
+          gfx.fill(0x9b2226)
+          gfx.circle(bx - 5, by - 4, 4)
+          gfx.fill(0xffbe0b)
+          gfx.circle(bx + 5, by - 4, 4)
+          gfx.fill(0xffbe0b)
+          gfx.moveTo(bx - 10, by + 6)
+          gfx.lineTo(bx + 10, by + 6)
+          gfx.stroke({ width: 3, color: 0xffffff, alpha: 0.85 })
+          for (let h = 0; h < bossHpLocal; h++) {
+            gfx.circle(bx - 10 + h * 10, by - throb - 6, 3.5)
+            gfx.fill(0xff85a1)
+          }
         }
 
         const pcx = pickup.x * cell + cell / 2
@@ -672,23 +819,28 @@ export function SpaceTrailsGame() {
         /* ignore */
       }
     }
-  }, [grant, collectCard])
+  }, [grant, collectCard, setOverlay])
 
   return (
     <div className="minigame-overlay">
-      <div className="minigame-frame">
+      <div className={`minigame-frame ${stageClear ? 'stage-clear' : ''}`}>
         <div className="minigame-top">
           <h2>Space Trails</h2>
           <p>
             Stars {score}
-            {combo >= 2 ? ` · Combo ${combo}` : ''} · Wave {wave} · Skin {skinName} · {status}
+            {combo >= 2 ? ` · Combo ${combo}` : ''} · Wave {wave}
+            {bossHp > 0 ? ` · Boss ${bossHp}` : ''} · Skin {skinName} · {status}
           </p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
           </button>
         </div>
         <div className="minigame-canvas" ref={hostRef} />
-        {!alive ? <p className="minigame-end">Trail ended — rewards saved</p> : null}
+        {!alive ? (
+          <p className={`minigame-end ${stageClear ? 'clear' : ''}`}>
+            {endSummary || (stageClear ? 'Stage clear — rewards saved' : 'Trail ended — rewards saved')}
+          </p>
+        ) : null}
       </div>
     </div>
   )

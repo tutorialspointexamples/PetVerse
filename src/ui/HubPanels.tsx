@@ -1,4 +1,4 @@
-import { WORLDS } from '../game/worlds'
+import { WORLDS, getWorldSpots } from '../game/worlds'
 import { getActiveEvent } from '../game/events'
 import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
 import { FOODS } from '../game/foods'
@@ -93,24 +93,58 @@ export function TravelPanel() {
 export function WorldVisitPanel() {
   const overlay = useGameStore((s) => s.overlay)
   const activeWorld = useGameStore((s) => s.activeWorld)
+  const worldVisitCollected = useGameStore((s) => s.worldVisitCollected)
+  const collectWorldSpot = useGameStore((s) => s.collectWorldSpot)
   const clearWorldVisit = useGameStore((s) => s.clearWorldVisit)
   const { t } = useLocale()
   if (overlay !== 'worldVisit' || !activeWorld) return null
   const world = WORLDS.find((w) => w.id === activeWorld)
   if (!world) return null
+  const spots = getWorldSpots(activeWorld)
+  const found = worldVisitCollected.length
+  const cleared = found >= spots.length && spots.length > 0
   return (
     <div className="shop-overlay" role="dialog" aria-label="World visit">
       <div
-        className="shop-panel world-visit"
+        className="shop-panel world-visit interactive"
         style={{
-          background: `linear-gradient(180deg, #${world.wall.toString(16).padStart(6, '0')}, #${world.floor.toString(16).padStart(6, '0')})`,
+          background: `linear-gradient(165deg, #${world.wall.toString(16).padStart(6, '0')} 0%, #${world.accent.toString(16).padStart(6, '0')}55 42%, #${world.floor.toString(16).padStart(6, '0')} 100%)`,
           color: '#1a2a22',
         }}
       >
-        <h2>{world.name}</h2>
-        <p>
-          {world.blurb} {t('travel.landed')}
+        <div className="shop-header">
+          <h2>{world.name}</h2>
+          <p className="shop-coins">
+            {found}/{spots.length} {t('travel.spots')}
+          </p>
+          <button type="button" className="close-btn" onClick={clearWorldVisit}>
+            ×
+          </button>
+        </div>
+        <p className="panel-note">
+          {world.blurb} {t('travel.explore')}
         </p>
+        <div className="world-stage" aria-label={t('travel.explore')}>
+          <div className="world-pet" aria-hidden />
+          {spots.map((spot) => {
+            const taken = worldVisitCollected.includes(spot.id)
+            return (
+              <button
+                key={spot.id}
+                type="button"
+                className={`world-spot ${taken ? 'collected' : ''}`}
+                style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+                disabled={taken}
+                onClick={() => collectWorldSpot(spot.id)}
+                title={spot.blurb}
+              >
+                <strong>{spot.label}</strong>
+                <span>{taken ? t('travel.collected') : `+${spot.rewardCoins}c`}</span>
+              </button>
+            )
+          })}
+        </div>
+        {cleared ? <p className="world-clear-banner">{t('travel.cleared')}</p> : null}
         <button type="button" className="name-submit" onClick={clearWorldVisit}>
           {t('travel.home')}
         </button>

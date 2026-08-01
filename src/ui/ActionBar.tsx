@@ -122,7 +122,7 @@ export function ActionBar() {
           {t('nav.pets')}
         </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('photo')}>
-          Photo
+          {t('nav.photo')}
         </button>
         <button type="button" className="action-btn slim" onClick={() => setOverlay('lang')}>
           {t('nav.lang')}

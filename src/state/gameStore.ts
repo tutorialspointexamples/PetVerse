@@ -27,7 +27,7 @@ import { playCompanionVoice } from '../audio/companionVoice'
 import type { FurnitureId } from '../game/furniture'
 import { getFurniture } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
-import { getWorld } from '../game/worlds'
+import { getWorld, getWorldSpots } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
 import { getCompanion, getSkill, levelFromXp } from '../game/progress'
 import { getActiveEvent } from '../game/events'
@@ -90,6 +90,8 @@ export interface GameState extends SaveData {
   micError: string | null
   talking: boolean
   activeWorld: WorldId | null
+  /** Spot ids collected during the current world visit (session-only). */
+  worldVisitCollected: string[]
   lastMinigameReward: number
   hydrate: () => void
   save: () => void
@@ -115,12 +117,13 @@ export interface GameState extends SaveData {
   addXp: (n: number) => void
   travelTo: (id: WorldId) => boolean
   finishFlight: () => void
+  collectWorldSpot: (spotId: string) => boolean
   clearWorldVisit: () => void
   unlockCompanion: (id: CompanionId) => boolean
   setCompanion: (id: CompanionId) => void
   practiceSkill: (id: SkillId) => boolean
   claimEventBonus: () => boolean
-  grantMinigameReward: (coins: number, fuel?: number) => void
+  grantMinigameReward: (coins: number, fuel?: number, keepOpen?: boolean) => void
   applyRewardedBoost: () => void
   setRoom: (id: RoomId) => void
   feedFood: (id: FoodId) => boolean
@@ -243,6 +246,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   micError: null,
   talking: false,
   activeWorld: null,
+  worldVisitCollected: [],
   lastMinigameReward: 0,
   shopOpen: false,
 
@@ -516,6 +520,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedHats,
       ownedCards,
       activeWorld: id,
+      worldVisitCollected: [],
       overlay: 'flight',
     })
     get().save()
@@ -528,10 +533,41 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ overlay: 'none' })
       return
     }
-    set({ overlay: 'worldVisit' })
+    set({ overlay: 'worldVisit', worldVisitCollected: [] })
   },
 
-  clearWorldVisit: () => set({ activeWorld: null, overlay: 'none' }),
+  collectWorldSpot: (spotId) => {
+    const state = get()
+    const worldId = state.activeWorld
+    if (!worldId || state.overlay !== 'worldVisit') return false
+    if (state.worldVisitCollected.includes(spotId)) return false
+    const spot = getWorldSpots(worldId).find((s) => s.id === spotId)
+    if (!spot) return false
+    const collected = [...state.worldVisitCollected, spotId]
+    const allSpots = getWorldSpots(worldId)
+    const cleared = collected.length >= allSpots.length
+    const bonus = cleared ? 15 : 0
+    set({
+      worldVisitCollected: collected,
+      coins: state.coins + spot.rewardCoins + bonus,
+      stars: state.stars + (cleared ? 1 : 0),
+      xp: state.xp + (cleared ? 8 : 3),
+      needs: {
+        ...state.needs,
+        happiness: clampNeed(state.needs.happiness + spot.happiness + (cleared ? 6 : 0)),
+        energy: clampNeed(state.needs.energy - 2),
+      },
+      reaction: 'play',
+    })
+    window.setTimeout(() => {
+      if (get().reaction === 'play') get().setReaction('idle')
+    }, 900)
+    get().save()
+    get().trackMission('play')
+    return true
+  },
+
+  clearWorldVisit: () => set({ activeWorld: null, worldVisitCollected: [], overlay: 'none' }),
 
   setRoom: (id) => {
     const state = get()
@@ -663,7 +699,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     return true
   },
 
-  grantMinigameReward: (coins, fuel = 1) => {
+  grantMinigameReward: (coins, fuel = 1, keepOpen = false) => {
     const state = get()
     const cardId = MINIGAME_CARDS[state.overlay]
     const ownedCards =
@@ -677,7 +713,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       xp: state.xp + Math.max(5, Math.floor(coins / 2)),
       lastMinigameReward: coins,
       ownedCards,
-      overlay: 'none',
+      overlay: keepOpen ? state.overlay : 'none',
     })
     get().save()
     get().trackMission('minigame')

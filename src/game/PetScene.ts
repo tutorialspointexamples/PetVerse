@@ -1521,6 +1521,24 @@ export class PetScene {
     g.fill(0x243029)
     g.circle(3.5, headY + 18, 1.5)
     g.fill(0x243029)
+    // Animated whiskers — secondary motion for MTT2-like face life
+    const whiskerWave =
+      talking || reaction === 'talk' || reaction === 'laugh'
+        ? Math.sin(this.time * 14) * 3
+        : Math.sin(this.time * 2.2) * 1.5
+    const wY = headY + 18
+    g.moveTo(-18, wY)
+    g.quadraticCurveTo(-34, wY - 4 + whiskerWave, -48, wY - 2 + whiskerWave * 0.6)
+    g.stroke({ width: 1.8, color: 0x243029, alpha: 0.45, cap: 'round' })
+    g.moveTo(-18, wY + 4)
+    g.quadraticCurveTo(-32, wY + 6 + whiskerWave * 0.5, -46, wY + 8 + whiskerWave * 0.4)
+    g.stroke({ width: 1.8, color: 0x243029, alpha: 0.4, cap: 'round' })
+    g.moveTo(18, wY)
+    g.quadraticCurveTo(34, wY - 4 - whiskerWave, 48, wY - 2 - whiskerWave * 0.6)
+    g.stroke({ width: 1.8, color: 0x243029, alpha: 0.45, cap: 'round' })
+    g.moveTo(18, wY + 4)
+    g.quadraticCurveTo(32, wY + 6 - whiskerWave * 0.5, 46, wY + 8 - whiskerWave * 0.4)
+    g.stroke({ width: 1.8, color: 0x243029, alpha: 0.4, cap: 'round' })
     // Subtle brow ridge for more dimensional head
     g.ellipse(-20, headY - 14, 12, 3)
     g.fill({ color: 0x000000, alpha: 0.05 })

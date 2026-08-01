@@ -249,6 +249,35 @@ export type FurnitureId =
   | 'lamp_owl'
   | 'poster_melon'
   | 'toy_star_pop'
+  | 'rug_comet'
+  | 'bed_aurora'
+  | 'sofa_pine'
+  | 'poster_butter'
+  | 'plant_mist'
+  | 'shelf_nebula'
+  | 'table_crystal'
+  | 'chair_wave'
+  | 'fountain_comet'
+  | 'clock_aurora'
+  | 'toy_pine'
+  | 'cushion_candy'
+  | 'mirror_butter'
+  | 'rug_mist'
+  | 'bed_nebula'
+  | 'sofa_crystal'
+  | 'lamp_wave'
+  | 'poster_comet'
+  | 'plant_aurora'
+  | 'cabinet_pine'
+  | 'ottoman_candy'
+  | 'desk_butter'
+  | 'wall_art_mist'
+  | 'rug_nebula_soft'
+  | 'bed_crystal'
+  | 'sofa_wave'
+  | 'lamp_pine'
+  | 'poster_aurora'
+  | 'toy_comet'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -513,6 +542,35 @@ export const FURNITURE: FurnitureItem[] = [
   { id: 'lamp_owl', name: 'Owl Lamp', price: 125, slot: 'side', color: 0xb56b45, accent: 0xffe066 },
   { id: 'poster_melon', name: 'Melon Poster', price: 55, slot: 'wall', color: 0x80ed99, accent: 0xffffff },
   { id: 'toy_star_pop', name: 'Star Pop Toy', price: 90, slot: 'floor', color: 0xf4d35e, accent: 0xff006e },
+  { id: 'rug_comet', name: 'Comet Rug', price: 125, slot: 'floor', color: 0x00f5d4, accent: 0xffffff },
+  { id: 'bed_aurora', name: 'Aurora Bed', price: 240, slot: 'side', color: 0x9b5de5, accent: 0xffffff },
+  { id: 'sofa_pine', name: 'Pine Sofa', price: 200, slot: 'side', color: 0x2d6a4f, accent: 0x95d5b2 },
+  { id: 'poster_butter', name: 'Butter Poster', price: 60, slot: 'wall', color: 0xe9c46a, accent: 0xffffff },
+  { id: 'plant_mist', name: 'Mist Plant', price: 105, slot: 'side', color: 0x90e0ef, accent: 0x80ed99 },
+  { id: 'shelf_nebula', name: 'Nebula Shelf', price: 160, slot: 'wall', color: 0x5a189a, accent: 0xf4d35e },
+  { id: 'table_crystal', name: 'Crystal Table', price: 135, slot: 'floor', color: 0xcaf0f8, accent: 0xffffff },
+  { id: 'chair_wave', name: 'Wave Chair', price: 155, slot: 'side', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'fountain_comet', name: 'Comet Fountain', price: 190, slot: 'floor', color: 0x00f5d4, accent: 0x9b5de5 },
+  { id: 'clock_aurora', name: 'Aurora Clock', price: 115, slot: 'wall', color: 0x9b5de5, accent: 0xffffff },
+  { id: 'toy_pine', name: 'Pine Plush', price: 95, slot: 'floor', color: 0x2d6a4f, accent: 0xffffff },
+  { id: 'cushion_candy', name: 'Candy Cushion', price: 85, slot: 'floor', color: 0xff85a1, accent: 0xffffff },
+  { id: 'mirror_butter', name: 'Butter Mirror', price: 145, slot: 'wall', color: 0xe9c46a, accent: 0xffffff },
+  { id: 'rug_mist', name: 'Mist Rug', price: 120, slot: 'floor', color: 0x90e0ef, accent: 0xffffff },
+  { id: 'bed_nebula', name: 'Nebula Bed', price: 245, slot: 'side', color: 0x5a189a, accent: 0x00f5d4 },
+  { id: 'sofa_crystal', name: 'Crystal Sofa', price: 210, slot: 'side', color: 0xcaf0f8, accent: 0xffffff },
+  { id: 'lamp_wave', name: 'Wave Lamp', price: 135, slot: 'side', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'poster_comet', name: 'Comet Poster', price: 62, slot: 'wall', color: 0x00f5d4, accent: 0xffffff },
+  { id: 'plant_aurora', name: 'Aurora Plant', price: 112, slot: 'side', color: 0x9b5de5, accent: 0x80ed99 },
+  { id: 'cabinet_pine', name: 'Pine Cabinet', price: 170, slot: 'side', color: 0x2d6a4f, accent: 0xffffff },
+  { id: 'ottoman_candy', name: 'Candy Ottoman', price: 100, slot: 'floor', color: 0xff85a1, accent: 0xffffff },
+  { id: 'desk_butter', name: 'Butter Desk', price: 175, slot: 'side', color: 0xe9c46a, accent: 0xffffff },
+  { id: 'wall_art_mist', name: 'Mist Art', price: 70, slot: 'wall', color: 0x90e0ef, accent: 0xffffff },
+  { id: 'rug_nebula_soft', name: 'Soft Nebula Rug', price: 138, slot: 'floor', color: 0x5a189a, accent: 0xf4d35e },
+  { id: 'bed_crystal', name: 'Crystal Bed', price: 248, slot: 'side', color: 0xcaf0f8, accent: 0x4cc9f0 },
+  { id: 'sofa_wave', name: 'Wave Sofa', price: 205, slot: 'side', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'lamp_pine', name: 'Pine Lamp', price: 128, slot: 'side', color: 0x2d6a4f, accent: 0xffe066 },
+  { id: 'poster_aurora', name: 'Aurora Poster', price: 64, slot: 'wall', color: 0x9b5de5, accent: 0xffffff },
+  { id: 'toy_comet', name: 'Comet Toy', price: 92, slot: 'floor', color: 0x00f5d4, accent: 0xff006e },
 ]
 
 export function getFurniture(id: FurnitureId): FurnitureItem {
