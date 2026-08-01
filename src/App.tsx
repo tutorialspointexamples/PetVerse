@@ -94,13 +94,16 @@ export default function App() {
     overlay === 'spaceTrails' ||
     overlay === 'buildPlane' ||
     overlay === 'buddyCatch'
+  /** Unmount home Pixi while another Pixi Application owns the WebGL context. */
+  const pixiMinigame =
+    overlay === 'skyDash' || overlay === 'spaceTrails' || overlay === 'buildPlane'
 
   return (
     <div className="app-shell">
       <div className="atmosphere" aria-hidden />
       {!inMinigame ? <NeedsHud /> : null}
       <main className="stage">
-        <GameCanvas />
+        {!pixiMinigame ? <GameCanvas /> : null}
         {!inMinigame && named ? <CareTray /> : null}
       </main>
       {!inMinigame ? <ActionBar /> : null}

@@ -1,4 +1,10 @@
-import { WORLDS, getWorldSpots, type WorldSpot } from '../game/worlds'
+import {
+  WORLDS,
+  collectedSpotCount,
+  getWorldSpots,
+  isWorldFullyExplored,
+  type WorldSpot,
+} from '../game/worlds'
 import { getActiveEvent } from '../game/events'
 import { COMPANIONS, SKILLS, levelFromXp, type SkillId } from '../game/progress'
 import { getCompanionCare } from '../game/companionCare'
@@ -34,6 +40,8 @@ const SKILL_REACTION: Record<SkillId, 'skill_drums' | 'skill_hoop' | 'skill_boxi
 export function GamesHub() {
   const overlay = useGameStore((s) => s.overlay)
   const setOverlay = useGameStore((s) => s.setOverlay)
+  const companion = useGameStore((s) => s.companion)
+  const startBuddyCatch = useGameStore((s) => s.startBuddyCatch)
   const { t } = useLocale()
   if (overlay !== 'games') return null
   return (
@@ -61,6 +69,15 @@ export function GamesHub() {
           <strong>{t('games.plane')}</strong>
           <span>{t('games.plane.blurb')}</span>
         </button>
+        <button
+          type="button"
+          className="hub-card"
+          disabled={companion === 'none'}
+          onClick={() => startBuddyCatch()}
+        >
+          <strong>{t('games.buddy')}</strong>
+          <span>{companion === 'none' ? t('games.buddy.need') : t('games.buddy.blurb')}</span>
+        </button>
       </div>
     </div>
   )
@@ -72,6 +89,8 @@ export function TravelPanel() {
   const fuel = useGameStore((s) => s.fuel)
   const travelTo = useGameStore((s) => s.travelTo)
   const visitedWorlds = useGameStore((s) => s.visitedWorlds)
+  const worldSpotCollections = useGameStore((s) => s.worldSpotCollections)
+  const claimedWorldGifts = useGameStore((s) => s.claimedWorldGifts)
   const { t } = useLocale()
   if (overlay !== 'travel') return null
   return (
@@ -86,24 +105,39 @@ export function TravelPanel() {
             ×
           </button>
         </div>
+        <p className="panel-note">{t('travel.souvenir.note')}</p>
         <div className="world-list">
-          {WORLDS.map((w) => (
-            <button
-              key={w.id}
-              type="button"
-              className="hub-card"
-              style={{ borderLeft: `6px solid #${w.wall.toString(16).padStart(6, '0')}` }}
-              disabled={fuel < w.fuelCost}
-              onClick={() => travelTo(w.id)}
-            >
-              <strong>{t(`world.${w.id}.name`)}</strong>
-              <span>
-                {w.fuelCost} {t('travel.fuel')} · +{w.rewardCoins}c
-                {visitedWorlds.includes(w.id) ? ` · ${t('travel.visited')}` : ` · ${t('travel.new')}`}
-              </span>
-              <span className="hub-blurb">{t(`world.${w.id}.blurb`)}</span>
-            </button>
-          ))}
+          {WORLDS.map((w) => {
+            const spots = getWorldSpots(w.id)
+            const found = collectedSpotCount(worldSpotCollections, w.id)
+            const cleared = isWorldFullyExplored(worldSpotCollections, w.id)
+            const giftClaimed = claimedWorldGifts.includes(w.id)
+            const giftLabel = giftClaimed
+              ? t('travel.gift.claimed')
+              : cleared
+                ? t('travel.gift.ready')
+                : `${found}/${spots.length} ${t('travel.spots')}`
+            return (
+              <button
+                key={w.id}
+                type="button"
+                className={`hub-card ${cleared ? 'world-cleared' : ''}`}
+                style={{ borderLeft: `6px solid #${w.wall.toString(16).padStart(6, '0')}` }}
+                disabled={fuel < w.fuelCost}
+                onClick={() => travelTo(w.id)}
+              >
+                <strong>{t(`world.${w.id}.name`)}</strong>
+                <span>
+                  {w.fuelCost} {t('travel.fuel')} · +{w.rewardCoins}c
+                  {visitedWorlds.includes(w.id) ? ` · ${t('travel.visited')}` : ` · ${t('travel.new')}`}
+                </span>
+                <span className={`world-progress-badge ${giftClaimed ? 'claimed' : cleared ? 'ready' : ''}`}>
+                  {giftLabel}
+                </span>
+                <span className="hub-blurb">{t(`world.${w.id}.blurb`)}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>
@@ -114,6 +148,9 @@ export function WorldVisitPanel() {
   const overlay = useGameStore((s) => s.overlay)
   const activeWorld = useGameStore((s) => s.activeWorld)
   const worldVisitCollected = useGameStore((s) => s.worldVisitCollected)
+  const worldSpotCollections = useGameStore((s) => s.worldSpotCollections)
+  const claimedWorldGifts = useGameStore((s) => s.claimedWorldGifts)
+  const lastWorldGift = useGameStore((s) => s.lastWorldGift)
   const collectWorldSpot = useGameStore((s) => s.collectWorldSpot)
   const clearWorldVisit = useGameStore((s) => s.clearWorldVisit)
   const { t } = useLocale()
@@ -122,8 +159,11 @@ export function WorldVisitPanel() {
   const world = WORLDS.find((w) => w.id === activeWorld)
   if (!world) return null
   const spots = getWorldSpots(activeWorld)
-  const found = worldVisitCollected.length
+  const persisted = worldSpotCollections[activeWorld] ?? []
+  const foundIds = new Set([...persisted, ...worldVisitCollected])
+  const found = foundIds.size
   const cleared = found >= spots.length && spots.length > 0
+  const giftClaimed = claimedWorldGifts.includes(activeWorld)
   return (
     <div className="shop-overlay" role="dialog" aria-label="World visit">
       <div
@@ -137,6 +177,7 @@ export function WorldVisitPanel() {
           <h2>{t(`world.${world.id}.name`)}</h2>
           <p className="shop-coins">
             {found}/{spots.length} {t('travel.spots')}
+            {giftClaimed ? ` · ${t('travel.gift.claimed')}` : ''}
           </p>
           <button type="button" className="close-btn" onClick={clearWorldVisit}>
             ×
@@ -148,7 +189,7 @@ export function WorldVisitPanel() {
         <div className="world-stage" aria-label={t('travel.explore')}>
           <div className="world-pet" aria-hidden />
           {spots.map((spot) => {
-            const taken = worldVisitCollected.includes(spot.id)
+            const taken = foundIds.has(spot.id)
             return (
               <button
                 key={spot.id}
@@ -165,7 +206,17 @@ export function WorldVisitPanel() {
             )
           })}
         </div>
-        {cleared ? <p className="world-clear-banner">{t('travel.cleared')}</p> : null}
+        {lastWorldGift && lastWorldGift.worldId === activeWorld ? (
+          <p className="world-clear-banner gift">
+            {t('travel.gift.banner')
+              .replace('{coins}', String(lastWorldGift.coins))
+              .replace('{fuel}', String(lastWorldGift.fuel))}
+          </p>
+        ) : cleared ? (
+          <p className="world-clear-banner">
+            {giftClaimed ? t('travel.cleared.saved') : t('travel.cleared')}
+          </p>
+        ) : null}
         <button type="button" className="name-submit" onClick={clearWorldVisit}>
           {t('travel.home')}
         </button>

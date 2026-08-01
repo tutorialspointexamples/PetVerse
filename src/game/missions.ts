@@ -7,6 +7,7 @@ export type MissionKind =
   | 'play'
   | 'minigame'
   | 'travel'
+  | 'explore'
   | 'skill'
   | 'poke'
   | 'cure'
@@ -29,6 +30,8 @@ const POOL: MissionDef[] = [
   { id: 'game1', kind: 'minigame', target: 1, rewardCoins: 30, rewardFuel: 2, label: 'Finish 1 mini-game' },
   { id: 'game2', kind: 'minigame', target: 2, rewardCoins: 45, rewardFuel: 2, label: 'Win 2 mini-games' },
   { id: 'travel1', kind: 'travel', target: 1, rewardCoins: 35, rewardFuel: 0, label: 'Fly to any world' },
+  { id: 'explore3', kind: 'explore', target: 3, rewardCoins: 28, rewardFuel: 1, label: 'Discover 3 world spots' },
+  { id: 'explore6', kind: 'explore', target: 6, rewardCoins: 40, rewardFuel: 2, label: 'Discover 6 world spots' },
   { id: 'skill1', kind: 'skill', target: 1, rewardCoins: 28, rewardFuel: 1, label: 'Practice a skill' },
   { id: 'poke5', kind: 'poke', target: 5, rewardCoins: 15, rewardFuel: 0, label: 'Poke your pet 5 times' },
 ]

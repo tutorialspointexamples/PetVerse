@@ -28,7 +28,13 @@ import { playSkillSfx } from '../audio/skillSfx'
 import type { FurnitureId } from '../game/furniture'
 import { getFurniture } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
-import { getWorld, getWorldSpots } from '../game/worlds'
+import {
+  getWorld,
+  getWorldClearGift,
+  getWorldSpots,
+  isWorldFullyExplored,
+  type WorldClearGift,
+} from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
 import { getCompanion, getSkill, levelFromXp } from '../game/progress'
 import {
@@ -110,8 +116,10 @@ export interface GameState extends SaveData {
   micError: string | null
   talking: boolean
   activeWorld: WorldId | null
-  /** Spot ids collected during the current world visit (session-only). */
+  /** Spot ids collected for the active world visit (mirrors persisted finds). */
   worldVisitCollected: string[]
+  /** Session banner after claiming a world-clear souvenir gift. */
+  lastWorldGift: (WorldClearGift & { worldId: WorldId }) | null
   lastMinigameReward: number
   /** Last snack tag for pet eat VFX (session-only). */
   lastFoodTag: FoodTag | null
@@ -203,6 +211,8 @@ function sliceSave(state: GameState): SaveData {
     ownedFurniture,
     placedFurniture,
     visitedWorlds,
+    worldSpotCollections,
+    claimedWorldGifts,
     companion,
     ownedCompanions,
     companionCare,
@@ -243,6 +253,8 @@ function sliceSave(state: GameState): SaveData {
     ownedFurniture,
     placedFurniture,
     visitedWorlds,
+    worldSpotCollections,
+    claimedWorldGifts,
     companion,
     ownedCompanions,
     companionCare,
@@ -297,6 +309,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   talking: false,
   activeWorld: null,
   worldVisitCollected: [],
+  lastWorldGift: null,
   lastMinigameReward: 0,
   lastFoodTag: null,
   shopOpen: false,
@@ -595,7 +608,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (state.coins < 3) return false
     playCompanionVoice(state.companion)
     set({
-      coins: state.coins - 3 + 2,
+      coins: state.coins - 3,
       companionCare: withCompanionCare(state.companionCare, state.companion, {
         hunger: 28,
         happiness: 8,
@@ -707,7 +720,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedHats,
       ownedCards,
       activeWorld: id,
-      worldVisitCollected: [],
+      worldVisitCollected: state.worldSpotCollections[id] ?? [],
+      lastWorldGift: null,
       overlay: 'flight',
     })
     get().save()
@@ -716,32 +730,45 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   finishFlight: () => {
-    if (!get().activeWorld) {
+    const state = get()
+    if (!state.activeWorld) {
       set({ overlay: 'none' })
       return
     }
-    set({ overlay: 'worldVisit', worldVisitCollected: [] })
+    const collected = state.worldSpotCollections[state.activeWorld] ?? []
+    set({ overlay: 'worldVisit', worldVisitCollected: collected, lastWorldGift: null })
   },
 
   collectWorldSpot: (spotId) => {
     const state = get()
     const worldId = state.activeWorld
     if (!worldId || state.overlay !== 'worldVisit') return false
-    if (state.worldVisitCollected.includes(spotId)) return false
+    const persisted = state.worldSpotCollections[worldId] ?? []
+    if (persisted.includes(spotId) || state.worldVisitCollected.includes(spotId)) return false
     const spot = getWorldSpots(worldId).find((s) => s.id === spotId)
     if (!spot) return false
-    const collected = [...state.worldVisitCollected, spotId]
+    const collected = [...persisted, spotId]
     const allSpots = getWorldSpots(worldId)
-    const cleared = collected.length >= allSpots.length
-    const bonus = cleared ? 15 : 0
+    const fullyCleared = allSpots.length > 0 && allSpots.every((s) => collected.includes(s.id))
+    const giftPending = fullyCleared && !state.claimedWorldGifts.includes(worldId)
+    const gift = giftPending ? getWorldClearGift(worldId) : null
+    const claimedWorldGifts = gift
+      ? state.claimedWorldGifts.includes(worldId)
+        ? state.claimedWorldGifts
+        : [...state.claimedWorldGifts, worldId]
+      : state.claimedWorldGifts
     set({
+      worldSpotCollections: { ...state.worldSpotCollections, [worldId]: collected },
       worldVisitCollected: collected,
-      coins: state.coins + spot.rewardCoins + bonus,
-      stars: state.stars + (cleared ? 1 : 0),
-      xp: state.xp + (cleared ? 8 : 3),
+      claimedWorldGifts,
+      lastWorldGift: gift ? { worldId, ...gift } : state.lastWorldGift,
+      coins: state.coins + spot.rewardCoins + (gift?.coins ?? 0),
+      fuel: Math.min(20, state.fuel + (gift?.fuel ?? 0)),
+      stars: state.stars + (gift?.stars ?? 0),
+      xp: state.xp + (gift ? gift.xp : 3),
       needs: {
         ...state.needs,
-        happiness: clampNeed(state.needs.happiness + spot.happiness + (cleared ? 6 : 0)),
+        happiness: clampNeed(state.needs.happiness + spot.happiness + (gift ? 8 : 0)),
         energy: clampNeed(state.needs.energy - 2),
       },
       reaction: 'play',
@@ -751,10 +778,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     }, 900)
     get().save()
     get().trackMission('play')
+    get().trackMission('explore')
     return true
   },
 
-  clearWorldVisit: () => set({ activeWorld: null, worldVisitCollected: [], overlay: 'none' }),
+  clearWorldVisit: () =>
+    set({ activeWorld: null, worldVisitCollected: [], lastWorldGift: null, overlay: 'none' }),
 
   setRoom: (id) => {
     const state = get()

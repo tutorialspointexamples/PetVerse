@@ -185,3 +185,43 @@ export const WORLD_SPOTS: Record<WorldId, WorldSpot[]> = {
 export function getWorldSpots(id: WorldId): WorldSpot[] {
   return WORLD_SPOTS[id] ?? []
 }
+
+/** One-time souvenir gift when every hotspot in a world is cleared (MTT2 explore loop). */
+export interface WorldClearGift {
+  coins: number
+  fuel: number
+  stars: number
+  xp: number
+}
+
+export const WORLD_CLEAR_GIFTS: Record<WorldId, WorldClearGift> = {
+  candy: { coins: 28, fuel: 1, stars: 1, xp: 12 },
+  pirate: { coins: 24, fuel: 1, stars: 1, xp: 11 },
+  underwater: { coins: 26, fuel: 1, stars: 1, xp: 12 },
+  beach: { coins: 18, fuel: 1, stars: 1, xp: 8 },
+  forest: { coins: 22, fuel: 1, stars: 1, xp: 10 },
+  cyber: { coins: 32, fuel: 2, stars: 1, xp: 14 },
+  dragon: { coins: 34, fuel: 2, stars: 1, xp: 15 },
+  alien: { coins: 38, fuel: 2, stars: 2, xp: 16 },
+}
+
+export function getWorldClearGift(id: WorldId): WorldClearGift {
+  return WORLD_CLEAR_GIFTS[id] ?? WORLD_CLEAR_GIFTS.beach
+}
+
+export function collectedSpotCount(
+  collections: Partial<Record<WorldId, string[]>>,
+  id: WorldId,
+): number {
+  return collections[id]?.length ?? 0
+}
+
+export function isWorldFullyExplored(
+  collections: Partial<Record<WorldId, string[]>>,
+  id: WorldId,
+): boolean {
+  const spots = getWorldSpots(id)
+  if (!spots.length) return false
+  const have = new Set(collections[id] ?? [])
+  return spots.every((s) => have.has(s.id))
+}

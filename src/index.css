@@ -1390,6 +1390,36 @@ input {
   animation: world-clear-pop 0.45s ease-out;
 }
 
+.world-clear-banner.gift {
+  background: linear-gradient(120deg, rgba(255, 236, 179, 0.95), rgba(255, 255, 255, 0.88));
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.world-progress-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(26, 42, 34, 0.08);
+  color: inherit;
+}
+
+.world-progress-badge.ready {
+  background: rgba(244, 211, 94, 0.55);
+}
+
+.world-progress-badge.claimed {
+  background: rgba(123, 201, 166, 0.45);
+}
+
+.hub-card.world-cleared {
+  background: rgba(123, 201, 166, 0.12);
+}
+
 @keyframes world-pet-bob {
   0%,
   100% {

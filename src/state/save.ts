@@ -42,6 +42,10 @@ export interface SaveData {
   ownedFurniture: FurnitureId[]
   placedFurniture: FurnitureId[]
   visitedWorlds: WorldId[]
+  /** Persisted hotspot finds per plane world (first-time collectibles). */
+  worldSpotCollections: Partial<Record<WorldId, string[]>>
+  /** Worlds whose full-clear souvenir gift was already claimed. */
+  claimedWorldGifts: WorldId[]
   companion: CompanionId
   ownedCompanions: CompanionId[]
   /** Per-pet hunger/happiness for MTT2-style companion care. */
@@ -89,6 +93,8 @@ export function defaultSave(): SaveData {
     ownedFurniture: ['rug_basic'],
     placedFurniture: ['rug_basic'],
     visitedWorlds: [],
+    worldSpotCollections: {},
+    claimedWorldGifts: [],
     companion: 'none',
     ownedCompanions: ['none'],
     companionCare: defaultCompanionCareMap(),
@@ -133,6 +139,8 @@ export function loadSave(): SaveData {
       ownedFurniture: parsed.ownedFurniture?.length ? parsed.ownedFurniture : base.ownedFurniture,
       placedFurniture: Array.isArray(parsed.placedFurniture) ? parsed.placedFurniture : base.placedFurniture,
       visitedWorlds: parsed.visitedWorlds ?? base.visitedWorlds,
+      worldSpotCollections: parsed.worldSpotCollections ?? base.worldSpotCollections,
+      claimedWorldGifts: parsed.claimedWorldGifts ?? base.claimedWorldGifts,
       ownedCompanions: parsed.ownedCompanions?.length ? parsed.ownedCompanions : base.ownedCompanions,
       companionCare: { ...base.companionCare, ...(parsed.companionCare ?? {}) },
       unlockedSkills: parsed.unlockedSkills?.length ? parsed.unlockedSkills : base.unlockedSkills,
