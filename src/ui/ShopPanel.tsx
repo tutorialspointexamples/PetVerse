@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { BODY_COLORS, GLASSES, HATS, SCARVES, SHIRTS } from '../game/cosmetics'
-import { FURNITURE } from '../game/furniture'
+import { BODY_COLORS, GLASSES, HATS, SCARVES, SHIRTS, SHOES, WEARABLE_COUNT } from '../game/cosmetics'
+import { FURNITURE, FURNITURE_COUNT } from '../game/furniture'
 import { useGameStore } from '../state/gameStore'
+import { localizeCatalogName } from '../i18n/catalogNames'
+import { useLocale } from '../i18n/useLocale'
 
-type Tab = 'coats' | 'hats' | 'glasses' | 'scarves' | 'shirts' | 'furniture'
+type Tab = 'coats' | 'hats' | 'glasses' | 'scarves' | 'shirts' | 'shoes' | 'furniture'
 
 export function ShopPanel() {
   const overlay = useGameStore((s) => s.overlay)
@@ -14,11 +16,13 @@ export function ShopPanel() {
   const glasses = useGameStore((s) => s.glasses)
   const scarf = useGameStore((s) => s.scarf)
   const shirt = useGameStore((s) => s.shirt)
+  const shoes = useGameStore((s) => s.shoes)
   const ownedColors = useGameStore((s) => s.ownedColors)
   const ownedHats = useGameStore((s) => s.ownedHats)
   const ownedGlasses = useGameStore((s) => s.ownedGlasses)
   const ownedScarves = useGameStore((s) => s.ownedScarves)
   const ownedShirts = useGameStore((s) => s.ownedShirts)
+  const ownedShoes = useGameStore((s) => s.ownedShoes)
   const ownedFurniture = useGameStore((s) => s.ownedFurniture)
   const placedFurniture = useGameStore((s) => s.placedFurniture)
   const buyColor = useGameStore((s) => s.buyColor)
@@ -26,8 +30,11 @@ export function ShopPanel() {
   const buyGlasses = useGameStore((s) => s.buyGlasses)
   const buyScarf = useGameStore((s) => s.buyScarf)
   const buyShirt = useGameStore((s) => s.buyShirt)
+  const buyShoes = useGameStore((s) => s.buyShoes)
   const buyFurniture = useGameStore((s) => s.buyFurniture)
   const [tab, setTab] = useState<Tab>('coats')
+  const { t, locale } = useLocale()
+  const nameOf = (name: string) => localizeCatalogName(name, locale)
 
   if (overlay !== 'shop') return null
 
@@ -35,8 +42,10 @@ export function ShopPanel() {
     <div className="shop-overlay" role="dialog" aria-label="Style shop">
       <div className="shop-panel wide">
         <div className="shop-header">
-          <h2>Style Shop</h2>
-          <p className="shop-coins">{coins} coins</p>
+          <h2>{t('shop.title')}</h2>
+          <p className="shop-coins">
+            {coins} {t('hud.coins')} · {WEARABLE_COUNT} {t('shop.looks')} · {FURNITURE_COUNT} {t('shop.decor')}
+          </p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')} aria-label="Close shop">
             ×
           </button>
@@ -45,21 +54,22 @@ export function ShopPanel() {
         <div className="shop-tabs">
           {(
             [
-              ['coats', 'Coats'],
-              ['hats', 'Hats'],
-              ['glasses', 'Glasses'],
-              ['scarves', 'Scarves'],
-              ['shirts', 'Shirts'],
-              ['furniture', 'Furniture'],
+              ['coats', 'shop.tab.coats'],
+              ['hats', 'shop.tab.hats'],
+              ['glasses', 'shop.tab.glasses'],
+              ['scarves', 'shop.tab.scarves'],
+              ['shirts', 'shop.tab.shirts'],
+              ['shoes', 'shop.tab.shoes'],
+              ['furniture', 'shop.tab.furniture'],
             ] as const
-          ).map(([id, label]) => (
+          ).map(([id, labelKey]) => (
             <button
               key={id}
               type="button"
               className={`shop-tab ${tab === id ? 'active' : ''}`}
               onClick={() => setTab(id)}
             >
-              {label}
+              {t(labelKey)}
             </button>
           ))}
         </div>
@@ -81,9 +91,9 @@ export function ShopPanel() {
                     className="swatch"
                     style={{ background: `#${color.fill.toString(16).padStart(6, '0')}` }}
                   />
-                  <span className="shop-item-name">{color.name}</span>
+                  <span className="shop-item-name">{nameOf(color.name)}</span>
                   <span className="shop-item-price">
-                    {equipped ? 'On' : owned ? 'Own' : `${color.price}c`}
+                    {equipped ? t('shop.on') : owned ? t('shop.own') : `${color.price}c`}
                   </span>
                 </button>
               )
@@ -107,9 +117,9 @@ export function ShopPanel() {
                   <span className="hat-preview" style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}>
                     {item.id === 'none' ? '—' : '✦'}
                   </span>
-                  <span className="shop-item-name">{item.name}</span>
+                  <span className="shop-item-name">{nameOf(item.name)}</span>
                   <span className="shop-item-price">
-                    {equipped ? 'On' : owned ? 'Own' : `${item.price}c`}
+                    {equipped ? t('shop.on') : owned ? t('shop.own') : `${item.price}c`}
                   </span>
                 </button>
               )
@@ -131,9 +141,9 @@ export function ShopPanel() {
                   onClick={() => buyGlasses(item.id)}
                 >
                   <span className="hat-preview">◯</span>
-                  <span className="shop-item-name">{item.name}</span>
+                  <span className="shop-item-name">{nameOf(item.name)}</span>
                   <span className="shop-item-price">
-                    {equipped ? 'On' : owned ? 'Own' : `${item.price}c`}
+                    {equipped ? t('shop.on') : owned ? t('shop.own') : `${item.price}c`}
                   </span>
                 </button>
               )
@@ -158,9 +168,9 @@ export function ShopPanel() {
                     className="swatch"
                     style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
                   />
-                  <span className="shop-item-name">{item.name}</span>
+                  <span className="shop-item-name">{nameOf(item.name)}</span>
                   <span className="shop-item-price">
-                    {equipped ? 'On' : owned ? 'Own' : `${item.price}c`}
+                    {equipped ? t('shop.on') : owned ? t('shop.own') : `${item.price}c`}
                   </span>
                 </button>
               )
@@ -185,9 +195,36 @@ export function ShopPanel() {
                     className="swatch"
                     style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
                   />
-                  <span className="shop-item-name">{item.name}</span>
+                  <span className="shop-item-name">{nameOf(item.name)}</span>
                   <span className="shop-item-price">
-                    {equipped ? 'On' : owned ? 'Own' : `${item.price}c`}
+                    {equipped ? t('shop.on') : owned ? t('shop.own') : `${item.price}c`}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {tab === 'shoes' && (
+          <div className="shop-grid">
+            {SHOES.map((item) => {
+              const owned = ownedShoes.includes(item.id)
+              const equipped = shoes === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`shop-item ${equipped ? 'equipped' : ''}`}
+                  disabled={!owned && coins < item.price}
+                  onClick={() => buyShoes(item.id)}
+                >
+                  <span
+                    className="swatch"
+                    style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
+                  />
+                  <span className="shop-item-name">{nameOf(item.name)}</span>
+                  <span className="shop-item-price">
+                    {equipped ? t('shop.on') : owned ? t('shop.own') : `${item.price}c`}
                   </span>
                 </button>
               )
@@ -212,9 +249,9 @@ export function ShopPanel() {
                     className="swatch"
                     style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
                   />
-                  <span className="shop-item-name">{item.name}</span>
+                  <span className="shop-item-name">{nameOf(item.name)}</span>
                   <span className="shop-item-price">
-                    {placed ? 'In room' : owned ? 'Place' : `${item.price}c`}
+                    {placed ? t('shop.inroom') : owned ? t('shop.place') : `${item.price}c`}
                   </span>
                 </button>
               )
