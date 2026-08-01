@@ -31,6 +31,9 @@ export interface PetPose {
   armL: number
   armR: number
   jaw: number
+  legL: number
+  legR: number
+  tail: number
 }
 
 export function derivePose(input: PetPoseInput): PetPose {
@@ -121,6 +124,22 @@ export function derivePose(input: PetPoseInput): PetPose {
             : 0)) *
     (Math.PI / 3)
 
+  const step =
+    reaction === 'play' || reaction === 'laugh' || reaction.startsWith('skill_')
+      ? Math.sin(time * 10) * 0.18
+      : sleeping
+        ? 0
+        : Math.sin(time * 2.2) * 0.05
+
+  const tailWag =
+    reaction === 'play' || reaction === 'laugh'
+      ? Math.sin(time * 14) * 0.45
+      : mood === 'happy'
+        ? Math.sin(time * 6) * 0.22
+        : sleeping
+          ? Math.sin(time * 1.1) * 0.04
+          : Math.sin(time * 2.4) * 0.1
+
   return {
     bounce,
     sx,
@@ -137,5 +156,8 @@ export function derivePose(input: PetPoseInput): PetPose {
     armL: -armBase + Math.sin(time * 2.2) * 0.04,
     armR: armBase - Math.sin(time * 2.2) * 0.04,
     jaw: mouthOpen * 0.18 + (yawnT > 0 ? 0.12 : 0),
+    legL: step,
+    legR: -step,
+    tail: tailWag,
   }
 }

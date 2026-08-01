@@ -75,7 +75,12 @@ export class PetScene {
   private roomPropHint = new Graphics()
   private pet = new Container()
   private shadow = new Graphics()
-  private legs = new Graphics()
+  private tailBone = new Container()
+  private tailGfx = new Graphics()
+  private legLBone = new Container()
+  private legRBone = new Container()
+  private legLGfx = new Graphics()
+  private legRGfx = new Graphics()
   private shoesGfx = new Graphics()
   private body = new Graphics()
   private shirtGfx = new Graphics()
@@ -198,9 +203,14 @@ export class PetScene {
     this.earLBone.addChild(this.earLGfx)
     this.earRBone.addChild(this.earRGfx)
     this.jawBone.addChild(this.jawGfx)
+    this.legLBone.addChild(this.legLGfx)
+    this.legRBone.addChild(this.legRGfx)
+    this.tailBone.addChild(this.tailGfx)
     this.pet.addChild(
       this.shadow,
-      this.legs,
+      this.tailBone,
+      this.legLBone,
+      this.legRBone,
       this.shoesGfx,
       this.body,
       this.shirtGfx,
@@ -1355,6 +1365,9 @@ export class PetScene {
     this.bones.armL.target = pose.armL
     this.bones.armR.target = pose.armR
     this.bones.jaw.target = pose.jaw
+    this.bones.legL.target = pose.legL
+    this.bones.legR.target = pose.legR
+    this.bones.tail.target = pose.tail
 
     const headY = -78 + b + pose.headBob * 0.15
     this.earLBone.position.set(-48, headY - 42)
@@ -1368,9 +1381,17 @@ export class PetScene {
     this.jawBone.position.set(0, headY + 18)
     this.jawBone.rotation = this.bones.jaw.angle
     this.jawBone.scale.y = 1 + this.bones.jaw.angle * 0.35
+    this.legLBone.position.set(-34, 70 + b * 0.2)
+    this.legRBone.position.set(34, 70 + b * 0.2)
+    this.legLBone.rotation = this.bones.legL.angle
+    this.legRBone.rotation = this.bones.legR.angle
+    this.tailBone.position.set(48, 40 + b * 0.15)
+    this.tailBone.rotation = this.bones.tail.angle
 
     this.drawShadow(b)
-    this.drawLegs(color.fill, b, pose.limbPhase)
+    this.drawTailBone(color.fill)
+    this.drawLegBone('left', color.fill)
+    this.drawLegBone('right', color.fill)
     this.drawShoesLayer(shoes, b)
     this.drawBodyLayer(color.fill, color.belly, color.ear, mood, b, pose.breath)
     this.drawShirtLayer(shirt, b)
@@ -1402,38 +1423,37 @@ export class PetScene {
     g.fill({ color: 0x1a2a22, alpha: 0.18 })
   }
 
-  private drawLegs(fill: number, b: number, limbPhase = 0) {
-    const g = this.legs
+  private drawTailBone(fill: number) {
+    const g = this.tailGfx
     g.clear()
-    const playStep = limbPhase
-    const leftY = 70 + b * 0.2 + playStep * 0.35
-    const rightY = 70 + b * 0.2 - playStep * 0.35
-    // Thigh volume + shin taper for more articulated limbs
-    g.ellipse(-34, leftY + 8, 16, 20)
+    // Drawn relative to hip hinge — spring rotation makes it wag
+    g.moveTo(0, 0)
+    g.quadraticCurveTo(18, 8, 36, -6)
+    g.quadraticCurveTo(44, -14, 52, -8)
+    g.quadraticCurveTo(40, 4, 22, 14)
+    g.quadraticCurveTo(8, 10, 0, 0)
     g.fill(fill)
-    g.roundRect(-48, leftY, 28, 42, 12)
+    g.circle(48, -10, 7)
     g.fill(fill)
-    g.ellipse(34, rightY + 8, 16, 20)
+    g.circle(50, -12, 3)
+    g.fill({ color: 0xffffff, alpha: 0.18 })
+  }
+
+  private drawLegBone(side: 'left' | 'right', fill: number) {
+    const g = side === 'left' ? this.legLGfx : this.legRGfx
+    g.clear()
+    // Local coords: hip at 0,0 — spring bone rotates whole limb
+    g.ellipse(0, 8, 16, 20)
     g.fill(fill)
-    g.roundRect(20, rightY, 28, 42, 12)
+    g.roundRect(-14, 0, 28, 42, 12)
     g.fill(fill)
-    // Knee highlights
-    g.ellipse(-34, leftY + 14, 7, 5)
+    g.ellipse(0, 14, 7, 5)
     g.fill({ color: 0xffffff, alpha: 0.12 })
-    g.ellipse(34, rightY + 14, 7, 5)
-    g.fill({ color: 0xffffff, alpha: 0.12 })
-    // Soft paw pads when barefoot
     if (this.props.shoes === 'none') {
-      g.ellipse(-34, leftY + 38, 10, 6)
+      g.ellipse(0, 38, 10, 6)
       g.fill({ color: 0xffb4a2, alpha: 0.75 })
-      g.ellipse(34, rightY + 38, 10, 6)
-      g.fill({ color: 0xffb4a2, alpha: 0.75 })
-      for (const sx of [-40, -34, -28]) {
-        g.circle(sx, leftY + 30, 2.4)
-        g.fill({ color: 0xffb4a2, alpha: 0.7 })
-      }
-      for (const sx of [28, 34, 40]) {
-        g.circle(sx, rightY + 30, 2.4)
+      for (const sx of [-6, 0, 6]) {
+        g.circle(sx, 30, 2.4)
         g.fill({ color: 0xffb4a2, alpha: 0.7 })
       }
     }
@@ -2596,20 +2616,24 @@ export class PetScene {
     this.pokeZone = detail?.zone === 'belly' ? 'belly' : 'head'
     this.pokeJiggleDir = this.pokeZone === 'belly' ? -1 : 1
     const s = this.pokeJiggleStrength
-    // Multi-bone ragdoll impulse — ears/jaw on head poke, arms on belly poke
+    // Multi-bone ragdoll impulse — ears/jaw/tail on head poke, arms/legs on belly poke
     if (this.pokeZone === 'head') {
       impulseBone(this.bones.earL, -2.8 * s)
       impulseBone(this.bones.earR, 2.8 * s)
       impulseBone(this.bones.jaw, 1.4 * s)
       impulseBone(this.bones.armL, -0.6 * s)
       impulseBone(this.bones.armR, 0.6 * s)
+      impulseBone(this.bones.tail, 1.8 * s)
       this.earFlopT = Math.max(this.earFlopT, 0.55)
     } else {
       impulseBone(this.bones.armL, 3.2 * s)
       impulseBone(this.bones.armR, -3.2 * s)
+      impulseBone(this.bones.legL, 2.4 * s)
+      impulseBone(this.bones.legR, -2.4 * s)
       impulseBone(this.bones.jaw, 0.7 * s)
       impulseBone(this.bones.earL, -0.8 * s)
       impulseBone(this.bones.earR, 0.8 * s)
+      impulseBone(this.bones.tail, -2.2 * s)
     }
     // Localized spark burst at poke site (soft-puppet feel).
     const y = this.pokeZone === 'belly' ? 36 : -72

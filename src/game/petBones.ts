@@ -28,7 +28,7 @@ export function impulseBone(b: SpringBone, impulse: number) {
   b.vel += impulse
 }
 
-export type BoneId = 'earL' | 'earR' | 'armL' | 'armR' | 'jaw'
+export type BoneId = 'earL' | 'earR' | 'armL' | 'armR' | 'jaw' | 'legL' | 'legR' | 'tail'
 
 export type BoneSet = Record<BoneId, SpringBone>
 
@@ -39,6 +39,9 @@ export function createBoneSet(): BoneSet {
     armL: createBone(),
     armR: createBone(),
     jaw: createBone(),
+    legL: createBone(),
+    legR: createBone(),
+    tail: createBone(),
   }
 }
 
@@ -48,4 +51,7 @@ export function stepBoneSet(bones: BoneSet, dt: number) {
   stepBone(bones.armL, dt, 40, 10)
   stepBone(bones.armR, dt, 40, 10)
   stepBone(bones.jaw, dt, 70, 11)
+  stepBone(bones.legL, dt, 48, 10)
+  stepBone(bones.legR, dt, 48, 10)
+  stepBone(bones.tail, dt, 36, 7.5)
 }
