@@ -1,29 +1,45 @@
 import { WORLDS } from '../game/worlds'
 import { getActiveEvent } from '../game/events'
 import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
+import { FOODS } from '../game/foods'
+import { ROOMS } from '../game/rooms'
+import { CARDS } from '../game/cards'
+import { missionsForDay, todayKey } from '../game/missions'
 import { IAP_PRODUCTS, purchaseIap, showRewardedAd } from '../monetization/stubs'
 import { useGameStore } from '../state/gameStore'
+import { useEffect } from 'react'
+import { LOCALES } from '../i18n/strings'
+import { useLocale } from '../i18n/useLocale'
 
 export function GamesHub() {
   const overlay = useGameStore((s) => s.overlay)
   const setOverlay = useGameStore((s) => s.setOverlay)
+  const { t } = useLocale()
   if (overlay !== 'games') return null
   return (
     <div className="shop-overlay" role="dialog" aria-label="Mini-games">
       <div className="shop-panel">
         <div className="shop-header">
-          <h2>Mini-Games</h2>
+          <h2>{t('games.title')}</h2>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
           </button>
         </div>
+        <button type="button" className="hub-card" onClick={() => setOverlay('spaceTrails')}>
+          <strong>Space Trails</strong>
+          <span>Steer the trail, collect stars offline</span>
+        </button>
         <button type="button" className="hub-card" onClick={() => setOverlay('skyDash')}>
-          <strong>Sky Dash</strong>
+          <strong>Sky Race</strong>
           <span>Flap, grab coins, dodge blocks</span>
         </button>
         <button type="button" className="hub-card" onClick={() => setOverlay('dunkToss')}>
-          <strong>Dunk Toss</strong>
+          <strong>Dunk-a-Pet</strong>
           <span>Time your toss in the green zone</span>
+        </button>
+        <button type="button" className="hub-card" onClick={() => setOverlay('buildPlane')}>
+          <strong>Build Your Plane</strong>
+          <span>Assemble parts and earn fuel</span>
         </button>
       </div>
     </div>
@@ -62,6 +78,7 @@ export function TravelPanel() {
                 {w.fuelCost} fuel · +{w.rewardCoins}c
                 {visitedWorlds.includes(w.id) ? ' · visited' : ' · new'}
               </span>
+              <span className="hub-blurb">{w.blurb}</span>
             </button>
           ))}
         </div>
@@ -87,10 +104,199 @@ export function WorldVisitPanel() {
         }}
       >
         <h2>{world.name}</h2>
-        <p>You landed safely and collected rewards. New unlocks were added to your shop.</p>
+        <p>{world.blurb} You landed safely and collected rewards. New unlocks (and a collectible card) were added.</p>
         <button type="button" className="name-submit" onClick={clearWorldVisit}>
           Fly home
         </button>
+      </div>
+    </div>
+  )
+}
+
+export function FlightPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const activeWorld = useGameStore((s) => s.activeWorld)
+  const finishFlight = useGameStore((s) => s.finishFlight)
+  const world = WORLDS.find((w) => w.id === activeWorld)
+
+  useEffect(() => {
+    if (overlay !== 'flight') return
+    const t = window.setTimeout(() => finishFlight(), 2200)
+    return () => window.clearTimeout(t)
+  }, [overlay, finishFlight])
+
+  if (overlay !== 'flight' || !world) return null
+  return (
+    <div className="shop-overlay flight-overlay" role="dialog" aria-label="Flying">
+      <div className="flight-scene">
+        <div className="flight-sky" />
+        <div className="flight-plane" aria-hidden />
+        <p className="flight-label">Flying to {world.name}…</p>
+        <button type="button" className="name-submit" onClick={finishFlight}>
+          Skip
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export function FoodPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const coins = useGameStore((s) => s.coins)
+  const feedFood = useGameStore((s) => s.feedFood)
+  const favoriteFood = useGameStore((s) => s.favoriteFood)
+  const cooldowns = useGameStore((s) => s.cooldowns)
+  if (overlay !== 'food') return null
+  const cooling = Boolean(cooldowns.feed && cooldowns.feed > Date.now())
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Food menu">
+      <div className="shop-panel">
+        <div className="shop-header">
+          <h2>Kitchen Menu</h2>
+          <p className="shop-coins">{coins}c</p>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        {FOODS.map((food) => (
+          <button
+            key={food.id}
+            type="button"
+            className={`hub-card ${favoriteFood === food.id ? 'active' : ''}`}
+            disabled={cooling || (food.price > 0 && coins < food.price)}
+            onClick={() => feedFood(food.id)}
+          >
+            <strong>
+              {food.name}
+              {favoriteFood === food.id ? ' · fav' : ''}
+            </strong>
+            <span>
+              +{food.hunger} hunger · +{food.happiness} happy
+              {food.price ? ` · ${food.price}c` : ' · free'}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function RoomsPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const room = useGameStore((s) => s.room)
+  const setRoom = useGameStore((s) => s.setRoom)
+  const { t } = useLocale()
+  if (overlay !== 'rooms') return null
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Rooms">
+      <div className="shop-panel">
+        <div className="shop-header">
+          <h2>{t('rooms.title')}</h2>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        <div className="room-grid">
+          {ROOMS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              className={`hub-card room-card ${room === r.id ? 'active' : ''}`}
+              style={{ borderLeft: `6px solid #${r.wall.toString(16).padStart(6, '0')}` }}
+              onClick={() => setRoom(r.id)}
+            >
+              <strong>{r.name}</strong>
+              <span>
+                {room === r.id ? 'You are here' : 'Go'}
+                {r.id === 'kitchen'
+                  ? ' · fridge=menu, stove=snack'
+                  : r.id === 'bathroom'
+                    ? ' · tub=bath, sink=brush, toilet=potty'
+                    : r.id === 'bedroom'
+                      ? ' · bed=sleep, lamp=poke'
+                      : r.id === 'yard'
+                        ? ' · pad/swing=play'
+                        : ' · tv=play, sofa=poke'}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function LangPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const { locale, setLocale, t } = useLocale()
+  if (overlay !== 'lang') return null
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Language">
+      <div className="shop-panel">
+        <div className="shop-header">
+          <h2>{t('lang.title')}</h2>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        <div className="room-grid">
+          {LOCALES.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              className={`hub-card ${locale === l.id ? 'active' : ''}`}
+              onClick={() => {
+                setLocale(l.id)
+                setOverlay('none')
+              }}
+            >
+              <strong>{l.label}</strong>
+              <span>{l.id.toUpperCase()}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function CardsPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const ownedCards = useGameStore((s) => s.ownedCards)
+  if (overlay !== 'cards') return null
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Collectible cards">
+      <div className="shop-panel wide">
+        <div className="shop-header">
+          <h2>Card Album</h2>
+          <p className="shop-coins">
+            {ownedCards.length}/{CARDS.length}
+          </p>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        <p className="panel-note">Earn cards by flying to worlds and finishing mini-games.</p>
+        <div className="card-album">
+          {CARDS.map((card) => {
+            const owned = ownedCards.includes(card.id)
+            return (
+              <div
+                key={card.id}
+                className={`album-card ${owned ? 'owned' : 'locked'} rarity-${card.rarity}`}
+                style={{ ['--card-color' as string]: `#${card.color.toString(16).padStart(6, '0')}` }}
+              >
+                <strong>{owned ? card.name : '???'}</strong>
+                <span>{owned ? card.blurb : 'Keep playing to unlock'}</span>
+                <em>{card.rarity}</em>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -178,10 +384,15 @@ export function CompanionsPanel() {
               onClick={() => unlockCompanion(c.id)}
             >
               <strong>{c.name}</strong>
-              <span>{owned ? (companion === c.id ? 'Active' : 'Own · tap to equip') : `${c.unlockCost}c`}</span>
+              <span>
+                Voice: {c.voiceLabel}
+                {' · '}
+                {owned ? (companion === c.id ? 'Active · tap pet to hear' : 'Own · tap to equip') : `${c.unlockCost}c`}
+              </span>
             </button>
           )
         })}
+        <p className="hint">Each companion has a unique voice — tap them in the room to hear it.</p>
       </div>
     </div>
   )
@@ -219,6 +430,66 @@ export function EventPanel() {
   )
 }
 
+export function MissionsPanel() {
+  const overlay = useGameStore((s) => s.overlay)
+  const setOverlay = useGameStore((s) => s.setOverlay)
+  const missionProgress = useGameStore((s) => s.missionProgress)
+  const claimedMissions = useGameStore((s) => s.claimedMissions)
+  const claimMission = useGameStore((s) => s.claimMission)
+  const ensureMissions = useGameStore((s) => s.ensureMissions)
+  const { t } = useLocale()
+
+  useEffect(() => {
+    if (overlay === 'missions') ensureMissions()
+  }, [overlay, ensureMissions])
+
+  if (overlay !== 'missions') return null
+  const missions = missionsForDay(todayKey())
+
+  return (
+    <div className="shop-overlay" role="dialog" aria-label="Daily missions">
+      <div className="shop-panel">
+        <div className="shop-header">
+          <h2>{t('missions.title')}</h2>
+          <p className="shop-coins">{t('missions.subtitle')}</p>
+          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+            ×
+          </button>
+        </div>
+        <div className="mission-list">
+          {missions.map((m) => {
+            const progress = missionProgress[m.id] ?? 0
+            const claimed = claimedMissions.includes(m.id)
+            const ready = progress >= m.target && !claimed
+            return (
+              <div key={m.id} className={`mission-card ${claimed ? 'claimed' : ''} ${ready ? 'ready' : ''}`}>
+                <div className="mission-copy">
+                  <strong>{m.label}</strong>
+                  <span>
+                    {Math.min(progress, m.target)}/{m.target} · +{m.rewardCoins}c
+                    {m.rewardFuel ? ` · +${m.rewardFuel} fuel` : ''}
+                  </span>
+                  <div className="mission-bar">
+                    <i style={{ width: `${Math.min(100, (progress / m.target) * 100)}%` }} />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="mission-claim"
+                  disabled={!ready}
+                  onClick={() => claimMission(m.id)}
+                >
+                  {claimed ? t('missions.done') : ready ? t('missions.claim') : t('missions.track')}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function RewardedPanel() {
   const overlay = useGameStore((s) => s.overlay)
   const setOverlay = useGameStore((s) => s.setOverlay)
@@ -236,7 +507,6 @@ export function RewardedPanel() {
     const result = await purchaseIap(id)
     if (result.ok && coins > 0) addCoins(coins)
     if (result.ok && id === 'outfit_pack') {
-      // grant a few cosmetics via coin proxy
       addCoins(50)
     }
     setOverlay('none')

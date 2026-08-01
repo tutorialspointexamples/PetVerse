@@ -1,6 +1,7 @@
 # PetVerse
 
 Browser virtual-pet game inspired by talking-pet care loops (original PetVerse IP).
+Gameplay mirrors the My Talking Tom 2 loop: care routines, talk-back, plane travel, mini-games, outfits, companions, and skills.
 
 ## Run
 
@@ -10,11 +11,18 @@ npm run dev
 ```
 
 ## Features
-- Layered pet puppet animations, talk-back, care needs
-- Expanded wardrobe + furniture decoration
-- Mini-games: Sky Dash, Dunk Toss
-- Plane travel to Beach / Forest / Candy worlds
-- Companions, skills, seasonal event bonus
+- Care: drag-drop tray (spoon/soap/brush/potty/pillow/ball) + feed menu (22 foods), sleep, bath, play, brush, potty + layered pet reactions / VFX
+- Home rooms: Living, Kitchen, Bathroom, Bedroom, Backyard
+- Talk-back mic (hold to record, pitch-shifted playback)
+- Large wardrobe (450 looks) + 220 furniture SKUs
+- Mini-games: Space Trails (portals, power skins, boost pads, asteroids, comets), Sky Race (rings/boosts/combos), Dunk-a-Pet (rim/swish/crowd), Build Your Plane (assemble + flight test)
+- Interactive rooms: fridge/stove cooking, tub/sink/toilet, bed/lamp, yard trampoline/swing/fountain splash, living TV/sofa
+- Plane travel to 8 worlds with flight cutscene
+- Daily missions with coin/fuel claims
+- Collectible card album (25) from worlds, rooms, missions, and mini-games
+- Photo booth snaps, multi-language UI (EN/ES/PT/FR/DE/RU/TR/AR)
+- Companions with unique voices, skills (drums / hoop / boxing), seasonal events
+- Pet puppet squash/stretch, breathing, articulated limbs, brow/ear secondary motion
 - Optional mock rewarded ad / IAP boosts
 - Capacitor Android packaging notes in `docs/ANDROID.md`
 
