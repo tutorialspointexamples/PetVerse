@@ -2275,6 +2275,66 @@ html[dir='rtl'] .shop-panel {
   direction: rtl;
 }
 
+.companion-care-card {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(26, 42, 34, 0.08);
+}
+
+.companion-care-title {
+  margin: 0 0 8px;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.companion-care-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.companion-care-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 28px;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.companion-care-mini {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+.companion-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.companion-actions .name-submit {
+  margin: 0;
+}
+
+.name-submit.secondary {
+  background: #4a9b82;
+  box-shadow: 0 8px 0 #2f6f5e;
+}
+
+.name-submit.secondary:active:not(:disabled) {
+  box-shadow: 0 6px 0 #2f6f5e;
+}
+
+.name-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 
 
 

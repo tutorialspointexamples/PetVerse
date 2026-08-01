@@ -30,6 +30,11 @@ import type { WorldId } from '../game/worlds'
 import { getWorld, getWorldSpots } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
 import { getCompanion, getSkill, levelFromXp } from '../game/progress'
+import {
+  decayCompanionCare,
+  getCompanionCare,
+  withCompanionCare,
+} from '../game/companionCare'
 import { getActiveEvent } from '../game/events'
 import type { RoomId } from '../game/rooms'
 import type { FoodId, FoodTag } from '../game/foods'
@@ -145,6 +150,7 @@ export interface GameState extends SaveData {
   collectCard: (id: CardId) => boolean
   claimCardSet: (id: CardSetId) => boolean
   playWithCompanion: () => boolean
+  feedCompanion: () => boolean
   trackMission: (kind: MissionKind, amount?: number) => void
   claimMission: (id: string) => boolean
   ensureMissions: () => void
@@ -181,6 +187,7 @@ function sliceSave(state: GameState): SaveData {
     visitedWorlds,
     companion,
     ownedCompanions,
+    companionCare,
     unlockedSkills,
     eventClaimDate,
     claimedEventIds,
@@ -219,6 +226,7 @@ function sliceSave(state: GameState): SaveData {
     visitedWorlds,
     companion,
     ownedCompanions,
+    companionCare,
     unlockedSkills,
     eventClaimDate,
     claimedEventIds,
@@ -346,7 +354,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   tick: (dtSec) => {
-    const { needs, sleeping, cooldowns, overlay } = get()
+    const { needs, sleeping, cooldowns, overlay, companion, companionCare } = get()
     if (MINIGAME_OVERLAYS.includes(overlay)) return
     const nextNeeds = applyDecay(needs, dtSec, sleeping)
     const now = Date.now()
@@ -354,7 +362,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     for (const [key, until] of Object.entries(cooldowns)) {
       if (until && until > now) nextCooldowns[key as CareAction] = until
     }
-    set({ needs: nextNeeds, cooldowns: nextCooldowns })
+    let nextCompanionCare = companionCare
+    if (companion !== 'none') {
+      const cur = getCompanionCare(companionCare, companion)
+      nextCompanionCare = {
+        ...companionCare,
+        [companion]: decayCompanionCare(cur, dtSec),
+      }
+    }
+    set({ needs: nextNeeds, cooldowns: nextCooldowns, companionCare: nextCompanionCare })
   },
 
   doCare: (action) => {
@@ -454,6 +470,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         ...state.needs,
         happiness: Math.min(100, state.needs.happiness + 8),
       },
+      companionCare: withCompanionCare(state.companionCare, state.companion, {
+        happiness: 10,
+      }),
       coins: state.coins + 2,
     })
     get().save()
@@ -474,6 +493,10 @@ export const useGameStore = create<GameState>((set, get) => ({
         happiness: Math.min(100, state.needs.happiness + 16),
         energy: Math.max(0, state.needs.energy - 4),
       },
+      companionCare: withCompanionCare(state.companionCare, state.companion, {
+        happiness: 22,
+        hunger: -4,
+      }),
       coins: state.coins + 6,
       xp: state.xp + 4,
       fuel: Math.min(20, state.fuel + 1),
@@ -483,6 +506,32 @@ export const useGameStore = create<GameState>((set, get) => ({
     window.setTimeout(() => {
       if (get().reaction === 'play') set({ reaction: 'idle' })
     }, 1600)
+    return true
+  },
+
+  feedCompanion: () => {
+    const state = get()
+    if (state.companion === 'none') return false
+    if (state.coins < 3) return false
+    playCompanionVoice(state.companion)
+    set({
+      coins: state.coins - 3 + 2,
+      companionCare: withCompanionCare(state.companionCare, state.companion, {
+        hunger: 28,
+        happiness: 8,
+      }),
+      needs: {
+        ...state.needs,
+        happiness: Math.min(100, state.needs.happiness + 4),
+      },
+      xp: state.xp + 2,
+      reaction: 'laugh',
+      sleeping: false,
+    })
+    get().save()
+    window.setTimeout(() => {
+      if (get().reaction === 'laugh') set({ reaction: 'idle' })
+    }, 1200)
     return true
   },
 
@@ -689,6 +738,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       coins: state.coins - def.unlockCost,
       ownedCompanions: [...state.ownedCompanions, id],
       companion: id,
+      companionCare: withCompanionCare(state.companionCare, id, {
+        hunger: 0,
+        happiness: 0,
+      }),
     })
     get().save()
     return true

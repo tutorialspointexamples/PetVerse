@@ -1,6 +1,7 @@
 import { WORLDS, getWorldSpots, type WorldSpot } from '../game/worlds'
 import { getActiveEvent } from '../game/events'
 import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
+import { getCompanionCare } from '../game/companionCare'
 import { FOODS } from '../game/foods'
 import { ROOMS } from '../game/rooms'
 import { CARD_SETS, CARDS, setProgress } from '../game/cards'
@@ -453,13 +454,16 @@ export function CompanionsPanel() {
   const setOverlay = useGameStore((s) => s.setOverlay)
   const coins = useGameStore((s) => s.coins)
   const companion = useGameStore((s) => s.companion)
+  const companionCare = useGameStore((s) => s.companionCare)
   const ownedCompanions = useGameStore((s) => s.ownedCompanions)
   const unlockCompanion = useGameStore((s) => s.unlockCompanion)
   const playWithCompanion = useGameStore((s) => s.playWithCompanion)
+  const feedCompanion = useGameStore((s) => s.feedCompanion)
   const companionPlayUntil = useGameStore((s) => s.companionPlayUntil)
   const { t } = useLocale()
   if (overlay !== 'companions') return null
   const playCooling = companionPlayUntil > Date.now()
+  const care = getCompanionCare(companionCare, companion)
   return (
     <div className="shop-overlay" role="dialog" aria-label="Companions">
       <div className="shop-panel">
@@ -469,6 +473,33 @@ export function CompanionsPanel() {
             ×
           </button>
         </div>
+        {companion !== 'none' ? (
+          <div className="companion-care-card" aria-label={t('companions.care')}>
+            <p className="companion-care-title">{t('companions.care')}</p>
+            <div className="companion-care-meters">
+              <div className="companion-care-row">
+                <span>{t('companions.hunger')}</span>
+                <div className="need-track slim">
+                  <div
+                    className={`need-fill ${care.hunger < 30 ? 'low' : care.hunger < 50 ? 'mid' : 'high'}`}
+                    style={{ width: `${care.hunger}%` }}
+                  />
+                </div>
+                <span>{Math.round(care.hunger)}</span>
+              </div>
+              <div className="companion-care-row">
+                <span>{t('companions.happy')}</span>
+                <div className="need-track slim">
+                  <div
+                    className={`need-fill ${care.happiness < 30 ? 'low' : care.happiness < 50 ? 'mid' : 'high'}`}
+                    style={{ width: `${care.happiness}%` }}
+                  />
+                </div>
+                <span>{Math.round(care.happiness)}</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
         {COMPANIONS.map((c) => {
           if (c.id === 'none') {
             return (
@@ -479,6 +510,7 @@ export function CompanionsPanel() {
             )
           }
           const owned = ownedCompanions.includes(c.id)
+          const petCare = getCompanionCare(companionCare, c.id)
           return (
             <button
               key={c.id}
@@ -497,19 +529,35 @@ export function CompanionsPanel() {
                     : t('companions.owned')
                   : `${c.unlockCost}c`}
               </span>
+              {owned ? (
+                <span className="companion-care-mini">
+                  {t('companions.hunger')} {Math.round(petCare.hunger)} · {t('companions.happy')}{' '}
+                  {Math.round(petCare.happiness)}
+                </span>
+              ) : null}
             </button>
           )
         })}
-        <button
-          type="button"
-          className="name-submit"
-          disabled={companion === 'none' || playCooling}
-          onClick={() => {
-            if (playWithCompanion()) setOverlay('none')
-          }}
-        >
-          {playCooling ? t('companions.play.cool') : t('companions.play')}
-        </button>
+        <div className="companion-actions">
+          <button
+            type="button"
+            className="name-submit secondary"
+            disabled={companion === 'none' || coins < 3}
+            onClick={() => feedCompanion()}
+          >
+            {t('companions.feed')} · 3c
+          </button>
+          <button
+            type="button"
+            className="name-submit"
+            disabled={companion === 'none' || playCooling}
+            onClick={() => {
+              if (playWithCompanion()) setOverlay('none')
+            }}
+          >
+            {playCooling ? t('companions.play.cool') : t('companions.play')}
+          </button>
+        </div>
         <p className="hint">{t('companions.hint')}</p>
       </div>
     </div>

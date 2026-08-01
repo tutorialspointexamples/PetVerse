@@ -10,6 +10,8 @@ import type {
 import type { FurnitureId } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
+import type { CompanionCareMap } from '../game/companionCare'
+import { defaultCompanionCareMap } from '../game/companionCare'
 import type { RoomId } from '../game/rooms'
 import type { FoodId } from '../game/foods'
 import type { CardId, CardSetId } from '../game/cards'
@@ -42,6 +44,8 @@ export interface SaveData {
   visitedWorlds: WorldId[]
   companion: CompanionId
   ownedCompanions: CompanionId[]
+  /** Per-pet hunger/happiness for MTT2-style companion care. */
+  companionCare: CompanionCareMap
   unlockedSkills: SkillId[]
   eventClaimDate: string | null
   claimedEventIds: string[]
@@ -85,6 +89,7 @@ export function defaultSave(): SaveData {
     visitedWorlds: [],
     companion: 'none',
     ownedCompanions: ['none'],
+    companionCare: defaultCompanionCareMap(),
     unlockedSkills: ['drums'],
     eventClaimDate: null,
     claimedEventIds: [],
@@ -126,6 +131,7 @@ export function loadSave(): SaveData {
       placedFurniture: Array.isArray(parsed.placedFurniture) ? parsed.placedFurniture : base.placedFurniture,
       visitedWorlds: parsed.visitedWorlds ?? base.visitedWorlds,
       ownedCompanions: parsed.ownedCompanions?.length ? parsed.ownedCompanions : base.ownedCompanions,
+      companionCare: { ...base.companionCare, ...(parsed.companionCare ?? {}) },
       unlockedSkills: parsed.unlockedSkills?.length ? parsed.unlockedSkills : base.unlockedSkills,
       claimedEventIds: parsed.claimedEventIds ?? base.claimedEventIds,
       eventActivityDate: parsed.eventActivityDate ?? base.eventActivityDate,

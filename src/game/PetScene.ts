@@ -34,6 +34,8 @@ export interface PetSceneProps {
   petName: string
   placedFurniture: FurnitureId[]
   companion: CompanionId
+  companionHunger: number
+  companionHappiness: number
   room: RoomId
 }
 
@@ -953,13 +955,33 @@ export class PetScene {
     hit.eventMode = 'static'
     const def = getCompanion(id)
     const playing = this.props.reaction === 'play'
-    const hop = playing ? Math.abs(Math.sin(this.time * 10)) * 18 : Math.sin(this.time * 3) * 4
+    const hungry = this.props.companionHunger < 30
+    const sad = this.props.companionHappiness < 30
+    const hop = playing
+      ? Math.abs(Math.sin(this.time * 10)) * 18
+      : hungry || sad
+        ? Math.sin(this.time * 1.6) * 2
+        : Math.sin(this.time * 3) * 4
     const x = w * 0.72 + (playing ? Math.sin(this.time * 6) * 16 : 0)
     const y = h * 0.7 + hop
     g.ellipse(x, y + 28, 22, 8)
     g.fill({ color: 0x1a2a22, alpha: 0.15 })
     g.circle(x, y, 22)
     g.fill(def.fill)
+    // Mini care meters (MTT2 companion needs)
+    const barW = 36
+    const barX = x - barW / 2
+    const barY = y - 40
+    g.roundRect(barX - 2, barY - 2, barW + 4, 14, 4)
+    g.fill({ color: 0x1a2a22, alpha: 0.45 })
+    g.roundRect(barX, barY, barW, 4, 2)
+    g.fill({ color: 0xffffff, alpha: 0.2 })
+    g.roundRect(barX, barY, barW * (this.props.companionHunger / 100), 4, 2)
+    g.fill(this.props.companionHunger < 30 ? 0xd1645b : 0xe9b44c)
+    g.roundRect(barX, barY + 6, barW, 4, 2)
+    g.fill({ color: 0xffffff, alpha: 0.2 })
+    g.roundRect(barX, barY + 6, barW * (this.props.companionHappiness / 100), 4, 2)
+    g.fill(this.props.companionHappiness < 30 ? 0xd1645b : 0x5cb88a)
     if (playing) {
       // Fetch toy — companion play interaction beyond tap-to-hear
       const ballX = w * 0.55 + Math.sin(this.time * 7) * 40
