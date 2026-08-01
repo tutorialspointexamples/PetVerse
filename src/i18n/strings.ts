@@ -93,7 +93,7 @@ const en: Dict = {
   'rooms.here': 'You are here',
   'rooms.go': 'Go',
   'cards.title': 'Card Album',
-  'cards.note': 'Earn cards by flying to worlds and finishing mini-games. Complete sets for bonus rewards.',
+  'cards.note': 'Earn cards by flying to worlds, exploring spots, and finishing mini-games. Complete sets for bonus rewards.',
   'cards.locked': 'Keep playing to unlock',
   'cards.set.claim': 'Claim set',
   'cards.set.done': 'Set claimed',

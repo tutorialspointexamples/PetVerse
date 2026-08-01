@@ -735,7 +735,26 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ overlay: 'none' })
       return
     }
-    const collected = state.worldSpotCollections[state.activeWorld] ?? []
+    const worldId = state.activeWorld
+    const collected = state.worldSpotCollections[worldId] ?? []
+    const pendingGift =
+      isWorldFullyExplored(state.worldSpotCollections, worldId) &&
+      !state.claimedWorldGifts.includes(worldId)
+    if (pendingGift) {
+      const gift = getWorldClearGift(worldId)
+      set({
+        overlay: 'worldVisit',
+        worldVisitCollected: collected,
+        claimedWorldGifts: [...state.claimedWorldGifts, worldId],
+        lastWorldGift: { worldId, ...gift },
+        coins: state.coins + gift.coins,
+        fuel: Math.min(20, state.fuel + gift.fuel),
+        stars: state.stars + gift.stars,
+        xp: state.xp + gift.xp,
+      })
+      get().save()
+      return
+    }
     set({ overlay: 'worldVisit', worldVisitCollected: collected, lastWorldGift: null })
   },
 
