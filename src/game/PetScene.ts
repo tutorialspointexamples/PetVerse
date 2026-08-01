@@ -49,6 +49,7 @@ export type PokeZone =
   | 'bedroom_lamp'
   | 'yard_play'
   | 'yard_swing'
+  | 'yard_fountain'
   | 'living_tv'
   | 'living_sofa'
 
@@ -99,6 +100,8 @@ export class PetScene {
   private stretchT = 0
   private sneezeT = 0
   private earFlopT = 0
+  private cookT = 0
+  private fountainT = 0
   private lookTarget = { x: 0, y: 0 }
   private idleClock = 0
   private idleCycle = 0
@@ -206,6 +209,7 @@ export class PetScene {
     })
     this.roomPropHitC.on('pointertap', () => {
       if (this.props.room === 'bathroom') this.onPoke('bath_potty')
+      else if (this.props.room === 'yard') this.onPoke('yard_fountain')
     })
 
     parent.addEventListener('pointermove', this.onPointerMove)
@@ -249,8 +253,18 @@ export class PetScene {
       back.fill(0xffffff)
       back.roundRect(w * 0.1, h * 0.32, w * 0.1, h * 0.08, 4)
       back.fill(0x4cc9f0)
+      // Stove + cooktop
       back.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
       back.fill(0xe76f51)
+      back.roundRect(w * 0.64, h * 0.38, w * 0.24, h * 0.08, 4)
+      back.fill(0x333333)
+      // Frying pan
+      back.ellipse(w * 0.74, h * 0.41, 22, 10)
+      back.fill(0x6c757d)
+      back.ellipse(w * 0.74, h * 0.4, 16, 7)
+      back.fill(0x495057)
+      back.roundRect(w * 0.82, h * 0.39, 28, 5, 2)
+      back.fill(0x343a40)
     } else if (this.props.room === 'bathroom') {
       // Sink vanity
       back.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
@@ -301,6 +315,19 @@ export class PetScene {
       back.fill(0xffffff)
       back.ellipse(w * 0.24, h * 0.4, 28, 18)
       back.fill(0xffffff)
+      // Yard fountain (interactive water toy)
+      const fx = w * 0.82
+      const fy = h * 0.58
+      back.ellipse(fx, fy + 18, 36, 12)
+      back.fill(0x4cc9f0)
+      back.ellipse(fx, fy + 18, 26, 8)
+      back.fill(0x90e0ef)
+      back.roundRect(fx - 6, fy - 28, 12, 46, 4)
+      back.fill(0xb0b0b0)
+      back.circle(fx, fy - 32, 12)
+      back.fill(0xffffff)
+      back.circle(fx, fy - 32, 7)
+      back.fill(0x4cc9f0)
     } else {
       // Living room: window + TV console
       const wx = w * 0.08
@@ -374,21 +401,34 @@ export class PetScene {
       hit.eventMode = 'static'
       hint.roundRect(w * 0.08, h * 0.28, w * 0.28, h * 0.28, 8)
       hint.stroke({ width: 3, color: 0xffbe0b, alpha: pulse })
-      // Stove → quick snack
+      // Stove → cooking snack mini-anim
       hitB.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
       hitB.fill({ color: 0xffffff, alpha: 0.001 })
       hitB.eventMode = 'static'
       hint.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
       hint.stroke({ width: 3, color: 0xe76f51, alpha: pulse })
-      hint.circle(w * 0.72, h * 0.42, 5)
-      hint.fill({ color: 0x333333, alpha: 0.5 })
-      hint.circle(w * 0.78, h * 0.42, 5)
-      hint.fill({ color: 0x333333, alpha: 0.5 })
+      hint.ellipse(w * 0.74, h * 0.41, 22, 10)
+      hint.stroke({ width: 2, color: 0x6c757d, alpha: 0.55 + pulse * 0.3 })
       const flame = 0.3 + Math.abs(Math.sin(this.time * 10)) * 0.5
-      hint.circle(w * 0.72, h * 0.48, 4)
+      const cookBoost = this.cookT > 0 ? 1.4 : 1
+      hint.circle(w * 0.7, h * 0.48, 4 * cookBoost)
       hint.fill({ color: 0xffbe0b, alpha: flame })
-      hint.circle(w * 0.78, h * 0.48, 4)
+      hint.circle(w * 0.78, h * 0.48, 4 * cookBoost)
       hint.fill({ color: 0xe63946, alpha: flame * 0.85 })
+      // Sizzle steam while cooking
+      if (this.cookT > 0) {
+        for (let i = 0; i < 5; i++) {
+          const t = this.time * 3 + i
+          const sx = w * 0.7 + i * 8 + Math.sin(t) * 4
+          const sy = h * 0.36 - (1 - this.cookT / 1.8) * 28 - i * 6 - Math.abs(Math.sin(t * 1.4)) * 6
+          hint.ellipse(sx, sy, 7 + i, 4)
+          hint.fill({ color: 0xffffff, alpha: 0.2 + this.cookT * 0.2 })
+        }
+        // Pan bounce
+        const bob = Math.sin(this.time * 18) * 2
+        hint.ellipse(w * 0.74, h * 0.41 + bob, 18, 8)
+        hint.fill({ color: 0xffbe0b, alpha: 0.35 })
+      }
     } else if (room === 'bathroom') {
       // Tub → bath
       hit.ellipse(w * 0.2, h * 0.5, 44, 32)
@@ -449,6 +489,33 @@ export class PetScene {
       hint.fill({ color: 0xe76f51, alpha: 0.85 })
       hint.roundRect(sx - 14, sy + 66, 58, 14, 6)
       hint.stroke({ width: 2, color: 0xffbe0b, alpha: pulse })
+      // Fountain → splash play
+      const fountX = w * 0.82
+      const fountY = h * 0.58
+      hitC.ellipse(fountX, fountY + 10, 40, 36)
+      hitC.fill({ color: 0xffffff, alpha: 0.001 })
+      hitC.eventMode = 'static'
+      hint.ellipse(fountX, fountY + 18, 36, 12)
+      hint.stroke({ width: 3, color: 0x4cc9f0, alpha: pulse })
+      if (this.fountainT > 0) {
+        const burst = 1 - this.fountainT / 1.6
+        for (let i = 0; i < 8; i++) {
+          const ang = -Math.PI / 2 + (i - 3.5) * 0.22
+          const dist = 18 + burst * 42 + Math.sin(this.time * 14 + i) * 4
+          const dx = Math.cos(ang) * dist
+          const dy = Math.sin(ang) * dist
+          hint.circle(fountX + dx, fountY - 20 + dy, 3 + (i % 3))
+          hint.fill({ color: i % 2 ? 0xffffff : 0x90e0ef, alpha: 0.55 * this.fountainT })
+        }
+        hint.circle(fountX, fountY - 40 - burst * 20, 10 + burst * 8)
+        hint.fill({ color: 0x4cc9f0, alpha: 0.35 * this.fountainT })
+      } else {
+        const spout = 8 + Math.abs(Math.sin(this.time * 4)) * 10
+        hint.circle(fountX, fountY - 32 - spout * 0.3, 5)
+        hint.fill({ color: 0xffffff, alpha: 0.45 })
+        hint.ellipse(fountX, fountY - 20, 4, spout)
+        hint.fill({ color: 0x90e0ef, alpha: 0.4 })
+      }
     } else if (room === 'living') {
       // TV → watch / play
       hit.roundRect(w * 0.68, h * 0.18, w * 0.24, h * 0.22, 10)
@@ -1702,6 +1769,43 @@ export class PetScene {
     }
   }
 
+  /** Kitchen cook sizzle / yard fountain splash — MTT2 room-toy juice. */
+  pulseRoomProp(kind: 'cook' | 'fountain') {
+    if (kind === 'cook') {
+      this.cookT = 1.8
+      for (let i = 0; i < 12; i++) {
+        const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.2
+        this.particles.push({
+          x: 90 + (Math.random() - 0.5) * 30,
+          y: -10 + Math.random() * 20,
+          vx: Math.cos(ang) * (20 + Math.random() * 30),
+          vy: Math.sin(ang) * (30 + Math.random() * 40) - 20,
+          life: 0,
+          max: 0.6 + Math.random() * 0.5,
+          color: Math.random() > 0.5 ? 0xffbe0b : 0xffffff,
+          size: 2 + Math.random() * 4,
+          kind: Math.random() > 0.6 ? 'spark' : 'circle',
+        })
+      }
+    } else {
+      this.fountainT = 1.6
+      for (let i = 0; i < 16; i++) {
+        const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.6
+        this.particles.push({
+          x: 120 + (Math.random() - 0.5) * 20,
+          y: 40 + Math.random() * 10,
+          vx: Math.cos(ang) * (40 + Math.random() * 50),
+          vy: Math.sin(ang) * (50 + Math.random() * 40),
+          life: 0,
+          max: 0.7 + Math.random() * 0.5,
+          color: Math.random() > 0.4 ? 0x4cc9f0 : 0xffffff,
+          size: 2 + Math.random() * 5,
+          kind: 'circle',
+        })
+      }
+    }
+  }
+
   private spawnReactionFx(reaction: Reaction) {
     const bursts: Array<{
       n: number
@@ -1778,6 +1882,8 @@ export class PetScene {
     if (this.stretchT > 0) this.stretchT = Math.max(0, this.stretchT - dt)
     if (this.sneezeT > 0) this.sneezeT = Math.max(0, this.sneezeT - dt)
     if (this.earFlopT > 0) this.earFlopT = Math.max(0, this.earFlopT - dt)
+    if (this.cookT > 0) this.cookT = Math.max(0, this.cookT - dt)
+    if (this.fountainT > 0) this.fountainT = Math.max(0, this.fountainT - dt)
     this.idleClock += dt
     if (
       this.idleClock > 10 &&

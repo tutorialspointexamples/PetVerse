@@ -23,6 +23,7 @@ export type CardId =
   | 'swing_ticket'
   | 'comet_core'
   | 'mission_ribbon'
+  | 'fountain_splash'
 
 export interface CardDef {
   id: CardId
@@ -57,6 +58,7 @@ export const CARDS: CardDef[] = [
   { id: 'swing_ticket', name: 'Swing Ticket', rarity: 'rare', blurb: 'Soared on the backyard swing.', color: 0xe76f51 },
   { id: 'comet_core', name: 'Comet Core', rarity: 'epic', blurb: 'Caught a Space Trails comet.', color: 0x00f5d4 },
   { id: 'mission_ribbon', name: 'Mission Ribbon', rarity: 'rare', blurb: 'Cleared a daily mission streak.', color: 0x9b5de5 },
+  { id: 'fountain_splash', name: 'Fountain Splash', rarity: 'common', blurb: 'Splashed the backyard fountain.', color: 0x4cc9f0 },
 ]
 
 export function getCard(id: CardId): CardDef {

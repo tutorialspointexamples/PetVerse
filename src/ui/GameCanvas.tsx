@@ -39,7 +39,8 @@ export function GameCanvas() {
       else if (zone === 'kitchen_food') a.setOverlay('food')
       else if (zone === 'kitchen_stove') {
         if (a.doCare('feed')) a.collectCard('stove_spark')
-      }       else if (zone === 'bath_tub') a.doCare('bath')
+        sceneRef.current?.pulseRoomProp('cook')
+      } else if (zone === 'bath_tub') a.doCare('bath')
       else if (zone === 'bath_sink') a.doCare('brush')
       else if (zone === 'bath_potty') a.doCare('potty')
       else if (zone === 'bed_sleep') a.doCare('sleep')
@@ -48,6 +49,9 @@ export function GameCanvas() {
         a.collectCard('lamp_glow')
       } else if (zone === 'yard_swing') {
         if (a.doCare('play')) a.collectCard('swing_ticket')
+      } else if (zone === 'yard_fountain') {
+        if (a.doCare('play')) a.collectCard('fountain_splash')
+        sceneRef.current?.pulseRoomProp('fountain')
       } else if (zone === 'yard_play') a.doCare('play')
       else if (zone === 'living_tv') a.doCare('play')
       else if (zone === 'living_sofa') {
