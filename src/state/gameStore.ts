@@ -141,7 +141,10 @@ export interface GameState extends SaveData {
   clearWorldVisit: () => void
   unlockCompanion: (id: CompanionId) => boolean
   setCompanion: (id: CompanionId) => void
-  practiceSkill: (id: SkillId) => boolean
+  practiceSkill: (
+    id: SkillId,
+    score?: { perfects: number; goods: number; misses: number; bestStreak: number },
+  ) => boolean
   claimEventBonus: () => boolean
   doEventActivity: () => boolean
   grantMinigameReward: (coins: number, fuel?: number, keepOpen?: boolean) => void
@@ -766,7 +769,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().save()
   },
 
-  practiceSkill: (id) => {
+  practiceSkill: (id, score) => {
     const state = get()
     const level = levelFromXp(state.xp)
     const skill = getSkill(id)
@@ -784,23 +787,35 @@ export const useGameStore = create<GameState>((set, get) => ({
     const companionHappy = getCompanionCare(state.companionCare, state.companion).happiness
     const companionJoins =
       state.companion !== 'none' && companionHappy > 40
+    const perfects = score?.perfects ?? 0
+    const goods = score?.goods ?? 0
+    const misses = score?.misses ?? 0
+    const bestStreak = score?.bestStreak ?? 0
+    const totalBeats = perfects + goods + misses
+    // Rhythm QTE quality scales coin/XP like MTT2 skill performances.
+    const accuracy =
+      totalBeats <= 0 ? 1 : (perfects * 1.25 + goods * 1) / Math.max(1, totalBeats)
+    const mult = Math.min(1.85, Math.max(0.45, accuracy + bestStreak * 0.06))
+    const coinGain = Math.round(skill.coinReward * mult)
+    const xpGain = Math.round(skill.xpReward * mult)
+    const happyBoost = Math.round(8 + perfects * 2 + goods)
     playSkillSfx(id)
     if (companionJoins) playCompanionVoice(state.companion)
     set({
       unlockedSkills: unlocked,
-      coins: state.coins + skill.coinReward,
-      xp: state.xp + skill.xpReward,
+      coins: state.coins + coinGain,
+      xp: state.xp + xpGain,
       reaction: reactionMap[id],
       skillPracticeUntil: now + 5500,
       sleeping: false,
       needs: {
         ...state.needs,
-        happiness: Math.min(100, state.needs.happiness + 10),
+        happiness: Math.min(100, state.needs.happiness + happyBoost),
         energy: Math.max(0, state.needs.energy - 5),
       },
       companionCare: companionJoins
         ? withCompanionCare(state.companionCare, state.companion, {
-            happiness: 12,
+            happiness: 10 + perfects * 2,
             hunger: -2,
           })
         : state.companionCare,
@@ -809,7 +824,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().trackMission('skill')
     window.setTimeout(() => {
       if (get().reaction === reactionMap[id]) set({ reaction: 'idle' })
-    }, 3200)
+    }, 3600)
     return true
   },
 

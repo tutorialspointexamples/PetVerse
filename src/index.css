@@ -1109,6 +1109,135 @@ input {
   opacity: 0.8;
 }
 
+.skill-rhythm {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.skill-rhythm-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+.skill-rhythm-top span {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.skill-meter {
+  position: relative;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(18, 40, 32, 0.12);
+  overflow: hidden;
+}
+
+.skill-meter-zone {
+  position: absolute;
+  left: 28%;
+  width: 46%;
+  top: 0;
+  bottom: 0;
+  background: rgba(46, 196, 128, 0.45);
+}
+
+.skill-meter-perfect {
+  position: absolute;
+  left: 42%;
+  width: 16%;
+  top: 0;
+  bottom: 0;
+  background: rgba(244, 211, 94, 0.75);
+}
+
+.skill-meter-needle {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 8px;
+  margin-left: -4px;
+  border-radius: 4px;
+  background: #e63946;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.skill-beat-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.skill-beat-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(18, 40, 32, 0.18);
+}
+
+.skill-beat-dot.active {
+  background: #f4d35e;
+  transform: scale(1.15);
+}
+
+.skill-beat-dot.done {
+  background: #2ec480;
+}
+
+.skill-popup,
+.skill-result {
+  margin: 0;
+  text-align: center;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 700;
+  color: #1d3557;
+}
+
+.skill-popup {
+  font-size: 1.15rem;
+  animation: skill-pop 0.35s ease;
+}
+
+.skill-result {
+  font-size: 1rem;
+}
+
+@keyframes skill-pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.skill-hit-btn {
+  border: 0;
+  border-radius: 16px;
+  padding: 14px 16px;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #122820;
+  cursor: pointer;
+  background: linear-gradient(180deg, #ffe66d, #f4d35e);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+}
+
+.skill-hit-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.skill-cancel {
+  text-align: center;
+}
+
 .world-visit h2 {
   font-family: 'Fredoka', 'Nunito', sans-serif;
 }

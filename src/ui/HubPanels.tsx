@@ -1,17 +1,25 @@
 import { WORLDS, getWorldSpots, type WorldSpot } from '../game/worlds'
 import { getActiveEvent } from '../game/events'
-import { COMPANIONS, SKILLS, levelFromXp } from '../game/progress'
+import { COMPANIONS, SKILLS, levelFromXp, type SkillId } from '../game/progress'
 import { getCompanionCare } from '../game/companionCare'
 import { FOODS } from '../game/foods'
 import { ROOMS } from '../game/rooms'
 import { CARD_SETS, CARDS, setProgress } from '../game/cards'
 import { missionsForDay, todayKey } from '../game/missions'
 import { IAP_PRODUCTS, purchaseIap, showRewardedAd } from '../monetization/stubs'
+import { playSkillBeatSfx } from '../audio/skillSfx'
 import { useGameStore } from '../state/gameStore'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { LOCALES } from '../i18n/strings'
 import { useLocale } from '../i18n/useLocale'
 import { WorldSpotActivity } from './WorldSpotActivity'
+
+const SKILL_BEATS = 4
+const SKILL_REACTION: Record<SkillId, 'skill_drums' | 'skill_hoop' | 'skill_boxing'> = {
+  drums: 'skill_drums',
+  hoop: 'skill_hoop',
+  boxing: 'skill_boxing',
+}
 
 export function GamesHub() {
   const overlay = useGameStore((s) => s.overlay)
@@ -409,59 +417,257 @@ export function SkillsPanel() {
   const setOverlay = useGameStore((s) => s.setOverlay)
   const xp = useGameStore((s) => s.xp)
   const practiceSkill = useGameStore((s) => s.practiceSkill)
+  const setReaction = useGameStore((s) => s.setReaction)
   const unlockedSkills = useGameStore((s) => s.unlockedSkills)
   const skillPracticeUntil = useGameStore((s) => s.skillPracticeUntil)
   const reaction = useGameStore((s) => s.reaction)
   const companion = useGameStore((s) => s.companion)
+  const companionCare = useGameStore((s) => s.companionCare)
   const level = levelFromXp(xp)
   const { t } = useLocale()
+  const [activeSkill, setActiveSkill] = useState<SkillId | null>(null)
+  const [beatIndex, setBeatIndex] = useState(0)
+  const [meter, setMeter] = useState(0)
+  const [dir, setDir] = useState(1)
+  const [perfects, setPerfects] = useState(0)
+  const [goods, setGoods] = useState(0)
+  const [misses, setMisses] = useState(0)
+  const [streak, setStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
+  const [popup, setPopup] = useState<string | null>(null)
+  const [resultMsg, setResultMsg] = useState<string | null>(null)
+  const running = useRef(true)
+  const companionJoins =
+    companion !== 'none' && getCompanionCare(companionCare, companion).happiness > 40
+
+  useEffect(() => {
+    running.current = true
+    return () => {
+      running.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!activeSkill || resultMsg) return
+    let frame = 0
+    let last = performance.now()
+    const loop = (now: number) => {
+      if (!running.current || !activeSkill) return
+      const dt = (now - last) / 1000
+      last = now
+      setMeter((m) => {
+        const speed = 1.35 + beatIndex * 0.12 + streak * 0.05
+        let next = m + dir * dt * speed
+        if (next >= 1) {
+          next = 1
+          setDir(-1)
+        } else if (next <= 0) {
+          next = 0
+          setDir(1)
+        }
+        return next
+      })
+      frame = requestAnimationFrame(loop)
+    }
+    frame = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(frame)
+  }, [activeSkill, beatIndex, dir, streak, resultMsg])
+
   if (overlay !== 'skills') return null
   const cooling = skillPracticeUntil > Date.now()
   const performing = reaction.startsWith('skill_')
+
+  const startRhythm = (id: SkillId) => {
+    if (cooling || level < (SKILLS.find((s) => s.id === id)?.unlockLevel ?? 99)) return
+    setActiveSkill(id)
+    setBeatIndex(0)
+    setMeter(0.15)
+    setDir(1)
+    setPerfects(0)
+    setGoods(0)
+    setMisses(0)
+    setStreak(0)
+    setBestStreak(0)
+    setPopup(null)
+    setResultMsg(null)
+    setReaction(SKILL_REACTION[id])
+  }
+
+  const hitBeat = () => {
+    if (!activeSkill || resultMsg) return
+    const perfect = meter > 0.42 && meter < 0.58
+    const good = !perfect && meter > 0.28 && meter < 0.74
+    let nextPerfects = perfects
+    let nextGoods = goods
+    let nextMisses = misses
+    let nextStreak = streak
+    let quality: 'perfect' | 'good' | 'miss' = 'miss'
+    if (perfect) {
+      nextPerfects += 1
+      nextStreak += 1
+      quality = 'perfect'
+      setPopup(
+        nextStreak >= 3
+          ? t('skills.fire').replace('{n}', String(nextStreak))
+          : nextStreak >= 2
+            ? t('skills.combo').replace('{n}', String(nextStreak))
+            : t('skills.perfect'),
+      )
+    } else if (good) {
+      nextGoods += 1
+      nextStreak += 1
+      quality = 'good'
+      setPopup(nextStreak >= 2 ? t('skills.combo').replace('{n}', String(nextStreak)) : t('skills.good'))
+    } else {
+      nextMisses += 1
+      nextStreak = 0
+      quality = 'miss'
+      setPopup(t('skills.miss'))
+    }
+    playSkillBeatSfx(quality)
+    const nextBest = Math.max(bestStreak, nextStreak)
+    setPerfects(nextPerfects)
+    setGoods(nextGoods)
+    setMisses(nextMisses)
+    setStreak(nextStreak)
+    setBestStreak(nextBest)
+    const nextBeat = beatIndex + 1
+    if (nextBeat >= SKILL_BEATS) {
+      const ok = practiceSkill(activeSkill, {
+        perfects: nextPerfects,
+        goods: nextGoods,
+        misses: nextMisses,
+        bestStreak: nextBest,
+      })
+      if (ok) {
+        const stars =
+          nextPerfects >= 3 ? '★★★' : nextPerfects + nextGoods >= 3 ? '★★☆' : nextGoods >= 1 ? '★☆☆' : '☆☆☆'
+        setResultMsg(
+          t('skills.result')
+            .replace('{stars}', stars)
+            .replace('{p}', String(nextPerfects))
+            .replace('{g}', String(nextGoods)),
+        )
+      } else {
+        setResultMsg(t('skills.cool'))
+        setReaction('idle')
+      }
+      window.setTimeout(() => {
+        if (!running.current) return
+        setActiveSkill(null)
+        setPopup(null)
+        setResultMsg(null)
+      }, 1600)
+    } else {
+      setBeatIndex(nextBeat)
+      setMeter(0.1 + Math.random() * 0.2)
+      setDir(1)
+      window.setTimeout(() => {
+        if (running.current) setPopup(null)
+      }, 450)
+    }
+  }
+
+  const cancelRhythm = () => {
+    setActiveSkill(null)
+    setPopup(null)
+    setResultMsg(null)
+    if (reaction.startsWith('skill_')) setReaction('idle')
+  }
+
   return (
     <div className="shop-overlay" role="dialog" aria-label="Skills">
       <div className="shop-panel">
         <div className="shop-header">
           <h2>{t('skills.title')}</h2>
           <p className="shop-coins">Lv {level}</p>
-          <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
+          <button
+            type="button"
+            className="close-btn"
+            onClick={() => {
+              cancelRhythm()
+              setOverlay('none')
+            }}
+          >
             ×
           </button>
         </div>
         <p className="panel-note">
-          {performing
-            ? companion !== 'none'
-              ? 'Performing… companion is cheering!'
-              : 'Performing a skill routine…'
-            : cooling
-              ? 'Catch your breath — try another skill shortly.'
-              : 'Practice drums, hoop toss, or paw spar for a short show.'}
+          {activeSkill
+            ? companionJoins
+              ? t('skills.performing.cheer')
+              : t('skills.performing')
+            : performing
+              ? companion !== 'none'
+                ? t('skills.performing.cheer')
+                : t('skills.performing')
+              : cooling
+                ? t('skills.cool')
+                : t('skills.hint')}
         </p>
-        {SKILLS.map((skill) => {
-          const locked = level < skill.unlockLevel
-          const learned = unlockedSkills.includes(skill.id)
-          return (
-            <button
-              key={skill.id}
-              type="button"
-              className="hub-card"
-              disabled={locked || cooling}
-              onClick={() => practiceSkill(skill.id)}
-            >
-              <strong>
-                {skill.name}
-                {learned ? '' : ' · new'}
-              </strong>
+        {activeSkill ? (
+          <div className="skill-rhythm" aria-label={t('skills.rhythm')}>
+            <div className="skill-rhythm-top">
+              <strong>{SKILLS.find((s) => s.id === activeSkill)?.name}</strong>
               <span>
-                {locked
-                  ? `Unlock at level ${skill.unlockLevel}`
-                  : cooling
-                    ? 'Cooling down…'
-                    : `+${skill.coinReward}c · +${skill.xpReward} XP · 3s show`}
+                {t('skills.beat')} {Math.min(beatIndex + 1, SKILL_BEATS)}/{SKILL_BEATS}
               </span>
+            </div>
+            <div className="skill-meter" role="meter" aria-valuenow={Math.round(meter * 100)}>
+              <div className="skill-meter-zone" />
+              <div className="skill-meter-perfect" />
+              <div className="skill-meter-needle" style={{ left: `${meter * 100}%` }} />
+            </div>
+            <div className="skill-beat-dots">
+              {Array.from({ length: SKILL_BEATS }, (_, i) => (
+                <span
+                  key={i}
+                  className={`skill-beat-dot ${i < beatIndex ? 'done' : i === beatIndex ? 'active' : ''}`}
+                />
+              ))}
+            </div>
+            {popup ? <p className="skill-popup">{popup}</p> : null}
+            {resultMsg ? <p className="skill-result">{resultMsg}</p> : null}
+            <button type="button" className="skill-hit-btn" disabled={!!resultMsg} onClick={hitBeat}>
+              {activeSkill === 'drums'
+                ? t('skills.hit.drums')
+                : activeSkill === 'hoop'
+                  ? t('skills.hit.hoop')
+                  : t('skills.hit.boxing')}
             </button>
-          )
-        })}
+            <button type="button" className="hub-card skill-cancel" onClick={cancelRhythm}>
+              <strong>{t('skills.cancel')}</strong>
+            </button>
+          </div>
+        ) : (
+          SKILLS.map((skill) => {
+            const locked = level < skill.unlockLevel
+            const learned = unlockedSkills.includes(skill.id)
+            return (
+              <button
+                key={skill.id}
+                type="button"
+                className="hub-card"
+                disabled={locked || cooling}
+                onClick={() => startRhythm(skill.id)}
+              >
+                <strong>
+                  {skill.name}
+                  {learned ? '' : ` · ${t('skills.new')}`}
+                </strong>
+                <span>
+                  {locked
+                    ? t('skills.unlock').replace('{n}', String(skill.unlockLevel))
+                    : cooling
+                      ? t('skills.cooling')
+                      : t('skills.reward')
+                          .replace('{c}', String(skill.coinReward))
+                          .replace('{x}', String(skill.xpReward))}
+                </span>
+              </button>
+            )
+          })
+        )}
       </div>
     </div>
   )

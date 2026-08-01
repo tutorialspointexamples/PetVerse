@@ -56,3 +56,18 @@ export function playSkillSfx(skill: 'drums' | 'hoop' | 'boxing') {
     tone(100, 0.95, 0.1, 'sawtooth', 0.05)
   }
 }
+
+/** Per-beat click during skill rhythm QTE. */
+export function playSkillBeatSfx(quality: 'perfect' | 'good' | 'miss') {
+  const ac = getCtx()
+  if (!ac) return
+  void ac.resume()
+  if (quality === 'perfect') {
+    tone(660, 0, 0.07, 'sine', 0.09)
+    tone(880, 0.05, 0.08, 'triangle', 0.06)
+  } else if (quality === 'good') {
+    tone(440, 0, 0.07, 'sine', 0.07)
+  } else {
+    tone(160, 0, 0.09, 'square', 0.04)
+  }
+}

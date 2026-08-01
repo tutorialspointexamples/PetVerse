@@ -124,6 +124,7 @@ export class PetScene {
   private pokeJiggleT = 0
   private pokeJiggleStrength = 1
   private pokeJiggleDir = 1
+  private pokeZone: 'head' | 'belly' | null = null
   private lookTarget = { x: 0, y: 0 }
   private idleClock = 0
   private idleCycle = 0
@@ -1410,10 +1411,16 @@ export class PetScene {
     g.clear()
     const breath = breathIn || Math.sin(this.time * 2.1) * 2.5
     const bodyFill = mood === 'sick' ? 0x8fbc8f : fill
+    const bellyPoke =
+      this.pokeZone === 'belly' && this.pokeJiggleT > 0
+        ? Math.sin(this.pokeJiggleT * 28) * this.pokeJiggleStrength
+        : 0
+    const bellyDent = Math.abs(bellyPoke) * 10
+    const bellyYPush = bellyPoke * 5
     // Soft outer rim for rounded cartoon volume
-    g.ellipse(0, 30 + b, 82 + breath * 0.4, 96)
+    g.ellipse(0, 30 + b + bellyYPush * 0.3, 82 + breath * 0.4, 96 - bellyDent * 0.25)
     g.fill({ color: ear, alpha: 0.35 })
-    g.ellipse(0, 28 + b, 78 + breath * 0.35, 92)
+    g.ellipse(0, 28 + b + bellyYPush * 0.35, 78 + breath * 0.35, 92 - bellyDent * 0.3)
     g.fill(bodyFill)
     // Chest/shoulder volume planes (pseudo-3D)
     g.ellipse(-36, 8 + b, 26, 22)
@@ -1425,11 +1432,24 @@ export class PetScene {
     g.fill({ color: 0x000000, alpha: 0.07 })
     g.ellipse(-22, 8 + b, 22, 28)
     g.fill({ color: 0xffffff, alpha: 0.1 })
-    // Cream belly patch with soft bounce
-    g.ellipse(0, 42 + b + breath * 0.3, 48 + breath * 0.2, 58)
+    // Cream belly patch with soft bounce — dents locally when poked
+    g.ellipse(
+      0,
+      42 + b + breath * 0.3 + bellyYPush,
+      48 + breath * 0.2 + bellyDent * 0.35,
+      58 - bellyDent,
+    )
     g.fill(belly)
-    g.ellipse(-8, 30 + b, 14, 18)
+    g.ellipse(-8, 30 + b + bellyYPush * 0.5, 14, 18)
     g.fill({ color: 0xffffff, alpha: 0.12 })
+    if (bellyDent > 0.5) {
+      // Soft ripple rings around the poke dent
+      const ring = 18 + (1 - this.pokeJiggleT / 0.65) * 28
+      g.ellipse(0, 48 + b + bellyYPush, ring, ring * 0.55)
+      g.stroke({ width: 3, color: 0xffffff, alpha: 0.22 * this.pokeJiggleT })
+      g.ellipse(0, 50 + b + bellyYPush, ring * 0.6, ring * 0.35)
+      g.stroke({ width: 2, color: 0xffb4a2, alpha: 0.28 * this.pokeJiggleT })
+    }
     // Fur stripes (talking-pet silhouette cue)
     g.ellipse(-40, 20 + b, 8, 22)
     g.fill({ color: ear, alpha: 0.28 })
@@ -1568,6 +1588,14 @@ export class PetScene {
   private drawArms(fill: number, reaction: Reaction, b: number, armLift = 0) {
     const g = this.arms
     g.clear()
+    const pokeGuard =
+      this.pokeZone === 'belly' && this.pokeJiggleT > 0
+        ? Math.sin(this.pokeJiggleT * 22) * 14 * this.pokeJiggleStrength
+        : 0
+    const headRecoil =
+      this.pokeZone === 'head' && this.pokeJiggleT > 0
+        ? Math.sin(this.pokeJiggleT * 26) * 8 * this.pokeJiggleStrength
+        : 0
     if (this.stretchT > 0 || (armLift > 10 && reaction === 'idle')) {
       const lift = armLift || 28
       g.ellipse(-70, -10 + b - lift * 0.3, 20, 40)
@@ -1595,15 +1623,36 @@ export class PetScene {
               : reaction === 'laugh'
                 ? Math.sin(this.time * 16) * 12
                 : Math.sin(this.time * 2) * 4
-    const liftBoost = armLift * 0.35
+    const liftBoost = armLift * 0.35 + Math.abs(pokeGuard) * 0.8 + Math.abs(headRecoil) * 0.4
+    const guardIn = Math.abs(pokeGuard) * 0.55
     // Upper-arm + forearm segments for clearer articulation
-    g.ellipse(-72 - leftPunch * 0.15, 6 + b + swing * 0.1 - liftBoost - leftPunch * 0.2, 16, 22)
+    g.ellipse(
+      -72 - leftPunch * 0.15 + guardIn,
+      6 + b + swing * 0.1 - liftBoost - leftPunch * 0.2 + pokeGuard * 0.2,
+      16,
+      22,
+    )
     g.fill(fill)
-    g.ellipse(72 + rightPunch * 0.15, 6 + b - swing * 0.1 - liftBoost - rightPunch * 0.2, 16, 22)
+    g.ellipse(
+      72 + rightPunch * 0.15 - guardIn,
+      6 + b - swing * 0.1 - liftBoost - rightPunch * 0.2 + pokeGuard * 0.2,
+      16,
+      22,
+    )
     g.fill(fill)
-    g.ellipse(-78 - leftPunch * 0.35, 20 + b + swing * 0.15 - liftBoost - leftPunch * 0.4, 22, 36)
+    g.ellipse(
+      -78 - leftPunch * 0.35 + guardIn * 1.2,
+      20 + b + swing * 0.15 - liftBoost - leftPunch * 0.4 + pokeGuard * 0.35,
+      22,
+      36,
+    )
     g.fill(fill)
-    g.ellipse(78 + rightPunch * 0.35, 20 + b - swing * 0.15 - liftBoost - rightPunch * 0.4, 22, 36)
+    g.ellipse(
+      78 + rightPunch * 0.35 - guardIn * 1.2,
+      20 + b - swing * 0.15 - liftBoost - rightPunch * 0.4 + pokeGuard * 0.35,
+      22,
+      36,
+    )
     g.fill(fill)
     g.ellipse(-74, 10 + b + swing * 0.08, 6, 8)
     g.fill({ color: 0xffffff, alpha: 0.12 })
@@ -1681,8 +1730,15 @@ export class PetScene {
   private drawHeadLayer(fill: number, ear: number, b: number, earFlop = 0) {
     const g = this.head
     g.clear()
-    const headY = -78 + b
-    const earWiggle = earFlop || Math.sin(this.time * 2.6) * 4
+    const headPoke =
+      this.pokeZone === 'head' && this.pokeJiggleT > 0
+        ? Math.sin(this.pokeJiggleT * 30) * this.pokeJiggleStrength
+        : 0
+    const cheekSquash = Math.abs(headPoke) * 8
+    const headSquashY = Math.abs(headPoke) * 5
+    const headY = -78 + b + headPoke * 3
+    const earWiggle =
+      (earFlop || Math.sin(this.time * 2.6) * 4) + Math.abs(headPoke) * 10 * this.pokeJiggleDir
     const talkBob = this.props.talking ? Math.sin(this.time * 14) * 2 : 0
     const browLift =
       this.props.reaction === 'laugh'
@@ -1690,12 +1746,12 @@ export class PetScene {
         : this.props.reaction === 'annoyed'
           ? -3
           : Math.sin(this.time * 1.8) * 1.2
-    // Cheek fluff for rounder talking-pet silhouette
-    g.ellipse(-52, headY + 18 + talkBob, 18, 16)
+    // Cheek fluff for rounder talking-pet silhouette — widens on head poke
+    g.ellipse(-52 - cheekSquash * 0.35, headY + 18 + talkBob, 18 + cheekSquash * 0.45, 16 - cheekSquash * 0.15)
     g.fill(fill)
-    g.ellipse(52, headY + 18 + talkBob, 18, 16)
+    g.ellipse(52 + cheekSquash * 0.35, headY + 18 + talkBob, 18 + cheekSquash * 0.45, 16 - cheekSquash * 0.15)
     g.fill(fill)
-    g.circle(0, headY + talkBob, 64)
+    g.ellipse(0, headY + talkBob, 64 + cheekSquash * 0.2, 64 - headSquashY)
     g.fill(fill)
     // Soft “3D” volume bands (rim light + cheek planes)
     g.circle(16, headY + 6 + talkBob, 40)
@@ -1768,13 +1824,33 @@ export class PetScene {
     const blink =
       (this.blinkT > 0 && this.blinkT < 0.1) || (this.blinkT > 0.18 && this.blinkT < 0.28)
 
-    if (sleeping || reaction === 'sleep' || blink) {
-      g.moveTo(-24, headY - 4)
-      g.quadraticCurveTo(-18, headY + 2, -12, headY - 4)
+    const headPoke =
+      this.pokeZone === 'head' && this.pokeJiggleT > 0
+        ? Math.abs(Math.sin(this.pokeJiggleT * 30)) * this.pokeJiggleStrength
+        : 0
+    const squint = headPoke > 0.15
+    if (sleeping || reaction === 'sleep' || blink || squint) {
+      const dip = squint ? 2 + headPoke * 3 : 0
+      g.moveTo(-24, headY - 4 + dip)
+      g.quadraticCurveTo(-18, headY + 2 + dip * 0.5, -12, headY - 4 + dip)
       g.stroke({ width: 4, color: 0x243029, cap: 'round' })
-      g.moveTo(12, headY - 4)
-      g.quadraticCurveTo(18, headY + 2, 24, headY - 4)
+      g.moveTo(12, headY - 4 + dip)
+      g.quadraticCurveTo(18, headY + 2 + dip * 0.5, 24, headY - 4 + dip)
       g.stroke({ width: 4, color: 0x243029, cap: 'round' })
+      if (squint) {
+        // Tiny poke stars beside the head
+        const spark = 0.45 + this.pokeJiggleT
+        g.moveTo(-58, headY - 20)
+        g.lineTo(-52, headY - 14)
+        g.moveTo(-55, headY - 22)
+        g.lineTo(-55, headY - 12)
+        g.stroke({ width: 2, color: 0xffe66d, alpha: spark, cap: 'round' })
+        g.moveTo(58, headY - 18)
+        g.lineTo(52, headY - 12)
+        g.moveTo(55, headY - 20)
+        g.lineTo(55, headY - 10)
+        g.stroke({ width: 2, color: 0xffe66d, alpha: spark, cap: 'round' })
+      }
     } else if (reaction === 'laugh') {
       g.moveTo(-26, headY - 2)
       g.quadraticCurveTo(-18, headY + 8, -10, headY - 2)
@@ -2386,9 +2462,27 @@ export class PetScene {
 
   private onPokeImpulse = (ev: Event) => {
     const detail = (ev as CustomEvent<{ zone?: string; strength?: number }>).detail
-    this.pokeJiggleT = 0.55
+    this.pokeJiggleT = 0.65
     this.pokeJiggleStrength = detail?.strength ?? 1
-    this.pokeJiggleDir = detail?.zone === 'belly' ? -1 : 1
+    this.pokeZone = detail?.zone === 'belly' ? 'belly' : 'head'
+    this.pokeJiggleDir = this.pokeZone === 'belly' ? -1 : 1
+    // Localized spark burst at poke site (soft-puppet feel).
+    const y = this.pokeZone === 'belly' ? 36 : -72
+    for (let i = 0; i < 8; i++) {
+      const ang = Math.random() * Math.PI * 2
+      this.particles.push({
+        x: (Math.random() - 0.5) * (this.pokeZone === 'belly' ? 36 : 28),
+        y: y + (Math.random() - 0.5) * 16,
+        vx: Math.cos(ang) * (18 + Math.random() * 36),
+        vy: Math.sin(ang) * (18 + Math.random() * 30) - 10,
+        life: 0,
+        max: 0.4 + Math.random() * 0.35,
+        color: this.pokeZone === 'belly' ? 0xffb4a2 : 0xffe66d,
+        size: 2 + Math.random() * 3.5,
+        kind: 'spark',
+      })
+    }
+    if (this.pokeZone === 'head') this.earFlopT = Math.max(this.earFlopT, 0.55)
   }
 
   private spawnReactionFx(reaction: Reaction) {
@@ -2486,7 +2580,10 @@ export class PetScene {
     if (this.sandboxPulseT > 0) this.sandboxPulseT = Math.max(0, this.sandboxPulseT - dt)
     if (this.cinemaPulseT > 0) this.cinemaPulseT = Math.max(0, this.cinemaPulseT - dt)
     if (this.consolePulseT > 0) this.consolePulseT = Math.max(0, this.consolePulseT - dt)
-    if (this.pokeJiggleT > 0) this.pokeJiggleT = Math.max(0, this.pokeJiggleT - dt)
+    if (this.pokeJiggleT > 0) {
+      this.pokeJiggleT = Math.max(0, this.pokeJiggleT - dt)
+      if (this.pokeJiggleT === 0) this.pokeZone = null
+    }
     this.idleClock += dt
     if (
       this.idleClock > 10 &&
