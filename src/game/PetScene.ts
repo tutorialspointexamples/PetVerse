@@ -894,15 +894,21 @@ export class PetScene {
     const b = this.bounce()
     const landing = Math.max(0, -b)
     const rising = Math.max(0, b)
+    const reactive =
+      this.props.reaction === 'laugh' ||
+      this.props.reaction === 'play' ||
+      this.props.reaction.startsWith('skill_')
     return {
-      sx: 1 + landing * 0.012 - rising * 0.008,
-      sy: 1 - landing * 0.012 + rising * 0.01,
+      sx: 1 + landing * 0.035 - rising * 0.022 + (reactive ? Math.sin(this.time * 12) * 0.03 : 0),
+      sy: 1 - landing * 0.035 + rising * 0.028 + (reactive ? Math.cos(this.time * 12) * 0.025 : 0),
       tilt:
         this.props.reaction === 'laugh'
-          ? Math.sin(this.time * 10) * 0.08
-          : this.props.reaction === 'annoyed'
-            ? -0.06
-            : Math.sin(this.time * 1.4) * 0.02,
+          ? Math.sin(this.time * 12) * 0.14
+          : this.props.reaction === 'play' || this.props.reaction.startsWith('skill_')
+            ? Math.sin(this.time * 8) * 0.1
+            : this.props.reaction === 'annoyed'
+              ? -0.08
+              : Math.sin(this.time * 1.4) * 0.03,
     }
   }
 
@@ -953,8 +959,10 @@ export class PetScene {
     g.clear()
     const playStep =
       this.props.reaction === 'play' || this.props.reaction.startsWith('skill_')
-        ? Math.sin(this.time * 12) * 8
-        : Math.sin(this.time * 2.2) * 2
+        ? Math.sin(this.time * 14) * 14
+        : this.props.reaction === 'laugh'
+          ? Math.sin(this.time * 16) * 6
+          : Math.sin(this.time * 2.2) * 2
     const leftY = 70 + b * 0.2 + playStep * 0.35
     const rightY = 70 + b * 0.2 - playStep * 0.35
     // Thigh volume + shin taper for more articulated limbs
@@ -1235,10 +1243,12 @@ export class PetScene {
     }
     const swing =
       reaction === 'play' || reaction === 'skill_boxing'
-        ? Math.sin(this.time * 14) * 14
+        ? Math.sin(this.time * 14) * 22
         : reaction === 'skill_drums'
-          ? Math.sin(this.time * 18) * 10
-          : Math.sin(this.time * 2) * 4
+          ? Math.sin(this.time * 18) * 16
+          : reaction === 'laugh'
+            ? Math.sin(this.time * 16) * 12
+            : Math.sin(this.time * 2) * 4
     // Upper-arm + forearm segments for clearer articulation
     g.ellipse(-72, 6 + b + swing * 0.1, 16, 22)
     g.fill(fill)
