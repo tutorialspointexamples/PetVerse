@@ -24,6 +24,10 @@ export type CardId =
   | 'comet_core'
   | 'mission_ribbon'
   | 'fountain_splash'
+  | 'cinema_ticket'
+  | 'popcorn_box'
+  | 'sandbox_gem'
+  | 'slide_whistle'
 
 export interface CardDef {
   id: CardId
@@ -59,6 +63,10 @@ export const CARDS: CardDef[] = [
   { id: 'comet_core', name: 'Comet Core', rarity: 'epic', blurb: 'Caught a Space Trails comet.', color: 0x00f5d4 },
   { id: 'mission_ribbon', name: 'Mission Ribbon', rarity: 'rare', blurb: 'Cleared a daily mission streak.', color: 0x9b5de5 },
   { id: 'fountain_splash', name: 'Fountain Splash', rarity: 'common', blurb: 'Splashed the backyard fountain.', color: 0x4cc9f0 },
+  { id: 'cinema_ticket', name: 'Cinema Ticket', rarity: 'rare', blurb: 'First seat in the chill cinema lounge.', color: 0xe63946 },
+  { id: 'popcorn_box', name: 'Popcorn Box', rarity: 'common', blurb: 'Crunched snacks during movie night.', color: 0xffbe0b },
+  { id: 'sandbox_gem', name: 'Sandbox Gem', rarity: 'common', blurb: 'Dug up treasure in the backyard sandbox.', color: 0xe9c46a },
+  { id: 'slide_whistle', name: 'Slide Whistle', rarity: 'rare', blurb: 'Whooshed down the backyard slide.', color: 0xffbe0b },
 ]
 
 export function getCard(id: CardId): CardDef {
@@ -120,8 +128,12 @@ export const CARD_SETS: CardSetDef[] = [
       'swing_ticket',
       'fountain_splash',
       'mission_ribbon',
+      'cinema_ticket',
+      'popcorn_box',
+      'sandbox_gem',
+      'slide_whistle',
     ],
-    rewardCoins: 30,
+    rewardCoins: 40,
     rewardStars: 1,
     rewardFuel: 2,
   },

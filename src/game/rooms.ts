@@ -1,4 +1,4 @@
-export type RoomId = 'living' | 'kitchen' | 'bathroom' | 'bedroom' | 'yard'
+export type RoomId = 'living' | 'kitchen' | 'bathroom' | 'bedroom' | 'yard' | 'cinema'
 
 export interface RoomDef {
   id: RoomId
@@ -51,6 +51,14 @@ export const ROOMS: RoomDef[] = [
     floor: 0x6a994e,
     trim: 0x4caf7a,
     outdoor: true,
+  },
+  {
+    id: 'cinema',
+    name: 'Cinema Lounge',
+    wall: 0x1a1028,
+    wallAccent: 0x3a1c5c,
+    floor: 0x2b1d3a,
+    trim: 0xe63946,
   },
 ]
 

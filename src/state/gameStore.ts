@@ -24,6 +24,7 @@ import {
   getShoes,
 } from '../game/cosmetics'
 import { playCompanionVoice } from '../audio/companionVoice'
+import { playSkillSfx } from '../audio/skillSfx'
 import type { FurnitureId } from '../game/furniture'
 import { getFurniture } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
@@ -159,6 +160,8 @@ export interface GameState extends SaveData {
   shopOpen: boolean
   toggleShop: () => void
   companionPlayUntil: number
+  /** Session cooldown gate for skill performances (ms timestamp). */
+  skillPracticeUntil: number
 }
 
 function sliceSave(state: GameState): SaveData {
@@ -281,6 +284,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   lastFoodTag: null,
   shopOpen: false,
   companionPlayUntil: 0,
+  skillPracticeUntil: 0,
 
   hydrate: () => {
     const data = loadSave()
@@ -454,6 +458,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     })
     get().save()
     get().trackMission('poke')
+    // Soft ragdoll-style jiggle impulse on the live scene (session-only visual).
+    window.dispatchEvent(
+      new CustomEvent('petverse-poke-impulse', {
+        detail: { zone, strength: zone === 'belly' ? 1.2 : 0.85 },
+      }),
+    )
     window.setTimeout(() => {
       if (get().reaction === 'laugh' || get().reaction === 'annoyed') {
         set({ reaction: get().sleeping ? 'sleep' : 'idle' })
@@ -678,10 +688,13 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setRoom: (id) => {
     const state = get()
-    const ownedCards =
-      id === 'yard' && !state.ownedCards.includes('yard_balloon')
-        ? [...state.ownedCards, 'yard_balloon' as CardId]
-        : state.ownedCards
+    let ownedCards = state.ownedCards
+    if (id === 'yard' && !ownedCards.includes('yard_balloon')) {
+      ownedCards = [...ownedCards, 'yard_balloon' as CardId]
+    }
+    if (id === 'cinema' && !ownedCards.includes('cinema_ticket')) {
+      ownedCards = [...ownedCards, 'cinema_ticket' as CardId]
+    }
     set({ room: id, overlay: 'none', ownedCards })
     get().save()
   },
@@ -758,6 +771,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const level = levelFromXp(state.xp)
     const skill = getSkill(id)
     if (level < skill.unlockLevel) return false
+    const now = Date.now()
+    if (state.skillPracticeUntil > now) return false
     const unlocked = state.unlockedSkills.includes(id)
       ? state.unlockedSkills
       : [...state.unlockedSkills, id]
@@ -766,22 +781,35 @@ export const useGameStore = create<GameState>((set, get) => ({
       hoop: 'skill_hoop',
       boxing: 'skill_boxing',
     }
+    const companionHappy = getCompanionCare(state.companionCare, state.companion).happiness
+    const companionJoins =
+      state.companion !== 'none' && companionHappy > 40
+    playSkillSfx(id)
+    if (companionJoins) playCompanionVoice(state.companion)
     set({
       unlockedSkills: unlocked,
       coins: state.coins + skill.coinReward,
       xp: state.xp + skill.xpReward,
       reaction: reactionMap[id],
+      skillPracticeUntil: now + 5500,
+      sleeping: false,
       needs: {
         ...state.needs,
         happiness: Math.min(100, state.needs.happiness + 10),
         energy: Math.max(0, state.needs.energy - 5),
       },
+      companionCare: companionJoins
+        ? withCompanionCare(state.companionCare, state.companion, {
+            happiness: 12,
+            hunger: -2,
+          })
+        : state.companionCare,
     })
     get().save()
     get().trackMission('skill')
     window.setTimeout(() => {
       if (get().reaction === reactionMap[id]) set({ reaction: 'idle' })
-    }, 1400)
+    }, 3200)
     return true
   },
 

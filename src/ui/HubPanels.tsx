@@ -283,8 +283,10 @@ export function RoomsPanel() {
                     : r.id === 'bedroom'
                       ? ' · bed=sleep, lamp=poke'
                       : r.id === 'yard'
-                        ? ' · pad/swing=play'
-                        : ' · tv=play, sofa=poke'}
+                        ? ' · pad/swing/fountain/sandbox=play'
+                        : r.id === 'cinema'
+                          ? ' · screen=watch, console=play, seats=poke'
+                          : ' · tv=play, sofa=poke'}
               </span>
             </button>
           ))}
@@ -408,9 +410,14 @@ export function SkillsPanel() {
   const xp = useGameStore((s) => s.xp)
   const practiceSkill = useGameStore((s) => s.practiceSkill)
   const unlockedSkills = useGameStore((s) => s.unlockedSkills)
+  const skillPracticeUntil = useGameStore((s) => s.skillPracticeUntil)
+  const reaction = useGameStore((s) => s.reaction)
+  const companion = useGameStore((s) => s.companion)
   const level = levelFromXp(xp)
   const { t } = useLocale()
   if (overlay !== 'skills') return null
+  const cooling = skillPracticeUntil > Date.now()
+  const performing = reaction.startsWith('skill_')
   return (
     <div className="shop-overlay" role="dialog" aria-label="Skills">
       <div className="shop-panel">
@@ -421,6 +428,15 @@ export function SkillsPanel() {
             ×
           </button>
         </div>
+        <p className="panel-note">
+          {performing
+            ? companion !== 'none'
+              ? 'Performing… companion is cheering!'
+              : 'Performing a skill routine…'
+            : cooling
+              ? 'Catch your breath — try another skill shortly.'
+              : 'Practice drums, hoop toss, or paw spar for a short show.'}
+        </p>
         {SKILLS.map((skill) => {
           const locked = level < skill.unlockLevel
           const learned = unlockedSkills.includes(skill.id)
@@ -429,7 +445,7 @@ export function SkillsPanel() {
               key={skill.id}
               type="button"
               className="hub-card"
-              disabled={locked}
+              disabled={locked || cooling}
               onClick={() => practiceSkill(skill.id)}
             >
               <strong>
@@ -439,7 +455,9 @@ export function SkillsPanel() {
               <span>
                 {locked
                   ? `Unlock at level ${skill.unlockLevel}`
-                  : `+${skill.coinReward}c · +${skill.xpReward} XP`}
+                  : cooling
+                    ? 'Cooling down…'
+                    : `+${skill.coinReward}c · +${skill.xpReward} XP · 3s show`}
               </span>
             </button>
           )

@@ -54,8 +54,12 @@ export type PokeZone =
   | 'yard_play'
   | 'yard_swing'
   | 'yard_fountain'
+  | 'yard_sandbox'
   | 'living_tv'
   | 'living_sofa'
+  | 'cinema_screen'
+  | 'cinema_console'
+  | 'cinema_sofa'
 
 export class PetScene {
   readonly app: Application
@@ -114,6 +118,12 @@ export class PetScene {
   private swingPulseT = 0
   private tvPulseT = 0
   private sleepPulseT = 0
+  private sandboxPulseT = 0
+  private cinemaPulseT = 0
+  private consolePulseT = 0
+  private pokeJiggleT = 0
+  private pokeJiggleStrength = 1
+  private pokeJiggleDir = 1
   private lookTarget = { x: 0, y: 0 }
   private idleClock = 0
   private idleCycle = 0
@@ -213,6 +223,7 @@ export class PetScene {
       else if (room === 'bedroom') this.onPoke('bed_sleep')
       else if (room === 'yard') this.onPoke('yard_play')
       else if (room === 'living') this.onPoke('living_tv')
+      else if (room === 'cinema') this.onPoke('cinema_screen')
     })
     this.roomPropHitB.on('pointertap', () => {
       const room = this.props.room
@@ -221,16 +232,20 @@ export class PetScene {
       else if (room === 'bedroom') this.onPoke('bedroom_lamp')
       else if (room === 'yard') this.onPoke('yard_swing')
       else if (room === 'living') this.onPoke('living_sofa')
+      else if (room === 'cinema') this.onPoke('cinema_console')
     })
     this.roomPropHitC.on('pointertap', () => {
       if (this.props.room === 'bathroom') this.onPoke('bath_potty')
       else if (this.props.room === 'yard') this.onPoke('yard_fountain')
+      else if (this.props.room === 'cinema') this.onPoke('cinema_sofa')
     })
     this.roomPropHitD.on('pointertap', () => {
       if (this.props.room === 'bathroom') this.onPoke('bath_medicine')
+      else if (this.props.room === 'yard') this.onPoke('yard_sandbox')
     })
 
     parent.addEventListener('pointermove', this.onPointerMove)
+    window.addEventListener('petverse-poke-impulse', this.onPokeImpulse)
 
     this.zzz.anchor.set(0.5)
     this.nameTag.anchor.set(0.5, 0)
@@ -359,6 +374,64 @@ export class PetScene {
       back.fill(0xffffff)
       back.circle(fx, fy - 32, 7)
       back.fill(0x4cc9f0)
+      // Sandbox dig pit
+      back.ellipse(w * 0.68, h * 0.72, 42, 16)
+      back.fill(0xe9c46a)
+      back.ellipse(w * 0.68, h * 0.72, 30, 10)
+      back.fill(0xd4a373)
+      // Permanent yard slide
+      const slx = w * 0.08
+      const sly = h * 0.28
+      back.roundRect(slx, sly, 14, h * 0.34, 4)
+      back.fill(0xffbe0b)
+      back.moveTo(slx + 14, sly + 8)
+      back.lineTo(slx + 90, sly + h * 0.28)
+      back.lineTo(slx + 78, sly + h * 0.3)
+      back.lineTo(slx + 14, sly + 28)
+      back.closePath()
+      back.fill(0x4cc9f0)
+      back.ellipse(slx + 86, sly + h * 0.3, 16, 8)
+      back.fill(0x6a994e)
+    } else if (this.props.room === 'cinema') {
+      // Dark chill cinema: big screen, seat row, console, popcorn
+      back.rect(0, 0, w, h * 0.62)
+      back.fill(0x140c1f)
+      back.rect(0, 0, w, h * 0.62)
+      back.fill({ color: 0x3a1c5c, alpha: 0.35 })
+      // Projector beam
+      back.moveTo(w * 0.5, h * 0.08)
+      back.lineTo(w * 0.18, h * 0.42)
+      back.lineTo(w * 0.82, h * 0.42)
+      back.closePath()
+      back.fill({ color: 0xffffff, alpha: 0.06 })
+      // Giant screen
+      back.roundRect(w * 0.12, h * 0.1, w * 0.76, h * 0.32, 10)
+      back.fill(0x0d0d0d)
+      back.roundRect(w * 0.14, h * 0.12, w * 0.72, h * 0.26, 8)
+      back.fill(0x1d3557)
+      // Neon trim
+      back.roundRect(w * 0.12, h * 0.1, w * 0.76, h * 0.32, 10)
+      back.stroke({ width: 3, color: 0xe63946, alpha: 0.7 })
+      // Seat row
+      for (let i = 0; i < 4; i++) {
+        const sx = w * 0.18 + i * w * 0.16
+        back.roundRect(sx, h * 0.48, w * 0.12, h * 0.12, 8)
+        back.fill(0x1a1a1a)
+        back.roundRect(sx + 4, h * 0.46, w * 0.12 - 8, h * 0.05, 6)
+        back.fill(0xe63946)
+      }
+      // Chill console
+      back.roundRect(w * 0.72, h * 0.48, w * 0.18, h * 0.12, 6)
+      back.fill(0x240046)
+      back.roundRect(w * 0.745, h * 0.5, w * 0.13, h * 0.05, 4)
+      back.fill(0x00f5d4)
+      // Popcorn stand
+      back.roundRect(w * 0.08, h * 0.5, w * 0.1, h * 0.1, 4)
+      back.fill(0xffbe0b)
+      back.rect(w * 0.08, h * 0.52, w * 0.1, 4)
+      back.fill(0xe63946)
+      back.rect(w * 0.08, h * 0.56, w * 0.1, 4)
+      back.fill(0xe63946)
     } else {
       // Living room: window + TV console
       const wx = w * 0.08
@@ -612,6 +685,74 @@ export class PetScene {
         hint.ellipse(fountX, fountY - 20, 4, spout)
         hint.fill({ color: 0x90e0ef, alpha: 0.4 })
       }
+      // Sandbox + slide cue (hit covers sandbox; slide is scenic next to swing)
+      const sbx = w * 0.68
+      const sby = h * 0.72
+      hitD.ellipse(sbx, sby, 48, 22)
+      hitD.fill({ color: 0xffffff, alpha: 0.001 })
+      hitD.eventMode = 'static'
+      hint.ellipse(sbx, sby, 42, 16)
+      hint.stroke({ width: 3, color: 0xe9c46a, alpha: pulse })
+      if (this.sandboxPulseT > 0) {
+        for (let i = 0; i < 6; i++) {
+          hint.circle(
+            sbx + (i - 2.5) * 8,
+            sby - 8 - (1 - this.sandboxPulseT / 1.4) * 16 - (i % 2) * 4,
+            3,
+          )
+          hint.fill({ color: i % 2 ? 0xe9c46a : 0xffffff, alpha: 0.55 * this.sandboxPulseT })
+        }
+      }
+      // Slide sparkle on the permanent slide structure
+      const slx = w * 0.08
+      const sly = h * 0.28
+      hint.moveTo(slx + 18, sly + 12)
+      hint.lineTo(slx + 82, sly + h * 0.26)
+      hint.stroke({ width: 3, color: 0xffbe0b, alpha: pulse * 0.7 })
+    } else if (room === 'cinema') {
+      // Big screen → chill watch
+      hit.roundRect(w * 0.12, h * 0.1, w * 0.76, h * 0.32, 10)
+      hit.fill({ color: 0xffffff, alpha: 0.001 })
+      hit.eventMode = 'static'
+      hint.roundRect(w * 0.12, h * 0.1, w * 0.76, h * 0.32, 10)
+      hint.stroke({ width: 3, color: 0xe63946, alpha: pulse })
+      const flicker = 0.25 + Math.abs(Math.sin(this.time * 5)) * 0.45
+      const chillBoost = this.cinemaPulseT > 0 ? 0.5 : 0
+      hint.roundRect(w * 0.14, h * 0.12, w * 0.72, h * 0.26, 8)
+      hint.fill({
+        color: this.cinemaPulseT > 0 ? 0xff85a1 : 0x4cc9f0,
+        alpha: flicker * 0.3 + chillBoost,
+      })
+      if (this.cinemaPulseT > 0) {
+        for (let i = 0; i < 8; i++) {
+          hint.circle(
+            w * 0.2 + i * w * 0.08,
+            h * 0.22 + Math.sin(this.time * 8 + i) * 6,
+            3,
+          )
+          hint.fill({ color: 0xffffff, alpha: 0.45 * this.cinemaPulseT })
+        }
+      }
+      // Neon console → short play pulse
+      hitB.roundRect(w * 0.72, h * 0.46, w * 0.2, h * 0.16, 6)
+      hitB.fill({ color: 0xffffff, alpha: 0.001 })
+      hitB.eventMode = 'static'
+      hint.roundRect(w * 0.72, h * 0.48, w * 0.18, h * 0.12, 6)
+      hint.stroke({ width: 3, color: 0x00f5d4, alpha: pulse })
+      if (this.consolePulseT > 0) {
+        for (let i = 0; i < 5; i++) {
+          hint.circle(w * 0.78 + i * 6, h * 0.52 - (1 - this.consolePulseT / 1.3) * 14, 3)
+          hint.fill({ color: 0x00f5d4, alpha: 0.55 * this.consolePulseT })
+        }
+      }
+      // Cinema sofa / seat row → poke + popcorn card
+      hitC.ellipse(w * 0.4, h * 0.55, 90, 28)
+      hitC.fill({ color: 0xffffff, alpha: 0.001 })
+      hitC.eventMode = 'static'
+      hint.ellipse(w * 0.4, h * 0.55, 90, 28)
+      hint.stroke({ width: 3, color: 0xe63946, alpha: pulse })
+      hint.roundRect(w * 0.08, h * 0.5, w * 0.1, h * 0.1, 4)
+      hint.stroke({ width: 2, color: 0xffbe0b, alpha: pulse })
     } else if (room === 'living') {
       // TV → watch / play
       hit.roundRect(w * 0.68, h * 0.18, w * 0.24, h * 0.22, 10)
@@ -875,6 +1016,40 @@ export class PetScene {
           g.fill(item.color)
           g.roundRect(x - 18, y - 40, 36, 18, 4)
           g.fill(item.accent)
+          g.circle(x - 10, y - 16, 4)
+          g.fill(0xff85a1)
+          g.circle(x + 10, y - 16, 4)
+          g.fill(0x4cc9f0)
+          g.roundRect(x - 8, y - 12, 16, 4, 2)
+          g.fill({ color: 0xffffff, alpha: 0.45 })
+        } else if (id === 'sofa_cinema' || id === 'sofa_cinema_xl') {
+          const wide = id === 'sofa_cinema_xl' ? 1.25 : 1
+          g.roundRect(x - 40 * wide, y - 36, 80 * wide, 32, 10)
+          g.fill(item.color)
+          g.roundRect(x - 36 * wide, y - 48, 72 * wide, 18, 8)
+          g.fill(item.accent)
+          g.ellipse(x - 28 * wide, y - 20, 10, 8)
+          g.fill({ color: 0xffffff, alpha: 0.12 })
+          g.ellipse(x + 28 * wide, y - 20, 10, 8)
+          g.fill({ color: 0xffffff, alpha: 0.12 })
+        } else if (id === 'slide') {
+          g.roundRect(x - 8, y - 70, 12, 70, 4)
+          g.fill(item.color)
+          g.moveTo(x + 4, y - 62)
+          g.lineTo(x + 48, y - 8)
+          g.lineTo(x + 38, y - 2)
+          g.lineTo(x + 4, y - 42)
+          g.closePath()
+          g.fill(item.accent)
+        } else if (id === 'drum_kit') {
+          g.ellipse(x, y - 18, 28, 14)
+          g.fill(item.color)
+          g.ellipse(x, y - 18, 20, 9)
+          g.fill(item.accent)
+          g.circle(x - 22, y - 34, 10)
+          g.fill(0x333333)
+          g.circle(x + 22, y - 34, 10)
+          g.fill(0x333333)
         } else if (id === 'alien_pod') {
           g.ellipse(x, y - 36, 28, 36)
           g.fill({ color: item.color, alpha: 0.85 })
@@ -957,12 +1132,13 @@ export class PetScene {
     const playing = this.props.reaction === 'play'
     const hungry = this.props.companionHunger < 30
     const sad = this.props.companionHappiness < 30
-    const hop = playing
+    const skillCheer = this.props.reaction.startsWith('skill_') && this.props.companionHappiness > 40
+    const hop = playing || skillCheer
       ? Math.abs(Math.sin(this.time * 10)) * 18
       : hungry || sad
         ? Math.sin(this.time * 1.6) * 2
         : Math.sin(this.time * 3) * 4
-    const x = w * 0.72 + (playing ? Math.sin(this.time * 6) * 16 : 0)
+    const x = w * 0.72 + (playing || skillCheer ? Math.sin(this.time * 6) * 16 : 0)
     const y = h * 0.7 + hop
     g.ellipse(x, y + 28, 22, 8)
     g.fill({ color: 0x1a2a22, alpha: 0.15 })
@@ -990,6 +1166,18 @@ export class PetScene {
       g.fill(0xff85a1)
       g.circle(ballX - 2, ballY - 2, 2)
       g.fill({ color: 0xffffff, alpha: 0.7 })
+    }
+    if (skillCheer) {
+      // Cheer bubbles while pet performs drums / hoop / boxing
+      for (let i = 0; i < 4; i++) {
+        const rise = ((this.time * 40 + i * 18) % 40)
+        g.circle(x + (i - 1.5) * 10, y - 28 - rise, 3)
+        g.fill({ color: 0xf4d35e, alpha: 0.55 })
+      }
+      g.moveTo(x - 6, y - 18)
+      g.lineTo(x, y - 30)
+      g.lineTo(x + 6, y - 18)
+      g.stroke({ width: 2, color: 0xff85a1, alpha: 0.7 })
     }
     g.circle(x - 8, y - 4, 3)
     g.fill(0x243029)
@@ -1058,10 +1246,16 @@ export class PetScene {
     const mood = deriveMood(needs)
     const scale = this.app.screen.width < 480 ? 0.82 : 1
     const pose = this.pose()
-    this.pet.scale.set(scale * pose.sx, scale * pose.sy)
-    this.pet.rotation = pose.tilt
+    const jiggle =
+      this.pokeJiggleT > 0
+        ? Math.sin(this.pokeJiggleT * 42) * 0.08 * this.pokeJiggleStrength * this.pokeJiggleDir
+        : 0
+    const jiggleSquash =
+      this.pokeJiggleT > 0 ? 1 + Math.sin(this.pokeJiggleT * 36) * 0.06 * this.pokeJiggleStrength : 1
+    this.pet.scale.set(scale * pose.sx * jiggleSquash, scale * pose.sy * (2 - jiggleSquash))
+    this.pet.rotation = pose.tilt + jiggle
     this.nameTag.text = petName || 'Your Pet'
-    const b = pose.bounce
+    const b = pose.bounce + (this.pokeJiggleT > 0 ? Math.sin(this.pokeJiggleT * 40) * 6 * this.pokeJiggleStrength : 0)
 
     this.drawShadow(b)
     this.drawLegs(color.fill, b, pose.limbPhase)
@@ -1386,54 +1580,101 @@ export class PetScene {
       g.fill(fill)
       return
     }
+    const punchPhase = Math.sin(this.time * 14)
+    const leftPunch = reaction === 'skill_boxing' ? Math.max(0, punchPhase) * 28 : 0
+    const rightPunch = reaction === 'skill_boxing' ? Math.max(0, -punchPhase) * 28 : 0
     const swing =
-      reaction === 'play' || reaction === 'skill_boxing'
-        ? Math.sin(this.time * 14) * 22
-        : reaction === 'skill_drums'
-          ? Math.sin(this.time * 18) * 16
-          : reaction === 'laugh'
-            ? Math.sin(this.time * 16) * 12
-            : Math.sin(this.time * 2) * 4
+      reaction === 'skill_boxing'
+        ? punchPhase * 26
+        : reaction === 'play'
+          ? Math.sin(this.time * 14) * 22
+          : reaction === 'skill_drums'
+            ? Math.sin(this.time * 20) * 18
+            : reaction === 'skill_hoop'
+              ? Math.sin(this.time * 8) * 10
+              : reaction === 'laugh'
+                ? Math.sin(this.time * 16) * 12
+                : Math.sin(this.time * 2) * 4
     const liftBoost = armLift * 0.35
     // Upper-arm + forearm segments for clearer articulation
-    g.ellipse(-72, 6 + b + swing * 0.1 - liftBoost, 16, 22)
+    g.ellipse(-72 - leftPunch * 0.15, 6 + b + swing * 0.1 - liftBoost - leftPunch * 0.2, 16, 22)
     g.fill(fill)
-    g.ellipse(72, 6 + b - swing * 0.1 - liftBoost, 16, 22)
+    g.ellipse(72 + rightPunch * 0.15, 6 + b - swing * 0.1 - liftBoost - rightPunch * 0.2, 16, 22)
     g.fill(fill)
-    g.ellipse(-78, 20 + b + swing * 0.15 - liftBoost, 22, 36)
+    g.ellipse(-78 - leftPunch * 0.35, 20 + b + swing * 0.15 - liftBoost - leftPunch * 0.4, 22, 36)
     g.fill(fill)
-    g.ellipse(78, 20 + b - swing * 0.15 - liftBoost, 22, 36)
+    g.ellipse(78 + rightPunch * 0.35, 20 + b - swing * 0.15 - liftBoost - rightPunch * 0.4, 22, 36)
     g.fill(fill)
     g.ellipse(-74, 10 + b + swing * 0.08, 6, 8)
     g.fill({ color: 0xffffff, alpha: 0.12 })
     g.ellipse(74, 10 + b - swing * 0.08, 6, 8)
     g.fill({ color: 0xffffff, alpha: 0.12 })
     // Palm pads for softer cartoon paws
-    g.ellipse(-78, 48 + b + swing * 0.1, 10, 8)
+    g.ellipse(-78 - leftPunch * 0.4, 48 + b + swing * 0.1 - leftPunch * 0.5, 10, 8)
     g.fill({ color: 0xffb4a2, alpha: 0.72 })
-    g.ellipse(78, 48 + b - swing * 0.1, 10, 8)
+    g.ellipse(78 + rightPunch * 0.4, 48 + b - swing * 0.1 - rightPunch * 0.5, 10, 8)
     g.fill({ color: 0xffb4a2, alpha: 0.72 })
     for (const sx of [-86, -78, -70]) {
-      g.circle(sx, 38 + b + swing * 0.08, 2.2)
+      g.circle(sx - leftPunch * 0.35, 38 + b + swing * 0.08 - leftPunch * 0.4, 2.2)
       g.fill({ color: 0xffb4a2, alpha: 0.65 })
     }
     for (const sx of [70, 78, 86]) {
-      g.circle(sx, 38 + b - swing * 0.08, 2.2)
+      g.circle(sx + rightPunch * 0.35, 38 + b - swing * 0.08 - rightPunch * 0.4, 2.2)
       g.fill({ color: 0xffb4a2, alpha: 0.65 })
     }
     if (reaction === 'skill_hoop') {
-      g.circle(0, -20 + b + Math.sin(this.time * 10) * 20, 28)
+      // Toss arc: rise → peak → catch
+      const toss = (Math.sin(this.time * 5) + 1) * 0.5
+      const hoopY = -10 + b - toss * 70
+      const hoopX = Math.sin(this.time * 5) * 18
+      const hoopR = 26 + toss * 6
+      g.circle(hoopX, hoopY, hoopR)
       g.stroke({ width: 5, color: 0xf4d35e })
+      g.circle(hoopX, hoopY, hoopR - 6)
+      g.stroke({ width: 2, color: 0xffffff, alpha: 0.35 })
+      if (toss > 0.85) {
+        g.ellipse(0, 55 + b, 36, 10)
+        g.fill({ color: 0xf4d35e, alpha: 0.25 })
+      }
+    }
+    if (reaction === 'skill_drums') {
+      // Alternating drum sticks
+      const stickL = Math.sin(this.time * 20) * 10
+      const stickR = Math.sin(this.time * 20 + Math.PI) * 10
+      g.moveTo(-48, 30 + b)
+      g.lineTo(-36, 55 + b + stickL)
+      g.stroke({ width: 3, color: 0xb56b45 })
+      g.moveTo(48, 30 + b)
+      g.lineTo(36, 55 + b + stickR)
+      g.stroke({ width: 3, color: 0xb56b45 })
+      g.circle(-36, 58 + b + stickL, 3)
+      g.fill(0x333333)
+      g.circle(36, 58 + b + stickR, 3)
+      g.fill(0x333333)
     }
     if (reaction === 'skill_boxing') {
-      g.circle(-90, 10 + b + swing, 14)
+      const lx = -90 - leftPunch * 0.5
+      const ly = 10 + b + swing - leftPunch * 0.6
+      const rx = 90 + rightPunch * 0.5
+      const ry = 10 + b - swing - rightPunch * 0.6
+      g.circle(lx, ly, 14)
       g.fill(0xe63946)
-      g.circle(90, 10 + b - swing, 14)
+      g.circle(rx, ry, 14)
       g.fill(0xe63946)
-      g.circle(-90, 10 + b + swing, 7)
+      g.circle(lx, ly, 7)
       g.fill({ color: 0xffffff, alpha: 0.35 })
-      g.circle(90, 10 + b - swing, 7)
+      g.circle(rx, ry, 7)
       g.fill({ color: 0xffffff, alpha: 0.35 })
+      // Impact stars on punch peaks
+      if (leftPunch > 20 || rightPunch > 20) {
+        const ix = leftPunch > rightPunch ? lx - 18 : rx + 18
+        const iy = leftPunch > rightPunch ? ly : ry
+        for (let i = 0; i < 4; i++) {
+          const ang = (i / 4) * Math.PI * 2 + this.time * 8
+          g.circle(ix + Math.cos(ang) * 12, iy + Math.sin(ang) * 10, 2.5)
+          g.fill({ color: 0xf4d35e, alpha: 0.7 })
+        }
+      }
     }
   }
 
@@ -1779,12 +2020,24 @@ export class PetScene {
     }
 
     if (reaction === 'skill_drums') {
-      g.roundRect(-30, 70 + b, 60, 28, 6)
+      const beat = Math.abs(Math.sin(this.time * 18))
+      g.roundRect(-34, 68 + b, 68, 32, 8)
       g.fill(0xb56b45)
-      g.circle(-40, 50 + b + Math.sin(this.time * 18) * 8, 8)
+      g.ellipse(0, 74 + b, 28, 12)
+      g.fill(0xe63946)
+      g.ellipse(0, 74 + b, 18, 7)
+      g.fill(0xf4d35e)
+      g.circle(-42, 48 + b + Math.sin(this.time * 20) * 10, 9)
       g.fill(0x333333)
-      g.circle(40, 50 + b + Math.sin(this.time * 18 + 1) * 8, 8)
+      g.circle(42, 48 + b + Math.sin(this.time * 20 + Math.PI) * 10, 9)
       g.fill(0x333333)
+      // Beat spark crumbs
+      if (beat > 0.85) {
+        for (let i = 0; i < 5; i++) {
+          g.circle((i - 2) * 10, 40 + b - beat * 16, 2.5)
+          g.fill({ color: 0xf4d35e, alpha: 0.65 })
+        }
+      }
     }
   }
 
@@ -2066,9 +2319,21 @@ export class PetScene {
     }
   }
 
-  /** Room-toy juice — cook / bath / brush / potty / swing / tv / sleep / fountain. */
+  /** Room-toy juice — cook / bath / brush / potty / swing / tv / sleep / fountain / cinema / sandbox. */
   pulseRoomProp(
-    kind: 'cook' | 'fountain' | 'bath' | 'brush' | 'potty' | 'medicine' | 'swing' | 'tv' | 'sleep',
+    kind:
+      | 'cook'
+      | 'fountain'
+      | 'bath'
+      | 'brush'
+      | 'potty'
+      | 'medicine'
+      | 'swing'
+      | 'tv'
+      | 'sleep'
+      | 'sandbox'
+      | 'cinema'
+      | 'console',
   ) {
     const w = this.app.screen.width
     const h = this.app.screen.height
@@ -2082,6 +2347,9 @@ export class PetScene {
       swing: { x: w * 0.2, y: h * 0.55, color: 0xffbe0b, n: 10 },
       tv: { x: w * 0.8, y: h * 0.28, color: 0x9b5de5, n: 12 },
       sleep: { x: w * 0.22, y: h * 0.38, color: 0xffe066, n: 8 },
+      sandbox: { x: w * 0.68, y: h * 0.7, color: 0xe9c46a, n: 12 },
+      cinema: { x: w * 0.5, y: h * 0.24, color: 0xe63946, n: 14 },
+      console: { x: w * 0.8, y: h * 0.52, color: 0x00f5d4, n: 10 },
     }
     const o = origins[kind]
     if (kind === 'cook') this.cookT = 1.8
@@ -2092,6 +2360,9 @@ export class PetScene {
     else if (kind === 'medicine') this.medicinePulseT = 1.4
     else if (kind === 'swing') this.swingPulseT = 1.4
     else if (kind === 'tv') this.tvPulseT = 1.3
+    else if (kind === 'sandbox') this.sandboxPulseT = 1.4
+    else if (kind === 'cinema') this.cinemaPulseT = 2.4
+    else if (kind === 'console') this.consolePulseT = 1.3
     else this.sleepPulseT = 1.6
 
     // Particles are drawn in pet-local fx space; convert screen → roughly centered pet space
@@ -2108,9 +2379,16 @@ export class PetScene {
         max: 0.55 + Math.random() * 0.55,
         color: Math.random() > 0.45 ? o.color : 0xffffff,
         size: 2 + Math.random() * 4,
-        kind: kind === 'brush' || kind === 'tv' ? 'spark' : 'circle',
+        kind: kind === 'brush' || kind === 'tv' || kind === 'cinema' || kind === 'console' ? 'spark' : 'circle',
       })
     }
+  }
+
+  private onPokeImpulse = (ev: Event) => {
+    const detail = (ev as CustomEvent<{ zone?: string; strength?: number }>).detail
+    this.pokeJiggleT = 0.55
+    this.pokeJiggleStrength = detail?.strength ?? 1
+    this.pokeJiggleDir = detail?.zone === 'belly' ? -1 : 1
   }
 
   private spawnReactionFx(reaction: Reaction) {
@@ -2131,7 +2409,9 @@ export class PetScene {
       bursts.push({ n: 8, color: 0xff85a1, kind: 'heart', spread: 50 })
     if (reaction === 'brush') bursts.push({ n: 10, color: 0x4cc9f0, kind: 'spark', spread: 45 })
     if (reaction === 'potty') bursts.push({ n: 6, color: 0x90e0ef, kind: 'spark', spread: 30 })
-    if (reaction.startsWith('skill_')) bursts.push({ n: 12, color: 0xf4d35e, kind: 'spark', spread: 60 })
+    if (reaction === 'skill_drums') bursts.push({ n: 14, color: 0xf4d35e, kind: 'crumb', spread: 55 })
+    if (reaction === 'skill_hoop') bursts.push({ n: 12, color: 0x4cc9f0, kind: 'spark', spread: 65 })
+    if (reaction === 'skill_boxing') bursts.push({ n: 14, color: 0xe63946, kind: 'spark', spread: 70 })
     for (const b of bursts) {
       for (let i = 0; i < b.n; i++) {
         const ang = Math.random() * Math.PI * 2
@@ -2203,6 +2483,10 @@ export class PetScene {
     if (this.swingPulseT > 0) this.swingPulseT = Math.max(0, this.swingPulseT - dt)
     if (this.tvPulseT > 0) this.tvPulseT = Math.max(0, this.tvPulseT - dt)
     if (this.sleepPulseT > 0) this.sleepPulseT = Math.max(0, this.sleepPulseT - dt)
+    if (this.sandboxPulseT > 0) this.sandboxPulseT = Math.max(0, this.sandboxPulseT - dt)
+    if (this.cinemaPulseT > 0) this.cinemaPulseT = Math.max(0, this.cinemaPulseT - dt)
+    if (this.consolePulseT > 0) this.consolePulseT = Math.max(0, this.consolePulseT - dt)
+    if (this.pokeJiggleT > 0) this.pokeJiggleT = Math.max(0, this.pokeJiggleT - dt)
     this.idleClock += dt
     if (
       this.idleClock > 10 &&
@@ -2268,6 +2552,7 @@ export class PetScene {
     this.disposed = true
     this.ready = false
     window.removeEventListener('resize', this.layout)
+    window.removeEventListener('petverse-poke-impulse', this.onPokeImpulse)
     this.host?.removeEventListener('pointermove', this.onPointerMove)
     this.host = null
     try {

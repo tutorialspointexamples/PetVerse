@@ -59,17 +59,33 @@ export function GameCanvas() {
       } else if (zone === 'yard_swing') {
         if (a.doCare('play')) {
           a.collectCard('swing_ticket')
+          a.collectCard('slide_whistle')
           sceneRef.current?.pulseRoomProp('swing')
         }
       } else if (zone === 'yard_fountain') {
         if (a.doCare('play')) a.collectCard('fountain_splash')
         sceneRef.current?.pulseRoomProp('fountain')
+      } else if (zone === 'yard_sandbox') {
+        if (a.doCare('play')) {
+          a.collectCard('sandbox_gem')
+          sceneRef.current?.pulseRoomProp('sandbox')
+        }
       } else if (zone === 'yard_play') a.doCare('play')
       else if (zone === 'living_tv') {
         if (a.doCare('play')) sceneRef.current?.pulseRoomProp('tv')
       } else if (zone === 'living_sofa') {
         a.poke('belly')
         a.collectCard('sofa_cushion')
+      } else if (zone === 'cinema_screen') {
+        if (a.doCare('play')) sceneRef.current?.pulseRoomProp('cinema')
+      } else if (zone === 'cinema_console') {
+        if (a.doCare('play')) {
+          a.collectCard('popcorn_box')
+          sceneRef.current?.pulseRoomProp('console')
+        }
+      } else if (zone === 'cinema_sofa') {
+        a.poke('belly')
+        a.collectCard('popcorn_box')
       } else a.poke(zone)
     }
 
