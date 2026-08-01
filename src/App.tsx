@@ -9,6 +9,7 @@ import { SkyDashGame } from './ui/SkyDashGame'
 import { DunkTossGame } from './ui/DunkTossGame'
 import { SpaceTrailsGame } from './ui/SpaceTrailsGame'
 import { BuildPlaneGame } from './ui/BuildPlaneGame'
+import { BuddyCatchGame } from './ui/BuddyCatchGame'
 import {
   CompanionsPanel,
   EventPanel,
@@ -91,7 +92,8 @@ export default function App() {
     overlay === 'skyDash' ||
     overlay === 'dunkToss' ||
     overlay === 'spaceTrails' ||
-    overlay === 'buildPlane'
+    overlay === 'buildPlane' ||
+    overlay === 'buddyCatch'
 
   return (
     <div className="app-shell">
@@ -121,6 +123,7 @@ export default function App() {
       {overlay === 'dunkToss' ? <DunkTossGame /> : null}
       {overlay === 'spaceTrails' ? <SpaceTrailsGame /> : null}
       {overlay === 'buildPlane' ? <BuildPlaneGame /> : null}
+      {overlay === 'buddyCatch' ? <BuddyCatchGame /> : null}
       <NameModal />
     </div>
   )

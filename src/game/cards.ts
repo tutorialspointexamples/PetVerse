@@ -28,6 +28,7 @@ export type CardId =
   | 'popcorn_box'
   | 'sandbox_gem'
   | 'slide_whistle'
+  | 'buddy_ball'
 
 export interface CardDef {
   id: CardId
@@ -67,6 +68,7 @@ export const CARDS: CardDef[] = [
   { id: 'popcorn_box', name: 'Popcorn Box', rarity: 'common', blurb: 'Crunched snacks during movie night.', color: 0xffbe0b },
   { id: 'sandbox_gem', name: 'Sandbox Gem', rarity: 'common', blurb: 'Dug up treasure in the backyard sandbox.', color: 0xe9c46a },
   { id: 'slide_whistle', name: 'Slide Whistle', rarity: 'rare', blurb: 'Whooshed down the backyard slide.', color: 0xffbe0b },
+  { id: 'buddy_ball', name: 'Buddy Ball', rarity: 'rare', blurb: 'Caught together in a companion co-op game.', color: 0x7bc9a6 },
 ]
 
 export function getCard(id: CardId): CardDef {
@@ -109,7 +111,7 @@ export const CARD_SETS: CardSetDef[] = [
     id: 'arcade',
     name: 'Arcade Ace',
     blurb: 'Clear every offline mini-game card.',
-    cards: ['sky_medal', 'dunk_star', 'trail_comet', 'plane_blueprint', 'comet_core'],
+    cards: ['sky_medal', 'dunk_star', 'trail_comet', 'plane_blueprint', 'comet_core', 'buddy_ball'],
     rewardCoins: 35,
     rewardStars: 1,
     rewardFuel: 1,
@@ -180,4 +182,5 @@ export const MINIGAME_CARDS: Record<string, CardId> = {
   dunkToss: 'dunk_star',
   spaceTrails: 'trail_comet',
   buildPlane: 'plane_blueprint',
+  buddyCatch: 'buddy_ball',
 }

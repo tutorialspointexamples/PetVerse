@@ -90,6 +90,7 @@ export type Overlay =
   | 'dunkToss'
   | 'spaceTrails'
   | 'buildPlane'
+  | 'buddyCatch'
   | 'worldVisit'
   | 'flight'
   | 'food'
@@ -100,7 +101,7 @@ export type Overlay =
   | 'photo'
   | 'missions'
 
-const MINIGAME_OVERLAYS: Overlay[] = ['skyDash', 'dunkToss', 'spaceTrails', 'buildPlane']
+const MINIGAME_OVERLAYS: Overlay[] = ['skyDash', 'dunkToss', 'spaceTrails', 'buildPlane', 'buddyCatch']
 
 export interface GameState extends SaveData {
   reaction: Reaction
@@ -163,6 +164,8 @@ export interface GameState extends SaveData {
   collectCard: (id: CardId) => boolean
   claimCardSet: (id: CardSetId) => boolean
   playWithCompanion: () => boolean
+  startBuddyCatch: () => boolean
+  finishBuddyCatch: (coins: number, xp: number, playerCatches: number, buddyCatches: number) => void
   feedCompanion: () => boolean
   trackMission: (kind: MissionKind, amount?: number) => void
   claimMission: (id: string) => boolean
@@ -504,6 +507,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   playWithCompanion: () => {
+    // Quick fetch still available; co-op Buddy Catch is the richer MTT2-style loop.
     const state = get()
     if (state.companion === 'none') return false
     const now = Date.now()
@@ -532,6 +536,57 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (get().reaction === 'play') set({ reaction: 'idle' })
     }, 1600)
     return true
+  },
+
+  startBuddyCatch: () => {
+    const state = get()
+    if (state.companion === 'none') return false
+    const now = Date.now()
+    if (state.companionPlayUntil > now) return false
+    set({
+      overlay: 'buddyCatch',
+      sleeping: false,
+      reaction: 'play',
+    })
+    playCompanionVoice(state.companion)
+    return true
+  },
+
+  finishBuddyCatch: (coins, xp, playerCatches, buddyCatches) => {
+    const state = get()
+    if (state.companion === 'none') return
+    const total = playerCatches + buddyCatches
+    const happiness = 18 + Math.min(20, buddyCatches * 3)
+    const hunger = -6 - Math.min(8, Math.floor(total / 4))
+    const ownedCards =
+      !state.ownedCards.includes('buddy_ball') && total >= 8
+        ? [...state.ownedCards, 'buddy_ball' as const]
+        : state.ownedCards
+    set({
+      companionPlayUntil: Date.now() + 12000,
+      coins: state.coins + coins,
+      xp: state.xp + xp,
+      fuel: Math.min(20, state.fuel + (total >= 12 ? 2 : 1)),
+      stars: state.stars + (total >= 18 ? 1 : 0),
+      needs: {
+        ...state.needs,
+        happiness: Math.min(100, state.needs.happiness + 14),
+        energy: Math.max(0, state.needs.energy - 6),
+      },
+      companionCare: withCompanionCare(state.companionCare, state.companion, {
+        happiness,
+        hunger,
+      }),
+      ownedCards,
+      reaction: 'play',
+      lastMinigameReward: coins,
+    })
+    get().save()
+    get().trackMission('play')
+    get().trackMission('minigame')
+    window.setTimeout(() => {
+      if (get().reaction === 'play') set({ reaction: 'idle' })
+    }, 1600)
   },
 
   feedCompanion: () => {

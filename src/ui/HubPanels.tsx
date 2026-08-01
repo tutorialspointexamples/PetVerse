@@ -761,6 +761,7 @@ export function CompanionsPanel() {
   const ownedCompanions = useGameStore((s) => s.ownedCompanions)
   const unlockCompanion = useGameStore((s) => s.unlockCompanion)
   const playWithCompanion = useGameStore((s) => s.playWithCompanion)
+  const startBuddyCatch = useGameStore((s) => s.startBuddyCatch)
   const feedCompanion = useGameStore((s) => s.feedCompanion)
   const companionPlayUntil = useGameStore((s) => s.companionPlayUntil)
   const { t } = useLocale()
@@ -855,10 +856,20 @@ export function CompanionsPanel() {
             className="name-submit"
             disabled={companion === 'none' || playCooling}
             onClick={() => {
+              startBuddyCatch()
+            }}
+          >
+            {playCooling ? t('companions.play.cool') : t('buddy.cta')}
+          </button>
+          <button
+            type="button"
+            className="name-submit secondary"
+            disabled={companion === 'none' || playCooling}
+            onClick={() => {
               if (playWithCompanion()) setOverlay('none')
             }}
           >
-            {playCooling ? t('companions.play.cool') : t('companions.play')}
+            {t('companions.play')}
           </button>
         </div>
         <p className="hint">{t('companions.hint')}</p>
