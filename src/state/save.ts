@@ -5,13 +5,19 @@ import type {
   HatId,
   ScarfId,
   ShirtId,
+  ShoesId,
 } from '../game/cosmetics'
 import type { FurnitureId } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
+import type { CompanionCareMap } from '../game/companionCare'
+import { defaultCompanionCareMap } from '../game/companionCare'
+import type { RoomId } from '../game/rooms'
+import type { FoodId } from '../game/foods'
+import type { CardId, CardSetId } from '../game/cards'
 import { DEFAULT_NEEDS } from '../game/needs'
 
-const SAVE_KEY = 'petverse-save-v2'
+const SAVE_KEY = 'petverse-save-v4'
 
 export interface SaveData {
   petName: string
@@ -26,20 +32,34 @@ export interface SaveData {
   glasses: GlassesId
   scarf: ScarfId
   shirt: ShirtId
+  shoes: ShoesId
   ownedColors: BodyColorId[]
   ownedHats: HatId[]
   ownedGlasses: GlassesId[]
   ownedScarves: ScarfId[]
   ownedShirts: ShirtId[]
+  ownedShoes: ShoesId[]
   ownedFurniture: FurnitureId[]
   placedFurniture: FurnitureId[]
   visitedWorlds: WorldId[]
   companion: CompanionId
   ownedCompanions: CompanionId[]
+  /** Per-pet hunger/happiness for MTT2-style companion care. */
+  companionCare: CompanionCareMap
   unlockedSkills: SkillId[]
   eventClaimDate: string | null
   claimedEventIds: string[]
+  /** YYYY-MM-DD when seasonal event activity was completed */
+  eventActivityDate: string | null
   sleeping: boolean
+  room: RoomId
+  favoriteFood: FoodId
+  ownedCards: CardId[]
+  claimedCardSets: CardSetId[]
+  /** YYYY-MM-DD for the active daily mission set */
+  missionDate: string | null
+  missionProgress: Record<string, number>
+  claimedMissions: string[]
   lastSavedAt: number
 }
 
@@ -57,27 +77,42 @@ export function defaultSave(): SaveData {
     glasses: 'none',
     scarf: 'none',
     shirt: 'none',
+    shoes: 'none',
     ownedColors: ['ginger'],
     ownedHats: ['none'],
     ownedGlasses: ['none'],
     ownedScarves: ['none'],
     ownedShirts: ['none'],
+    ownedShoes: ['none'],
     ownedFurniture: ['rug_basic'],
     placedFurniture: ['rug_basic'],
     visitedWorlds: [],
     companion: 'none',
     ownedCompanions: ['none'],
+    companionCare: defaultCompanionCareMap(),
     unlockedSkills: ['drums'],
     eventClaimDate: null,
     claimedEventIds: [],
+    eventActivityDate: null,
     sleeping: false,
+    room: 'living',
+    favoriteFood: 'kibble',
+    ownedCards: [],
+    claimedCardSets: [],
+    missionDate: null,
+    missionProgress: {},
+    claimedMissions: [],
     lastSavedAt: Date.now(),
   }
 }
 
 export function loadSave(): SaveData {
   try {
-    const raw = localStorage.getItem(SAVE_KEY) ?? localStorage.getItem('petverse-save-v1')
+    const raw =
+      localStorage.getItem(SAVE_KEY) ??
+      localStorage.getItem('petverse-save-v3') ??
+      localStorage.getItem('petverse-save-v2') ??
+      localStorage.getItem('petverse-save-v1')
     if (!raw) return defaultSave()
     const parsed = JSON.parse(raw) as Partial<SaveData>
     const base = defaultSave()
@@ -90,12 +125,23 @@ export function loadSave(): SaveData {
       ownedGlasses: parsed.ownedGlasses?.length ? parsed.ownedGlasses : base.ownedGlasses,
       ownedScarves: parsed.ownedScarves?.length ? parsed.ownedScarves : base.ownedScarves,
       ownedShirts: parsed.ownedShirts?.length ? parsed.ownedShirts : base.ownedShirts,
+      ownedShoes: parsed.ownedShoes?.length ? parsed.ownedShoes : base.ownedShoes,
+      shoes: parsed.shoes ?? base.shoes,
       ownedFurniture: parsed.ownedFurniture?.length ? parsed.ownedFurniture : base.ownedFurniture,
-      placedFurniture: parsed.placedFurniture?.length ? parsed.placedFurniture : base.placedFurniture,
+      placedFurniture: Array.isArray(parsed.placedFurniture) ? parsed.placedFurniture : base.placedFurniture,
       visitedWorlds: parsed.visitedWorlds ?? base.visitedWorlds,
       ownedCompanions: parsed.ownedCompanions?.length ? parsed.ownedCompanions : base.ownedCompanions,
+      companionCare: { ...base.companionCare, ...(parsed.companionCare ?? {}) },
       unlockedSkills: parsed.unlockedSkills?.length ? parsed.unlockedSkills : base.unlockedSkills,
       claimedEventIds: parsed.claimedEventIds ?? base.claimedEventIds,
+      eventActivityDate: parsed.eventActivityDate ?? base.eventActivityDate,
+      room: parsed.room ?? base.room,
+      favoriteFood: parsed.favoriteFood ?? base.favoriteFood,
+      ownedCards: parsed.ownedCards ?? base.ownedCards,
+      claimedCardSets: parsed.claimedCardSets ?? base.claimedCardSets,
+      missionDate: parsed.missionDate ?? base.missionDate,
+      missionProgress: parsed.missionProgress ?? base.missionProgress,
+      claimedMissions: parsed.claimedMissions ?? base.claimedMissions,
     }
   } catch {
     return defaultSave()
