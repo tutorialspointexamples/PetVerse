@@ -31,12 +31,16 @@ const POOL: MissionDef[] = [
   { id: 'poke5', kind: 'poke', target: 5, rewardCoins: 15, rewardFuel: 0, label: 'Poke your pet 5 times' },
 ]
 
-function dayKey(now = new Date()): string {
-  return now.toISOString().slice(0, 10)
+/** Local calendar day key (avoids UTC midnight drift vs seasonal events). */
+export function localDayKey(now = new Date()): string {
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 /** Deterministic 3-mission set for a calendar day. */
-export function missionsForDay(date = dayKey()): MissionDef[] {
+export function missionsForDay(date = localDayKey()): MissionDef[] {
   let hash = 0
   for (let i = 0; i < date.length; i++) hash = (hash * 31 + date.charCodeAt(i)) >>> 0
   const picks: MissionDef[] = []
@@ -53,7 +57,7 @@ export function missionsForDay(date = dayKey()): MissionDef[] {
 }
 
 export function todayKey(): string {
-  return dayKey()
+  return localDayKey()
 }
 
 export function emptyMissionProgress(): Record<string, number> {

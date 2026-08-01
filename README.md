@@ -14,9 +14,9 @@ npm run dev
 - Care: drag-drop tray (spoon/soap/brush/potty/pillow/ball) + feed menu (22 foods), sleep, bath, play, brush, potty + layered pet reactions / VFX
 - Home rooms: Living, Kitchen, Bathroom, Bedroom, Backyard
 - Talk-back mic (hold to record, pitch-shifted playback)
-- Large wardrobe (450 looks) + 220 furniture SKUs
-- Mini-games: Space Trails (portals, power skins, boost pads, asteroids, comets), Sky Race (rings/boosts/combos), Dunk-a-Pet (rim/swish/crowd), Build Your Plane (assemble + flight test)
-- Interactive rooms: fridge/stove cooking, tub/sink/toilet, bed/lamp, yard trampoline/swing/fountain splash, living TV/sofa
+- Large wardrobe (500 looks) + 250 furniture SKUs
+- Mini-games: Space Trails (waves, shield/magnet, portals, power skins, boost pads), Sky Race (rings/boosts/combos), Dunk-a-Pet (rim/swish/crowd), Build Your Plane (assemble + flight test)
+- Interactive rooms: fridge/stove cooking, tub/sink/toilet VFX, bed/lamp, yard trampoline/swing/fountain splash, living TV/sofa
 - Plane travel to 8 worlds with flight cutscene
 - Daily missions with coin/fuel claims
 - Collectible card album (25) from worlds, rooms, missions, and mini-games

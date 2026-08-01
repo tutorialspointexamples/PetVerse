@@ -3,7 +3,8 @@ import { Application, Container, Graphics, Text } from 'pixi.js'
 import { useGameStore } from '../state/gameStore'
 
 type Cell = { x: number; y: number }
-type Pickup = Cell & { kind: 'star' | 'comet' | 'boost' | 'portal' }
+type PickupKind = 'star' | 'comet' | 'boost' | 'portal' | 'shield' | 'magnet'
+type Pickup = Cell & { kind: PickupKind }
 type SnakeSkin = 'solar' | 'neon' | 'ice' | 'fire' | 'rainbow'
 
 const SKINS: SnakeSkin[] = ['solar', 'neon', 'ice', 'fire', 'rainbow']
@@ -16,7 +17,9 @@ const SKIN_COLORS: Record<SnakeSkin, { head: number; a: number; b: number; glow:
   rainbow: { head: 0x00f5d4, a: 0x9b5de5, b: 0xff85a1, glow: 0xffbe0b },
 }
 
-/** Snake-style trail collector — Space Trails with portals, power skins, asteroids, and boosts. */
+const WAVE_GOALS = [6, 12, 20, 30, 42]
+
+/** Snake-style trail collector — Space Trails with waves, shield/magnet, portals, skins. */
 export function SpaceTrailsGame() {
   const hostRef = useRef<HTMLDivElement>(null)
   const grant = useGameStore((s) => s.grantMinigameReward)
@@ -24,8 +27,10 @@ export function SpaceTrailsGame() {
   const setOverlay = useGameStore((s) => s.setOverlay)
   const [score, setScore] = useState(0)
   const [combo, setCombo] = useState(0)
+  const [wave, setWave] = useState(1)
   const [alive, setAlive] = useState(true)
   const [skinName, setSkinName] = useState<SnakeSkin>('solar')
+  const [status, setStatus] = useState('Shield · Magnet · Waves')
 
   useEffect(() => {
     const host = hostRef.current
@@ -37,8 +42,14 @@ export function SpaceTrailsGame() {
     let comboLocal = 0
     let comboTimer = 0
     let boostTimer = 0
+    let shieldTimer = 0
+    let magnetTimer = 0
     let portalFlash = 0
+    let waveFlash = 0
     let caughtComet = false
+    let waveLocal = 1
+    let waveStars = 0
+    let lengthBonusClaimed = 0
     let skin: SnakeSkin = 'solar'
     const cell = 24
     let dir = { x: 1, y: 0 }
@@ -59,7 +70,7 @@ export function SpaceTrailsGame() {
     const trailSparks: Array<{ x: number; y: number; life: number; vx: number; vy: number }> = []
 
     const syncSkin = (scoreVal: number, boosted: boolean) => {
-      const idx = Math.min(SKINS.length - 1, Math.floor(scoreVal / 8) + (boosted ? 1 : 0))
+      const idx = Math.min(SKINS.length - 1, Math.floor(scoreVal / 8) + (boosted ? 1 : 0) + Math.floor((waveLocal - 1) / 2))
       const next = SKINS[idx]
       if (next !== skin) {
         skin = next
@@ -71,9 +82,11 @@ export function SpaceTrailsGame() {
       if (!living) return
       living = false
       setAlive(false)
-      const coins = Math.min(55, 8 + Math.floor(finalScore / 1.6))
+      const waveBonus = (waveLocal - 1) * 6
+      const coins = Math.min(70, 8 + Math.floor(finalScore / 1.5) + waveBonus)
       if (caughtComet) collectCard('comet_core')
       grant(coins, finalScore >= 10 ? 2 : 1)
+      setStatus(`Wave ${waveLocal} clear · +${coins}c`)
     }
 
     const occupied = (x: number, y: number) =>
@@ -85,11 +98,13 @@ export function SpaceTrailsGame() {
         const y = 1 + Math.floor(Math.random() * (rows - 2))
         if (!occupied(x, y) && !boostPads.some((b) => b.x === x && b.y === y)) {
           const roll = Math.random()
-          pickup = {
-            x,
-            y,
-            kind: roll < 0.14 ? 'comet' : roll < 0.28 ? 'boost' : roll < 0.4 ? 'portal' : 'star',
-          }
+          let kind: PickupKind = 'star'
+          if (roll < 0.1) kind = 'comet'
+          else if (roll < 0.22) kind = 'boost'
+          else if (roll < 0.34) kind = 'portal'
+          else if (roll < 0.44) kind = 'shield'
+          else if (roll < 0.54) kind = 'magnet'
+          pickup = { x, y, kind }
           return
         }
       }
@@ -125,6 +140,24 @@ export function SpaceTrailsGame() {
           }
         }
       }
+    }
+
+    const advanceWave = (cols: number, rows: number) => {
+      waveLocal += 1
+      waveStars = 0
+      setWave(waveLocal)
+      waveFlash = 0.9
+      shieldTimer = Math.max(shieldTimer, 1.2)
+      seedAsteroids(cols, rows, Math.min(14, 4 + waveLocal))
+      addBoostPads(cols, rows, Math.min(5, 2 + Math.floor(waveLocal / 2)), true)
+      placePickup(cols, rows)
+      setStatus(`Wave ${waveLocal} — goal ${WAVE_GOALS[Math.min(WAVE_GOALS.length - 1, waveLocal - 1)]} stars`)
+      bursts.push({
+        x: cols * cell * 0.5,
+        y: rows * cell * 0.35,
+        life: 0.7,
+        color: 0x00f5d4,
+      })
     }
 
     const queueDir = (nx: number, ny: number) => {
@@ -163,7 +196,7 @@ export function SpaceTrailsGame() {
         text: '',
         style: {
           fill: 0xf4d35e,
-          fontSize: 18,
+          fontSize: 16,
           fontFamily: 'Fredoka, Nunito, sans-serif',
           fontWeight: '700',
         },
@@ -177,6 +210,7 @@ export function SpaceTrailsGame() {
       seedAsteroids(cols0, rows0, 5)
       addBoostPads(cols0, rows0, 3, true)
       placePickup(cols0, rows0)
+      setStatus(`Wave 1 — goal ${WAVE_GOALS[0]} stars`)
 
       const onPointerDown = (e: PointerEvent) => {
         const rect = app.canvas.getBoundingClientRect()
@@ -230,7 +264,10 @@ export function SpaceTrailsGame() {
         animTime += dt
         comboTimer = Math.max(0, comboTimer - dt)
         boostTimer = Math.max(0, boostTimer - dt)
+        shieldTimer = Math.max(0, shieldTimer - dt)
+        magnetTimer = Math.max(0, magnetTimer - dt)
         portalFlash = Math.max(0, portalFlash - dt)
+        waveFlash = Math.max(0, waveFlash - dt)
         if (comboTimer <= 0 && comboLocal > 0) {
           comboLocal = 0
           setCombo(0)
@@ -238,13 +275,27 @@ export function SpaceTrailsGame() {
         const cols = Math.max(10, Math.floor(app.screen.width / cell))
         const rows = Math.max(10, Math.floor(app.screen.height / cell))
         const boosted = boostTimer > 0
+        const shielded = shieldTimer > 0
+        const magnetOn = magnetTimer > 0
         syncSkin(scoreLocal, boosted)
-        stepEvery = Math.max(0.07, (boosted ? 0.11 : 0.18) - scoreLocal * 0.0035)
+
+        // Magnet pulls nearby pickups toward the head
+        if (magnetOn) {
+          const hx = snake[0].x
+          const hy = snake[0].y
+          const mdx = pickup.x - hx
+          const mdy = pickup.y - hy
+          if (Math.abs(mdx) + Math.abs(mdy) <= 5 && Math.abs(mdx) + Math.abs(mdy) > 0) {
+            if (Math.abs(mdx) >= Math.abs(mdy)) pickup.x += mdx > 0 ? -1 : 1
+            else pickup.y += mdy > 0 ? -1 : 1
+          }
+        }
+
+        stepEvery = Math.max(0.065, (boosted ? 0.1 : 0.18) - scoreLocal * 0.003 - (waveLocal - 1) * 0.006)
         stepAcc += dt
         while (stepAcc >= stepEvery) {
           stepAcc -= stepEvery
           dir = nextDir
-          // Soft wrap edges (portal lanes) — MTT2 Space Trails feel without hard walls
           let nx = snake[0].x + dir.x
           let ny = snake[0].y + dir.y
           let wrapped = false
@@ -275,15 +326,38 @@ export function SpaceTrailsGame() {
           }
           const head = { x: nx, y: ny }
           if (snake.some((s) => s.x === head.x && s.y === head.y)) {
-            finish(scoreLocal)
-            return
+            if (shielded) {
+              shieldTimer = 0
+              bursts.push({
+                x: head.x * cell + cell / 2,
+                y: head.y * cell + cell / 2,
+                life: 0.5,
+                color: 0x4cc9f0,
+              })
+              setStatus('Shield broke!')
+            } else {
+              finish(scoreLocal)
+              return
+            }
           }
-          if (asteroids.some((a) => a.x === head.x && a.y === head.y)) {
-            finish(scoreLocal)
-            return
+          const rockHit = asteroids.findIndex((a) => a.x === head.x && a.y === head.y)
+          if (rockHit >= 0) {
+            if (shielded) {
+              shieldTimer = 0
+              asteroids.splice(rockHit, 1)
+              bursts.push({
+                x: head.x * cell + cell / 2,
+                y: head.y * cell + cell / 2,
+                life: 0.5,
+                color: 0x4cc9f0,
+              })
+              setStatus('Shield smashed a rock!')
+            } else {
+              finish(scoreLocal)
+              return
+            }
           }
           snake.unshift(head)
-          // Trail sparks behind the head
           trailSparks.push({
             x: head.x * cell + cell / 2,
             y: head.y * cell + cell / 2,
@@ -291,7 +365,28 @@ export function SpaceTrailsGame() {
             vx: -dir.x * 20 + (Math.random() - 0.5) * 18,
             vy: -dir.y * 20 + (Math.random() - 0.5) * 18,
           })
-          // Floor boost pads
+
+          // Length milestones — grow rewards like MTT2 trail stages
+          const len = snake.length
+          if (len >= 8 && lengthBonusClaimed < 1) {
+            lengthBonusClaimed = 1
+            scoreLocal += 2
+            setScore(scoreLocal)
+            setStatus('Length milestone · +2')
+          } else if (len >= 14 && lengthBonusClaimed < 2) {
+            lengthBonusClaimed = 2
+            scoreLocal += 4
+            shieldTimer = Math.max(shieldTimer, 2)
+            setScore(scoreLocal)
+            setStatus('Long trail · shield + score')
+          } else if (len >= 22 && lengthBonusClaimed < 3) {
+            lengthBonusClaimed = 3
+            scoreLocal += 6
+            magnetTimer = Math.max(magnetTimer, 3)
+            setScore(scoreLocal)
+            setStatus('Mega trail · magnet boost')
+          }
+
           const padIdx = boostPads.findIndex((b) => b.x === head.x && b.y === head.y)
           if (padIdx >= 0) {
             boostTimer = Math.max(boostTimer, 2.2)
@@ -309,17 +404,29 @@ export function SpaceTrailsGame() {
           }
           if (head.x === pickup.x && head.y === pickup.y) {
             const gain =
-              pickup.kind === 'comet' ? 3 : pickup.kind === 'boost' ? 2 : pickup.kind === 'portal' ? 2 : 1
+              pickup.kind === 'comet'
+                ? 3
+                : pickup.kind === 'boost' || pickup.kind === 'portal' || pickup.kind === 'shield' || pickup.kind === 'magnet'
+                  ? 2
+                  : 1
             if (pickup.kind === 'comet') caughtComet = true
             if (pickup.kind === 'boost') boostTimer = Math.max(boostTimer, 2.8)
+            if (pickup.kind === 'shield') {
+              shieldTimer = Math.max(shieldTimer, 4.5)
+              setStatus('Shield online!')
+            }
+            if (pickup.kind === 'magnet') {
+              magnetTimer = Math.max(magnetTimer, 4)
+              setStatus('Magnet pull!')
+            }
             if (pickup.kind === 'portal') {
               portalFlash = 0.7
               boostTimer = Math.max(boostTimer, 1.4)
-              // Warp ahead a few cells through a portal gate
               head.x = (head.x + dir.x * 3 + cols) % cols
               head.y = (head.y + dir.y * 3 + rows) % rows
               snake[0] = head
             }
+            if (pickup.kind === 'star' || pickup.kind === 'comet') waveStars += pickup.kind === 'comet' ? 2 : 1
             const mult = 1 + Math.min(4, Math.floor(comboLocal / 3))
             scoreLocal += gain * mult
             comboLocal += 1
@@ -338,10 +445,17 @@ export function SpaceTrailsGame() {
                     ? 0xff006e
                     : pickup.kind === 'portal'
                       ? 0x9b5de5
-                      : 0xf4d35e,
+                      : pickup.kind === 'shield'
+                        ? 0x4cc9f0
+                        : pickup.kind === 'magnet'
+                          ? 0xffbe0b
+                          : 0xf4d35e,
             })
             placePickup(cols, rows)
-            if (scoreLocal > 0 && scoreLocal % 8 === 0 && asteroids.length < 12) {
+            const goal = WAVE_GOALS[Math.min(WAVE_GOALS.length - 1, waveLocal - 1)]
+            if (waveStars >= goal && waveLocal < WAVE_GOALS.length) {
+              advanceWave(cols, rows)
+            } else if (scoreLocal > 0 && scoreLocal % 8 === 0 && asteroids.length < 12 + waveLocal) {
               for (let tries = 0; tries < 30; tries++) {
                 const x = 1 + Math.floor(Math.random() * (cols - 2))
                 const y = 1 + Math.floor(Math.random() * (rows - 2))
@@ -354,8 +468,7 @@ export function SpaceTrailsGame() {
           } else {
             snake.pop()
           }
-          // Drift asteroids slowly every few steps
-          if (scoreLocal > 0 && Math.random() < 0.08) {
+          if (scoreLocal > 0 && Math.random() < 0.08 + waveLocal * 0.01) {
             asteroids = asteroids.map((a, i) => {
               const d = i % 2 === 0 ? 1 : -1
               let ax = a.x + (Math.random() < 0.5 ? d : 0)
@@ -370,14 +483,17 @@ export function SpaceTrailsGame() {
           }
         }
 
-        label.text = String(scoreLocal)
+        const goal = WAVE_GOALS[Math.min(WAVE_GOALS.length - 1, waveLocal - 1)]
+        label.text = `${scoreLocal}  W${waveLocal}`
         comboLabel.text =
           `${skin.toUpperCase()} · ` +
+          (shielded ? 'SHIELD · ' : '') +
+          (magnetOn ? 'MAGNET · ' : '') +
           (boosted ? 'BOOST · ' : '') +
-          (comboLocal >= 2 ? `Combo x${1 + Math.min(4, Math.floor(comboLocal / 3))}` : boosted ? 'speed up' : 'portals')
+          `${waveStars}/${goal}` +
+          (comboLocal >= 2 ? ` · Combo x${1 + Math.min(4, Math.floor(comboLocal / 3))}` : '')
         gfx.clear()
 
-        // Nebula bands
         for (let i = 0; i < 6; i++) {
           const bx = ((i * 97 + animTime * 12) % (app.screen.width + 120)) - 60
           const by = (i * 71 + Math.sin(animTime + i) * 20) % app.screen.height
@@ -391,7 +507,6 @@ export function SpaceTrailsGame() {
           gfx.fill({ color: 0xffffff, alpha: 0.28 + (i % 3) * 0.1 })
         }
 
-        // Edge portal gates (wrap lanes)
         const gatePulse = 0.25 + Math.abs(Math.sin(animTime * 5)) * 0.35 + portalFlash * 0.4
         for (let y = 0; y < rows; y += 2) {
           gfx.roundRect(2, y * cell + 4, 6, cell - 8, 3)
@@ -409,8 +524,11 @@ export function SpaceTrailsGame() {
           gfx.rect(0, 0, app.screen.width, app.screen.height)
           gfx.fill({ color: 0x9b5de5, alpha: portalFlash * 0.12 })
         }
+        if (waveFlash > 0) {
+          gfx.rect(0, 0, app.screen.width, app.screen.height)
+          gfx.fill({ color: 0x00f5d4, alpha: waveFlash * 0.1 })
+        }
 
-        // Floor boost pads
         for (const pad of boostPads) {
           const cx = pad.x * cell + cell / 2
           const cy = pad.y * cell + cell / 2
@@ -425,7 +543,6 @@ export function SpaceTrailsGame() {
           gfx.stroke({ width: 2, color: 0xffffff, alpha: 0.8 })
         }
 
-        // Asteroids
         for (const a of asteroids) {
           const cx = a.x * cell + cell / 2
           const cy = a.y * cell + cell / 2
@@ -436,7 +553,6 @@ export function SpaceTrailsGame() {
           gfx.fill({ color: 0x343a40, alpha: 0.6 })
         }
 
-        // Pickup glow
         const pcx = pickup.x * cell + cell / 2
         const pcy = pickup.y * cell + cell / 2
         const pulse = 12 + Math.sin(animTime * 8) * 3
@@ -447,7 +563,15 @@ export function SpaceTrailsGame() {
               ? 0xff006e
               : pickup.kind === 'portal'
                 ? 0x9b5de5
-                : 0xf4d35e
+                : pickup.kind === 'shield'
+                  ? 0x4cc9f0
+                  : pickup.kind === 'magnet'
+                    ? 0xffbe0b
+                    : 0xf4d35e
+        if (magnetOn) {
+          gfx.circle(snake[0].x * cell + cell / 2, snake[0].y * cell + cell / 2, 38 + Math.sin(animTime * 8) * 4)
+          gfx.stroke({ width: 2, color: 0xffbe0b, alpha: 0.35 })
+        }
         gfx.circle(pcx, pcy, pulse + 4)
         gfx.fill({ color: pickColor, alpha: 0.18 })
         gfx.circle(pcx, pcy, 8)
@@ -466,10 +590,22 @@ export function SpaceTrailsGame() {
           gfx.stroke({ width: 2.5, color: 0x00f5d4, alpha: 0.85 })
           gfx.circle(pcx, pcy, 5)
           gfx.stroke({ width: 2, color: 0xffffff, alpha: 0.7 })
+        } else if (pickup.kind === 'shield') {
+          gfx.circle(pcx, pcy, 11)
+          gfx.stroke({ width: 2.5, color: 0xffffff, alpha: 0.9 })
+          gfx.roundRect(pcx - 5, pcy - 4, 10, 9, 2)
+          gfx.stroke({ width: 1.5, color: 0xffffff, alpha: 0.85 })
+        } else if (pickup.kind === 'magnet') {
+          gfx.moveTo(pcx - 6, pcy - 4)
+          gfx.lineTo(pcx - 6, pcy + 5)
+          gfx.lineTo(pcx - 2, pcy + 5)
+          gfx.moveTo(pcx + 6, pcy - 4)
+          gfx.lineTo(pcx + 6, pcy + 5)
+          gfx.lineTo(pcx + 2, pcy + 5)
+          gfx.stroke({ width: 2.5, color: 0xffffff, alpha: 0.9 })
         }
 
         const palette = SKIN_COLORS[skin]
-        // Trail sparks
         for (let i = trailSparks.length - 1; i >= 0; i--) {
           const s = trailSparks[i]
           s.life -= dt
@@ -484,7 +620,6 @@ export function SpaceTrailsGame() {
           gfx.fill({ color: boosted ? palette.glow : palette.head, alpha: a })
         }
 
-        // Power-snake trail with unlockable skins
         snake.forEach((s, i) => {
           const alpha = 1 - (i / Math.max(snake.length, 1)) * 0.4
           const cx = s.x * cell + cell / 2
@@ -492,6 +627,10 @@ export function SpaceTrailsGame() {
           if (i === 0) {
             gfx.circle(cx, cy, boosted ? 15 : 12)
             gfx.fill({ color: palette.glow, alpha: 0.35 })
+            if (shielded) {
+              gfx.circle(cx, cy, 16 + Math.sin(animTime * 10) * 2)
+              gfx.stroke({ width: 2.5, color: 0x4cc9f0, alpha: 0.75 })
+            }
           }
           const bodyColor = i === 0 ? palette.head : i % 2 ? palette.a : palette.b
           gfx.roundRect(s.x * cell + 2, s.y * cell + 2, cell - 4, cell - 4, 7)
@@ -542,7 +681,7 @@ export function SpaceTrailsGame() {
           <h2>Space Trails</h2>
           <p>
             Stars {score}
-            {combo >= 2 ? ` · Combo ${combo}` : ''} · Skin {skinName} · Portals · Boost pads · Dodge rocks
+            {combo >= 2 ? ` · Combo ${combo}` : ''} · Wave {wave} · Skin {skinName} · {status}
           </p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×

@@ -380,7 +380,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ownedCards,
     })
     get().save()
-    if (action === 'bath' || action === 'play' || action === 'brush') {
+    if (action === 'feed' || action === 'bath' || action === 'play' || action === 'brush') {
       get().trackMission(action)
     }
     window.setTimeout(() => {
@@ -633,7 +633,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   claimEventBonus: () => {
     const event = getActiveEvent()
     if (!event) return false
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayKey()
     const state = get()
     if (state.eventClaimDate === today) return false
     const claimed = state.claimedEventIds.includes(event.id)

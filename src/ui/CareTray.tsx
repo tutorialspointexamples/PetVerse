@@ -1,21 +1,22 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useGameStore } from '../state/gameStore'
 import type { CareAction } from '../game/needs'
+import { useLocale } from '../i18n/useLocale'
 
 type CareTool = {
   id: CareAction
-  label: string
+  labelKey: string
   mark: string
-  hint: string
+  hintKey: string
 }
 
 const TOOLS: CareTool[] = [
-  { id: 'feed', label: 'Spoon', mark: 'spoon', hint: 'Drag food onto pet' },
-  { id: 'bath', label: 'Soap', mark: 'soap', hint: 'Drag soap onto pet' },
-  { id: 'brush', label: 'Brush', mark: 'brush', hint: 'Drag toothbrush onto pet' },
-  { id: 'potty', label: 'Potty', mark: 'potty', hint: 'Drag potty onto pet' },
-  { id: 'sleep', label: 'Pillow', mark: 'pillow', hint: 'Drag pillow onto pet' },
-  { id: 'play', label: 'Ball', mark: 'ball', hint: 'Drag ball onto pet' },
+  { id: 'feed', labelKey: 'care.spoon', mark: 'spoon', hintKey: 'care.hint.feed' },
+  { id: 'bath', labelKey: 'care.soap', mark: 'soap', hintKey: 'care.hint.bath' },
+  { id: 'brush', labelKey: 'care.brush', mark: 'brush', hintKey: 'care.hint.brush' },
+  { id: 'potty', labelKey: 'care.potty', mark: 'potty', hintKey: 'care.hint.potty' },
+  { id: 'sleep', labelKey: 'care.pillow', mark: 'pillow', hintKey: 'care.hint.sleep' },
+  { id: 'play', labelKey: 'care.ball', mark: 'ball', hintKey: 'care.hint.play' },
 ]
 
 /**
@@ -27,6 +28,7 @@ export function CareTray() {
   const setOverlay = useGameStore((s) => s.setOverlay)
   const sleeping = useGameStore((s) => s.sleeping)
   const cooldowns = useGameStore((s) => s.cooldowns)
+  const { t } = useLocale()
   const [drag, setDrag] = useState<{
     tool: CareTool
     x: number
@@ -88,8 +90,8 @@ export function CareTray() {
 
   return (
     <>
-      <aside className="care-tray" aria-label="Drag care tools onto pet">
-        <p className="care-tray-label">Drag onto pet</p>
+      <aside className="care-tray" aria-label={t('care.drag')}>
+        <p className="care-tray-label">{t('care.drag')}</p>
         <div className="care-tray-tools">
           {TOOLS.map((tool) => (
             <button
@@ -97,15 +99,15 @@ export function CareTray() {
               type="button"
               className={`care-tool ${cooling(tool.id) || (sleeping && tool.id !== 'sleep') ? 'disabled' : ''}`}
               disabled={cooling(tool.id) || (sleeping && tool.id !== 'sleep')}
-              title={tool.hint}
-              aria-label={tool.hint}
+              title={t(tool.hintKey)}
+              aria-label={t(tool.hintKey)}
               onPointerDown={(e) => onDown(tool, e)}
               onPointerMove={onMove}
               onPointerUp={onUp}
               onPointerCancel={() => setDrag(null)}
             >
               <span className={`care-tool-mark ${tool.mark}`} aria-hidden />
-              <span>{tool.label}</span>
+              <span>{t(tool.labelKey)}</span>
             </button>
           ))}
         </div>

@@ -26,20 +26,20 @@ export function GamesHub() {
           </button>
         </div>
         <button type="button" className="hub-card" onClick={() => setOverlay('spaceTrails')}>
-          <strong>Space Trails</strong>
-          <span>Steer the trail, collect stars offline</span>
+          <strong>{t('games.space')}</strong>
+          <span>{t('games.space.blurb')}</span>
         </button>
         <button type="button" className="hub-card" onClick={() => setOverlay('skyDash')}>
-          <strong>Sky Race</strong>
-          <span>Flap, grab coins, dodge blocks</span>
+          <strong>{t('games.sky')}</strong>
+          <span>{t('games.sky.blurb')}</span>
         </button>
         <button type="button" className="hub-card" onClick={() => setOverlay('dunkToss')}>
-          <strong>Dunk-a-Pet</strong>
-          <span>Time your toss in the green zone</span>
+          <strong>{t('games.dunk')}</strong>
+          <span>{t('games.dunk.blurb')}</span>
         </button>
         <button type="button" className="hub-card" onClick={() => setOverlay('buildPlane')}>
-          <strong>Build Your Plane</strong>
-          <span>Assemble parts and earn fuel</span>
+          <strong>{t('games.plane')}</strong>
+          <span>{t('games.plane.blurb')}</span>
         </button>
       </div>
     </div>
@@ -52,13 +52,16 @@ export function TravelPanel() {
   const fuel = useGameStore((s) => s.fuel)
   const travelTo = useGameStore((s) => s.travelTo)
   const visitedWorlds = useGameStore((s) => s.visitedWorlds)
+  const { t } = useLocale()
   if (overlay !== 'travel') return null
   return (
     <div className="shop-overlay" role="dialog" aria-label="Plane travel">
       <div className="shop-panel">
         <div className="shop-header">
-          <h2>Plane Travel</h2>
-          <p className="shop-coins">{fuel} fuel</p>
+          <h2>{t('travel.title')}</h2>
+          <p className="shop-coins">
+            {fuel} {t('travel.fuel')}
+          </p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
           </button>
@@ -75,8 +78,8 @@ export function TravelPanel() {
             >
               <strong>{w.name}</strong>
               <span>
-                {w.fuelCost} fuel · +{w.rewardCoins}c
-                {visitedWorlds.includes(w.id) ? ' · visited' : ' · new'}
+                {w.fuelCost} {t('travel.fuel')} · +{w.rewardCoins}c
+                {visitedWorlds.includes(w.id) ? ` · ${t('travel.visited')}` : ` · ${t('travel.new')}`}
               </span>
               <span className="hub-blurb">{w.blurb}</span>
             </button>
@@ -91,6 +94,7 @@ export function WorldVisitPanel() {
   const overlay = useGameStore((s) => s.overlay)
   const activeWorld = useGameStore((s) => s.activeWorld)
   const clearWorldVisit = useGameStore((s) => s.clearWorldVisit)
+  const { t } = useLocale()
   if (overlay !== 'worldVisit' || !activeWorld) return null
   const world = WORLDS.find((w) => w.id === activeWorld)
   if (!world) return null
@@ -104,9 +108,11 @@ export function WorldVisitPanel() {
         }}
       >
         <h2>{world.name}</h2>
-        <p>{world.blurb} You landed safely and collected rewards. New unlocks (and a collectible card) were added.</p>
+        <p>
+          {world.blurb} {t('travel.landed')}
+        </p>
         <button type="button" className="name-submit" onClick={clearWorldVisit}>
-          Fly home
+          {t('travel.home')}
         </button>
       </div>
     </div>
@@ -117,12 +123,13 @@ export function FlightPanel() {
   const overlay = useGameStore((s) => s.overlay)
   const activeWorld = useGameStore((s) => s.activeWorld)
   const finishFlight = useGameStore((s) => s.finishFlight)
+  const { t } = useLocale()
   const world = WORLDS.find((w) => w.id === activeWorld)
 
   useEffect(() => {
     if (overlay !== 'flight') return
-    const t = window.setTimeout(() => finishFlight(), 2200)
-    return () => window.clearTimeout(t)
+    const timer = window.setTimeout(() => finishFlight(), 2200)
+    return () => window.clearTimeout(timer)
   }, [overlay, finishFlight])
 
   if (overlay !== 'flight' || !world) return null
@@ -131,9 +138,11 @@ export function FlightPanel() {
       <div className="flight-scene">
         <div className="flight-sky" />
         <div className="flight-plane" aria-hidden />
-        <p className="flight-label">Flying to {world.name}…</p>
+        <p className="flight-label">
+          {t('travel.flying')} {world.name}…
+        </p>
         <button type="button" className="name-submit" onClick={finishFlight}>
-          Skip
+          {t('travel.skip')}
         </button>
       </div>
     </div>
@@ -147,13 +156,14 @@ export function FoodPanel() {
   const feedFood = useGameStore((s) => s.feedFood)
   const favoriteFood = useGameStore((s) => s.favoriteFood)
   const cooldowns = useGameStore((s) => s.cooldowns)
+  const { t } = useLocale()
   if (overlay !== 'food') return null
   const cooling = Boolean(cooldowns.feed && cooldowns.feed > Date.now())
   return (
     <div className="shop-overlay" role="dialog" aria-label="Food menu">
       <div className="shop-panel">
         <div className="shop-header">
-          <h2>Kitchen Menu</h2>
+          <h2>{t('food.title')}</h2>
           <p className="shop-coins">{coins}c</p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
@@ -169,11 +179,11 @@ export function FoodPanel() {
           >
             <strong>
               {food.name}
-              {favoriteFood === food.id ? ' · fav' : ''}
+              {favoriteFood === food.id ? ` · ${t('food.fav')}` : ''}
             </strong>
             <span>
               +{food.hunger} hunger · +{food.happiness} happy
-              {food.price ? ` · ${food.price}c` : ' · free'}
+              {food.price ? ` · ${food.price}c` : ` · ${t('food.free')}`}
             </span>
           </button>
         ))}
@@ -209,7 +219,7 @@ export function RoomsPanel() {
             >
               <strong>{r.name}</strong>
               <span>
-                {room === r.id ? 'You are here' : 'Go'}
+                {room === r.id ? t('rooms.here') : t('rooms.go')}
                 {r.id === 'kitchen'
                   ? ' · fridge=menu, stove=snack'
                   : r.id === 'bathroom'
@@ -267,12 +277,13 @@ export function CardsPanel() {
   const overlay = useGameStore((s) => s.overlay)
   const setOverlay = useGameStore((s) => s.setOverlay)
   const ownedCards = useGameStore((s) => s.ownedCards)
+  const { t } = useLocale()
   if (overlay !== 'cards') return null
   return (
     <div className="shop-overlay" role="dialog" aria-label="Collectible cards">
       <div className="shop-panel wide">
         <div className="shop-header">
-          <h2>Card Album</h2>
+          <h2>{t('cards.title')}</h2>
           <p className="shop-coins">
             {ownedCards.length}/{CARDS.length}
           </p>
@@ -280,7 +291,7 @@ export function CardsPanel() {
             ×
           </button>
         </div>
-        <p className="panel-note">Earn cards by flying to worlds and finishing mini-games.</p>
+        <p className="panel-note">{t('cards.note')}</p>
         <div className="card-album">
           {CARDS.map((card) => {
             const owned = ownedCards.includes(card.id)
@@ -291,7 +302,7 @@ export function CardsPanel() {
                 style={{ ['--card-color' as string]: `#${card.color.toString(16).padStart(6, '0')}` }}
               >
                 <strong>{owned ? card.name : '???'}</strong>
-                <span>{owned ? card.blurb : 'Keep playing to unlock'}</span>
+                <span>{owned ? card.blurb : t('cards.locked')}</span>
                 <em>{card.rarity}</em>
               </div>
             )
@@ -309,12 +320,13 @@ export function SkillsPanel() {
   const practiceSkill = useGameStore((s) => s.practiceSkill)
   const unlockedSkills = useGameStore((s) => s.unlockedSkills)
   const level = levelFromXp(xp)
+  const { t } = useLocale()
   if (overlay !== 'skills') return null
   return (
     <div className="shop-overlay" role="dialog" aria-label="Skills">
       <div className="shop-panel">
         <div className="shop-header">
-          <h2>Skills</h2>
+          <h2>{t('skills.title')}</h2>
           <p className="shop-coins">Lv {level}</p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
@@ -405,7 +417,7 @@ export function EventPanel() {
   const eventClaimDate = useGameStore((s) => s.eventClaimDate)
   const event = getActiveEvent()
   if (overlay !== 'event' || !event) return null
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayKey()
   const claimed = eventClaimDate === today
   return (
     <div className="shop-overlay" role="dialog" aria-label="Event">

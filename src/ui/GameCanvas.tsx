@@ -40,21 +40,29 @@ export function GameCanvas() {
       else if (zone === 'kitchen_stove') {
         if (a.doCare('feed')) a.collectCard('stove_spark')
         sceneRef.current?.pulseRoomProp('cook')
-      } else if (zone === 'bath_tub') a.doCare('bath')
-      else if (zone === 'bath_sink') a.doCare('brush')
-      else if (zone === 'bath_potty') a.doCare('potty')
-      else if (zone === 'bed_sleep') a.doCare('sleep')
-      else if (zone === 'bedroom_lamp') {
+      } else if (zone === 'bath_tub') {
+        if (a.doCare('bath')) sceneRef.current?.pulseRoomProp('bath')
+      } else if (zone === 'bath_sink') {
+        if (a.doCare('brush')) sceneRef.current?.pulseRoomProp('brush')
+      } else if (zone === 'bath_potty') {
+        if (a.doCare('potty')) sceneRef.current?.pulseRoomProp('potty')
+      } else if (zone === 'bed_sleep') {
+        if (a.doCare('sleep')) sceneRef.current?.pulseRoomProp('sleep')
+      } else if (zone === 'bedroom_lamp') {
         a.poke('head')
         a.collectCard('lamp_glow')
       } else if (zone === 'yard_swing') {
-        if (a.doCare('play')) a.collectCard('swing_ticket')
+        if (a.doCare('play')) {
+          a.collectCard('swing_ticket')
+          sceneRef.current?.pulseRoomProp('swing')
+        }
       } else if (zone === 'yard_fountain') {
         if (a.doCare('play')) a.collectCard('fountain_splash')
         sceneRef.current?.pulseRoomProp('fountain')
       } else if (zone === 'yard_play') a.doCare('play')
-      else if (zone === 'living_tv') a.doCare('play')
-      else if (zone === 'living_sofa') {
+      else if (zone === 'living_tv') {
+        if (a.doCare('play')) sceneRef.current?.pulseRoomProp('tv')
+      } else if (zone === 'living_sofa') {
         a.poke('belly')
         a.collectCard('sofa_cushion')
       } else a.poke(zone)

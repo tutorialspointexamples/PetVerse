@@ -27,6 +27,7 @@ import {
 import { PhotoPanel } from './ui/PhotoPanel'
 import { CareTray } from './ui/CareTray'
 import { getActiveEvent } from './game/events'
+import { todayKey } from './game/missions'
 
 export default function App() {
   const hydrate = useGameStore((s) => s.hydrate)
@@ -45,7 +46,7 @@ export default function App() {
   useEffect(() => {
     if (!named || eventPrompted.current) return
     const event = getActiveEvent()
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayKey()
     if (event && eventClaimDate !== today) {
       eventPrompted.current = true
       setOverlay('event')

@@ -219,6 +219,36 @@ export type FurnitureId =
   | 'clock_pixel'
   | 'wall_banner_star'
   | 'rug_panda'
+  | 'rug_melon'
+  | 'bed_rocket_soft'
+  | 'sofa_tulip'
+  | 'lamp_bee'
+  | 'poster_owl'
+  | 'plant_melon'
+  | 'shelf_rocket'
+  | 'table_candy'
+  | 'chair_pixel'
+  | 'fountain_bubble'
+  | 'clock_bee'
+  | 'toy_owl'
+  | 'cushion_surf'
+  | 'mirror_wave'
+  | 'rug_galaxy_soft'
+  | 'bed_tulip'
+  | 'sofa_melon'
+  | 'lamp_rocket'
+  | 'poster_candy'
+  | 'plant_star_pop'
+  | 'cabinet_pixel'
+  | 'ottoman_bee'
+  | 'desk_surf'
+  | 'wall_art_owl'
+  | 'rug_tulip'
+  | 'bed_pixel_soft'
+  | 'sofa_galaxy'
+  | 'lamp_owl'
+  | 'poster_melon'
+  | 'toy_star_pop'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -229,9 +259,40 @@ export interface FurnitureItem {
   slot: FurnitureSlot
   color: number
   accent: number
-}
+},
 
-export const FURNITURE: FurnitureItem[] = [
+export const FURNITURE: FurnitureItem[
+  { id: 'rug_melon', name: 'Melon Rug', price: 120, slot: 'floor', color: 0x80ed99, accent: 0xffffff },
+  { id: 'bed_rocket_soft', name: 'Soft Rocket Bed', price: 240, slot: 'side', color: 0xe63946, accent: 0xffffff },
+  { id: 'sofa_tulip', name: 'Tulip Sofa', price: 195, slot: 'side', color: 0xffc8dd, accent: 0xffffff },
+  { id: 'lamp_bee', name: 'Bee Lamp', price: 130, slot: 'side', color: 0xffbe0b, accent: 0x1a1a1a },
+  { id: 'poster_owl', name: 'Owl Poster', price: 58, slot: 'wall', color: 0xb56b45, accent: 0xffffff },
+  { id: 'plant_melon', name: 'Melon Plant', price: 105, slot: 'side', color: 0x80ed99, accent: 0xffe066 },
+  { id: 'shelf_rocket', name: 'Rocket Shelf', price: 155, slot: 'wall', color: 0xe63946, accent: 0x4cc9f0 },
+  { id: 'table_candy', name: 'Candy Table', price: 125, slot: 'floor', color: 0xff85a1, accent: 0xffffff },
+  { id: 'chair_pixel', name: 'Pixel Chair', price: 165, slot: 'side', color: 0xff88, accent: 0x1a1a1a },
+  { id: 'fountain_bubble', name: 'Bubble Fountain', price: 185, slot: 'floor', color: 0x90e0ef, accent: 0xffffff },
+  { id: 'clock_bee', name: 'Bee Clock', price: 110, slot: 'wall', color: 0xffbe0b, accent: 0x1a1a1a },
+  { id: 'toy_owl', name: 'Owl Plush', price: 95, slot: 'floor', color: 0xb56b45, accent: 0xffffff },
+  { id: 'cushion_surf', name: 'Surf Cushion', price: 85, slot: 'floor', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'mirror_wave', name: 'Wave Mirror', price: 145, slot: 'wall', color: 0x77b6, accent: 0x90e0ef },
+  { id: 'rug_galaxy_soft', name: 'Soft Galaxy Rug', price: 135, slot: 'floor', color: 0x240046, accent: 0xf4d35e },
+  { id: 'bed_tulip', name: 'Tulip Bed', price: 230, slot: 'side', color: 0xffc8dd, accent: 0xffffff },
+  { id: 'sofa_melon', name: 'Melon Sofa', price: 190, slot: 'side', color: 0x80ed99, accent: 0xffffff },
+  { id: 'lamp_rocket', name: 'Rocket Lamp', price: 140, slot: 'side', color: 0xe63946, accent: 0xffbe0b },
+  { id: 'poster_candy', name: 'Candy Poster', price: 60, slot: 'wall', color: 0xff85a1, accent: 0xffffff },
+  { id: 'plant_star_pop', name: 'Star Pop Plant', price: 110, slot: 'side', color: 0xf4d35e, accent: 0x4caf7a },
+  { id: 'cabinet_pixel', name: 'Pixel Cabinet', price: 170, slot: 'side', color: 0xff88, accent: 0x1a1a1a },
+  { id: 'ottoman_bee', name: 'Bee Ottoman', price: 100, slot: 'floor', color: 0xffbe0b, accent: 0xffffff },
+  { id: 'desk_surf', name: 'Surf Desk', price: 175, slot: 'side', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'wall_art_owl', name: 'Owl Art', price: 70, slot: 'wall', color: 0xb56b45, accent: 0xffffff },
+  { id: 'rug_tulip', name: 'Tulip Rug', price: 120, slot: 'floor', color: 0xffc8dd, accent: 0xffffff },
+  { id: 'bed_pixel_soft', name: 'Soft Pixel Bed', price: 245, slot: 'side', color: 0xff88, accent: 0xffffff },
+  { id: 'sofa_galaxy', name: 'Galaxy Sofa', price: 210, slot: 'side', color: 0x240046, accent: 0xf5d4 },
+  { id: 'lamp_owl', name: 'Owl Lamp', price: 125, slot: 'side', color: 0xb56b45, accent: 0xffe066 },
+  { id: 'poster_melon', name: 'Melon Poster', price: 55, slot: 'wall', color: 0x80ed99, accent: 0xffffff },
+  { id: 'toy_star_pop', name: 'Star Pop Toy', price: 90, slot: 'floor', color: 0xf4d35e, accent: 0xff006e },
+] = [
   { id: 'rug_basic', name: 'Coral Rug', price: 0, slot: 'floor', color: 0xe07a5f, accent: 0xf2cc8f },
   { id: 'rug_star', name: 'Star Rug', price: 80, slot: 'floor', color: 0x9b5de5, accent: 0xf4d35e },
   { id: 'rug_wave', name: 'Wave Rug', price: 95, slot: 'floor', color: 0x4cc9f0, accent: 0xffffff },
