@@ -75,6 +75,12 @@ export type BodyColorId =
   | 'velvetNight'
   | 'butterscotch'
   | 'seafoamLite'
+  | 'mangoDusk'
+  | 'lagoon'
+  | 'plumGlow'
+  | 'sandstone'
+  | 'frostMint'
+  | 'emberRose'
 
 export type HatId =
   | 'none'
@@ -201,6 +207,14 @@ export type HatId =
   | 'hatCupcake'
   | 'capWaveSoft'
   | 'bowCrystal'
+  | 'hatMango'
+  | 'hatLagoon'
+  | 'hatPlum'
+  | 'helmSand'
+  | 'hatFrost'
+  | 'hatEmber'
+  | 'capTide'
+  | 'hatOrbit'
 
 export type GlassesId =
   | 'none'
@@ -283,6 +297,14 @@ export type GlassesId =
   | 'lensRubySoft'
   | 'goggleCandy'
   | 'specsPixelSoft'
+  | 'lensMango'
+  | 'goggleLagoon'
+  | 'framesPlum'
+  | 'visorSand'
+  | 'lensFrost'
+  | 'goggleEmber'
+  | 'specsTide'
+  | 'framesOrbit'
 
 export type ScarfId =
   | 'none'
@@ -365,6 +387,14 @@ export type ScarfId =
   | 'leiMist'
   | 'scarfNebula'
   | 'ruffCrystal'
+  | 'scarfMango'
+  | 'capeLagoon'
+  | 'scarfPlum'
+  | 'bowtieSand'
+  | 'leiFrost'
+  | 'scarfEmber'
+  | 'ruffTide'
+  | 'capeOrbit'
 
 export type ShirtId =
   | 'none'
@@ -476,6 +506,16 @@ export type ShirtId =
   | 'teeCrystal'
   | 'shirtWaveSoft'
   | 'hoodieLeaf'
+  | 'shirtMango'
+  | 'hoodieLagoon'
+  | 'shirtPlum'
+  | 'teeSand'
+  | 'tankFrost'
+  | 'hoodieEmber'
+  | 'shirtTide'
+  | 'teeOrbit'
+  | 'hoodieMangoSoft'
+  | 'shirtLagoonStripe'
 
 export type ShoesId =
   | 'none'
@@ -561,6 +601,14 @@ export type ShoesId =
   | 'shoesMist'
   | 'sneakersNebula'
   | 'bootsCrystal'
+  | 'shoesMango'
+  | 'bootsLagoon'
+  | 'shoesPlum'
+  | 'sneakersSand'
+  | 'bootsFrost'
+  | 'shoesEmber'
+  | 'sneakersTide'
+  | 'bootsOrbit'
 
 export interface BodyColorOption {
   id: BodyColorId
@@ -685,6 +733,12 @@ export const BODY_COLORS: BodyColorOption[] = [
   { id: 'velvetNight', name: 'Velvet Night', fill: 0x3a0ca3, belly: 0xcbb2fe, ear: 0x7209b7, price: 130 },
   { id: 'butterscotch', name: 'Butterscotch', fill: 0xe9c46a, belly: 0xfff1c9, ear: 0xf4a261, price: 108 },
   { id: 'seafoamLite', name: 'Seafoam Lite', fill: 0x80ed99, belly: 0xe8fff0, ear: 0x57cc99, price: 114 },
+  { id: 'mangoDusk', name: 'Mango Dusk', fill: 0xff9f1c, belly: 0xffe5b4, ear: 0xf77f00, price: 116 },
+  { id: 'lagoon', name: 'Lagoon', fill: 0x00bbf9, belly: 0xd0f4ff, ear: 0x0096c7, price: 118 },
+  { id: 'plumGlow', name: 'Plum Glow', fill: 0x7b2cbf, belly: 0xe0aaff, ear: 0x9d4edd, price: 122 },
+  { id: 'sandstone', name: 'Sandstone', fill: 0xc9a227, belly: 0xfff1c9, ear: 0xa68a00, price: 110 },
+  { id: 'frostMint', name: 'Frost Mint', fill: 0x80ffdb, belly: 0xf0fff8, ear: 0x56cfe1, price: 114 },
+  { id: 'emberRose', name: 'Ember Rose', fill: 0xff4d6d, belly: 0xffccd5, ear: 0xc9184a, price: 120 },
 ]
 
 export const HATS: HatOption[] = [
@@ -813,6 +867,14 @@ export const HATS: HatOption[] = [
   { id: 'hatCupcake', name: 'Cupcake Hat', price: 108, color: 0xffc8dd, style: 'party' },
   { id: 'capWaveSoft', name: 'Wave Cap', price: 100, color: 0x4cc9f0, style: 'cap' },
   { id: 'bowCrystal', name: 'Crystal Bow', price: 112, color: 0xcaf0f8, style: 'bow' },
+  { id: 'hatMango', name: 'Mango Cap', price: 104, color: 0xff9f1c, style: 'cap' },
+  { id: 'hatLagoon', name: 'Lagoon Beanie', price: 112, color: 0x00bbf9, style: 'beanie' },
+  { id: 'hatPlum', name: 'Plum Crown', price: 128, color: 0x7b2cbf, style: 'flower' },
+  { id: 'helmSand', name: 'Sand Helm', price: 136, color: 0xc9a227, style: 'knight' },
+  { id: 'hatFrost', name: 'Frost Bow', price: 108, color: 0x80ffdb, style: 'bow' },
+  { id: 'hatEmber', name: 'Ember Party', price: 118, color: 0xff4d6d, style: 'party' },
+  { id: 'capTide', name: 'Tide Cap', price: 100, color: 0x48cae4, style: 'cap' },
+  { id: 'hatOrbit', name: 'Orbit Visor', price: 142, color: 0x7209b7, style: 'visor' },
 ]
 
 export const GLASSES: SimpleCosmetic<GlassesId>[] = [
@@ -897,6 +959,14 @@ export const GLASSES: SimpleCosmetic<GlassesId>[] = [
   { id: 'lensRubySoft', name: 'Soft Ruby Lens', price: 94, color: 0xe63946 },
   { id: 'goggleCandy', name: 'Candy Goggles', price: 86, color: 0xff85a1 },
   { id: 'specsPixelSoft', name: 'Soft Pixel Specs', price: 92, color: 0x00ff88 },
+  { id: 'lensMango', name: 'Mango Specs', price: 84, color: 0xff9f1c },
+  { id: 'goggleLagoon', name: 'Lagoon Goggles', price: 92, color: 0x00bbf9 },
+  { id: 'framesPlum', name: 'Plum Frames', price: 88, color: 0x7b2cbf },
+  { id: 'visorSand', name: 'Sand Visor', price: 96, color: 0xc9a227 },
+  { id: 'lensFrost', name: 'Frost Lenses', price: 90, color: 0x80ffdb },
+  { id: 'goggleEmber', name: 'Ember Goggles', price: 94, color: 0xff4d6d },
+  { id: 'specsTide', name: 'Tide Specs', price: 82, color: 0x48cae4 },
+  { id: 'framesOrbit', name: 'Orbit Frames', price: 98, color: 0x7209b7 },
 ]
 
 export const SCARVES: SimpleCosmetic<ScarfId>[] = [
@@ -981,6 +1051,14 @@ export const SCARVES: SimpleCosmetic<ScarfId>[] = [
   { id: 'leiMist', name: 'Mist Lei', price: 70, color: 0x90e0ef },
   { id: 'scarfNebula', name: 'Nebula Scarf', price: 88, color: 0x5a189a },
   { id: 'ruffCrystal', name: 'Crystal Ruff', price: 84, color: 0xcaf0f8 },
+  { id: 'scarfMango', name: 'Mango Scarf', price: 74, color: 0xff9f1c },
+  { id: 'capeLagoon', name: 'Lagoon Cape', price: 96, color: 0x00bbf9 },
+  { id: 'scarfPlum', name: 'Plum Scarf', price: 80, color: 0x7b2cbf },
+  { id: 'bowtieSand', name: 'Sand Bowtie', price: 70, color: 0xc9a227 },
+  { id: 'leiFrost', name: 'Frost Lei', price: 72, color: 0x80ffdb },
+  { id: 'scarfEmber', name: 'Ember Scarf', price: 86, color: 0xff4d6d },
+  { id: 'ruffTide', name: 'Tide Ruff', price: 78, color: 0x48cae4 },
+  { id: 'capeOrbit', name: 'Orbit Cape', price: 102, color: 0x7209b7 },
 ]
 
 export const SHIRTS: SimpleCosmetic<ShirtId>[] = [
@@ -1094,6 +1172,16 @@ export const SHIRTS: SimpleCosmetic<ShirtId>[] = [
   { id: 'teeCrystal', name: 'Crystal Tee', price: 98, color: 0xcaf0f8 },
   { id: 'shirtWaveSoft', name: 'Wave Soft Shirt', price: 100, color: 0x4cc9f0 },
   { id: 'hoodieLeaf', name: 'Leaf Hoodie', price: 110, color: 0x80ed99 },
+  { id: 'shirtMango', name: 'Mango Tee', price: 94, color: 0xff9f1c },
+  { id: 'hoodieLagoon', name: 'Lagoon Hoodie', price: 116, color: 0x00bbf9 },
+  { id: 'shirtPlum', name: 'Plum Shirt', price: 98, color: 0x7b2cbf },
+  { id: 'teeSand', name: 'Sand Tee', price: 90, color: 0xc9a227 },
+  { id: 'tankFrost', name: 'Frost Tank', price: 88, color: 0x80ffdb },
+  { id: 'hoodieEmber', name: 'Ember Hoodie', price: 120, color: 0xff4d6d },
+  { id: 'shirtTide', name: 'Tide Shirt', price: 96, color: 0x48cae4 },
+  { id: 'teeOrbit', name: 'Orbit Tee', price: 104, color: 0x7209b7 },
+  { id: 'hoodieMangoSoft', name: 'Soft Mango Hoodie', price: 118, color: 0xffb703 },
+  { id: 'shirtLagoonStripe', name: 'Lagoon Stripe', price: 100, color: 0x90e0ef },
 ]
 
 export const SHOES: SimpleCosmetic<ShoesId>[] = [
@@ -1181,6 +1269,14 @@ export const SHOES: SimpleCosmetic<ShoesId>[] = [
   { id: 'shoesMist', name: 'Mist Shoes', price: 84, color: 0x90e0ef },
   { id: 'sneakersNebula', name: 'Nebula Sneakers', price: 108, color: 0x5a189a },
   { id: 'bootsCrystal', name: 'Crystal Boots', price: 100, color: 0xcaf0f8 },
+  { id: 'shoesMango', name: 'Mango Sneakers', price: 88, color: 0xff9f1c },
+  { id: 'bootsLagoon', name: 'Lagoon Boots', price: 102, color: 0x00bbf9 },
+  { id: 'shoesPlum', name: 'Plum Shoes', price: 90, color: 0x7b2cbf },
+  { id: 'sneakersSand', name: 'Sand Sneakers', price: 86, color: 0xc9a227 },
+  { id: 'bootsFrost', name: 'Frost Boots', price: 98, color: 0x80ffdb },
+  { id: 'shoesEmber', name: 'Ember Shoes', price: 92, color: 0xff4d6d },
+  { id: 'sneakersTide', name: 'Tide Sneakers', price: 84, color: 0x48cae4 },
+  { id: 'bootsOrbit', name: 'Orbit Boots', price: 106, color: 0x7209b7 },
 ]
 
 export function getBodyColor(id: BodyColorId): BodyColorOption {

@@ -278,6 +278,31 @@ export type FurnitureId =
   | 'lamp_pine'
   | 'poster_aurora'
   | 'toy_comet'
+  | 'rug_mango'
+  | 'bed_lagoon'
+  | 'sofa_plum'
+  | 'lamp_sand'
+  | 'poster_frost'
+  | 'plant_ember'
+  | 'shelf_tide'
+  | 'table_orbit'
+  | 'chair_mango'
+  | 'fountain_lagoon'
+  | 'clock_plum'
+  | 'toy_sand'
+  | 'cushion_frost'
+  | 'mirror_ember'
+  | 'rug_tide'
+  | 'bed_orbit'
+  | 'sofa_mango'
+  | 'lamp_lagoon'
+  | 'poster_plum'
+  | 'plant_sand'
+  | 'cabinet_frost'
+  | 'ottoman_ember'
+  | 'desk_tide'
+  | 'wall_art_orbit'
+  | 'rug_ember_soft'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -571,6 +596,31 @@ export const FURNITURE: FurnitureItem[] = [
   { id: 'lamp_pine', name: 'Pine Lamp', price: 128, slot: 'side', color: 0x2d6a4f, accent: 0xffe066 },
   { id: 'poster_aurora', name: 'Aurora Poster', price: 64, slot: 'wall', color: 0x9b5de5, accent: 0xffffff },
   { id: 'toy_comet', name: 'Comet Toy', price: 92, slot: 'floor', color: 0x00f5d4, accent: 0xff006e },
+  { id: 'rug_mango', name: 'Mango Rug', price: 122, slot: 'floor', color: 0xff9f1c, accent: 0xffffff },
+  { id: 'bed_lagoon', name: 'Lagoon Bed', price: 236, slot: 'side', color: 0x00bbf9, accent: 0xffffff },
+  { id: 'sofa_plum', name: 'Plum Sofa', price: 208, slot: 'side', color: 0x7b2cbf, accent: 0xe0aaff },
+  { id: 'lamp_sand', name: 'Sand Lamp', price: 128, slot: 'side', color: 0xc9a227, accent: 0xffffff },
+  { id: 'poster_frost', name: 'Frost Poster', price: 62, slot: 'wall', color: 0x80ffdb, accent: 0xffffff },
+  { id: 'plant_ember', name: 'Ember Plant', price: 108, slot: 'side', color: 0xff4d6d, accent: 0xffe066 },
+  { id: 'shelf_tide', name: 'Tide Shelf', price: 158, slot: 'wall', color: 0x48cae4, accent: 0xffffff },
+  { id: 'table_orbit', name: 'Orbit Table', price: 142, slot: 'floor', color: 0x7209b7, accent: 0x00f5d4 },
+  { id: 'chair_mango', name: 'Mango Chair', price: 150, slot: 'side', color: 0xff9f1c, accent: 0xffffff },
+  { id: 'fountain_lagoon', name: 'Lagoon Fountain', price: 188, slot: 'floor', color: 0x00bbf9, accent: 0x80ffdb },
+  { id: 'clock_plum', name: 'Plum Clock', price: 118, slot: 'wall', color: 0x7b2cbf, accent: 0xffffff },
+  { id: 'toy_sand', name: 'Sand Plush', price: 94, slot: 'floor', color: 0xc9a227, accent: 0xffffff },
+  { id: 'cushion_frost', name: 'Frost Cushion', price: 86, slot: 'floor', color: 0x80ffdb, accent: 0xffffff },
+  { id: 'mirror_ember', name: 'Ember Mirror', price: 146, slot: 'wall', color: 0xff4d6d, accent: 0xffffff },
+  { id: 'rug_tide', name: 'Tide Rug', price: 124, slot: 'floor', color: 0x48cae4, accent: 0xffffff },
+  { id: 'bed_orbit', name: 'Orbit Bed', price: 250, slot: 'side', color: 0x7209b7, accent: 0x00f5d4 },
+  { id: 'sofa_mango', name: 'Mango Sofa', price: 204, slot: 'side', color: 0xff9f1c, accent: 0xffffff },
+  { id: 'lamp_lagoon', name: 'Lagoon Lamp', price: 132, slot: 'side', color: 0x00bbf9, accent: 0xffffff },
+  { id: 'poster_plum', name: 'Plum Poster', price: 64, slot: 'wall', color: 0x7b2cbf, accent: 0xffffff },
+  { id: 'plant_sand', name: 'Sand Plant', price: 110, slot: 'side', color: 0xc9a227, accent: 0x80ed99 },
+  { id: 'cabinet_frost', name: 'Frost Cabinet', price: 172, slot: 'side', color: 0x80ffdb, accent: 0xffffff },
+  { id: 'ottoman_ember', name: 'Ember Ottoman', price: 102, slot: 'floor', color: 0xff4d6d, accent: 0xffffff },
+  { id: 'desk_tide', name: 'Tide Desk', price: 176, slot: 'side', color: 0x48cae4, accent: 0xffffff },
+  { id: 'wall_art_orbit', name: 'Orbit Art', price: 72, slot: 'wall', color: 0x7209b7, accent: 0xffffff },
+  { id: 'rug_ember_soft', name: 'Soft Ember Rug', price: 136, slot: 'floor', color: 0xff4d6d, accent: 0xffbe0b },
 ]
 
 export function getFurniture(id: FurnitureId): FurnitureItem {

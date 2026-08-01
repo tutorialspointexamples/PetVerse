@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { WorldSpot, WorldSpotActivityKind } from '../game/worlds'
+import type { WorldSpot } from '../game/worlds'
 import { useLocale } from '../i18n/useLocale'
 
 interface Props {
@@ -198,5 +198,3 @@ function ChaseGame({ accent, onSuccess }: { accent: string; onSuccess: () => voi
     </div>
   )
 }
-
-export type { WorldSpotActivityKind }
