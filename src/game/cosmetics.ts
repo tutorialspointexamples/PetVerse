@@ -624,23 +624,10 @@ export const BODY_COLORS: BodyColorOption[] = [
   { id: 'kiwi', name: 'Kiwi', fill: 0x8fbc5a, belly: 0xf0f8e0, ear: 0x6a9438, price: 128 },
   { id: 'pewter', name: 'Pewter', fill: 0x8a9199, belly: 0xdde2e8, ear: 0x5c646c, price: 132 },
   { id: 'sherbet', name: 'Sherbet', fill: 0xff9ecd, belly: 0xffe8f4, ear: 0xe070b0, price: 136 },
-  { id: 'obsidian', name: 'Obsidian', fill: 0x1b1b1f, belly: 0x6c6c78, ear: 0x0a0a0c, price: 152 },,
+  { id: 'obsidian', name: 'Obsidian', fill: 0x1b1b1f, belly: 0x6c6c78, ear: 0x0a0a0c, price: 152 },
 ]
 
-export const HATS: HatOption[
-  { id: 'hatMelon', name: 'Melon Cap', price: 110, color: 0x80ed99, style: 'cap' },
-  { id: 'capRocket', name: 'Rocket Cap', price: 145, color: 0xe63946, style: 'cap' },
-  { id: 'helmBubble', name: 'Bubble Helm', price: 150, color: 0x90e0ef, style: 'diver' },
-  { id: 'hatOwl', name: 'Owl Hat', price: 130, color: 0xb56b45, style: 'beanie' },
-  { id: 'beaniePixelSoft', name: 'Soft Pixel Beanie', price: 120, color: 0xff88, style: 'beanie' },
-  { id: 'crownCandy', name: 'Candy Crown', price: 160, color: 0xff85a1, style: 'crown' },
-  { id: 'hatTulipSoft', name: 'Soft Tulip', price: 115, color: 0xffc8dd, style: 'flower' },
-  { id: 'capSurf', name: 'Surf Cap', price: 125, color: 0x4cc9f0, style: 'cap' },
-  { id: 'helmDragonSoft', name: 'Soft Dragon Helm', price: 155, color: 0xe76f51, style: 'dragon' },
-  { id: 'hatNewspaperFold', name: 'Folded News Hat', price: 100, color: 0xd8e2dc, style: 'cap' },
-  { id: 'bowGiant', name: 'Giant Bow', price: 135, color: 0xff006e, style: 'bow' },
-  { id: 'hatStarPop', name: 'Pop Star Hat', price: 140, color: 0xf4d35e, style: 'party' },
-] = [
+export const HATS: HatOption[] = [
   { id: 'none', name: 'No Hat', price: 0, color: 0x000000 },
   { id: 'cap', name: 'Cap', price: 50, color: 0x2a6f97, style: 'cap' },
   { id: 'bow', name: 'Bow', price: 45, color: 0xe63946, style: 'bow' },
@@ -742,19 +729,23 @@ export const HATS: HatOption[
   { id: 'crownIce', name: 'Frost Crown', price: 175, color: 0xcaf0f8, style: 'crown' },
   { id: 'beanieFrog', name: 'Frog Beanie', price: 120, color: 0x80ed99, style: 'beanie' },
   { id: 'hatCommuterSoft', name: 'Soft Commuter', price: 95, color: 0x457b9d, style: 'cap' },
-  { id: 'capArcade', name: 'Arcade Cap', price: 130, color: 0x00f5d4, style: 'cap' },,
+  { id: 'capArcade', name: 'Arcade Cap', price: 130, color: 0x00f5d4, style: 'cap' },
+
+  { id: 'hatMelon', name: 'Melon Cap', price: 110, color: 0x80ed99, style: 'cap' },
+  { id: 'capRocket', name: 'Rocket Cap', price: 145, color: 0xe63946, style: 'cap' },
+  { id: 'helmBubble', name: 'Bubble Helm', price: 150, color: 0x90e0ef, style: 'diver' },
+  { id: 'hatOwl', name: 'Owl Hat', price: 130, color: 0xb56b45, style: 'beanie' },
+  { id: 'beaniePixelSoft', name: 'Soft Pixel Beanie', price: 120, color: 0xff88, style: 'beanie' },
+  { id: 'crownCandy', name: 'Candy Crown', price: 160, color: 0xff85a1, style: 'crown' },
+  { id: 'hatTulipSoft', name: 'Soft Tulip', price: 115, color: 0xffc8dd, style: 'flower' },
+  { id: 'capSurf', name: 'Surf Cap', price: 125, color: 0x4cc9f0, style: 'cap' },
+  { id: 'helmDragonSoft', name: 'Soft Dragon Helm', price: 155, color: 0xe76f51, style: 'dragon' },
+  { id: 'hatNewspaperFold', name: 'Folded News Hat', price: 100, color: 0xd8e2dc, style: 'cap' },
+  { id: 'bowGiant', name: 'Giant Bow', price: 135, color: 0xff006e, style: 'bow' },
+  { id: 'hatStarPop', name: 'Pop Star Hat', price: 140, color: 0xf4d35e, style: 'party' },
 ]
 
-export const GLASSES: SimpleCosmetic<GlassesId>[
-  { id: 'lensAurora', name: 'Aurora Lenses', price: 120, color: 0x56cfe1 },
-  { id: 'goggleBee', name: 'Bee Goggles', price: 110, color: 0xffbe0b },
-  { id: 'specsCherry', name: 'Cherry Specs', price: 115, color: 0xff4d6d },
-  { id: 'visorNightSoft', name: 'Night Visor', price: 130, color: 0x240046 },
-  { id: 'framesRoundBerry', name: 'Berry Rounds', price: 105, color: 0x9b5de5 },
-  { id: 'lensLeaf', name: 'Leaf Lenses', price: 100, color: 0x4caf7a },
-  { id: 'goggleCloud', name: 'Cloud Goggles', price: 125, color: 0xffffff },
-  { id: 'specsWave', name: 'Wave Specs', price: 118, color: 0x77b6 },
-] = [
+export const GLASSES: SimpleCosmetic<GlassesId>[] = [
   { id: 'none', name: 'No Glasses', price: 0, color: 0x000000 },
   { id: 'round', name: 'Round', price: 55, color: 0x333333 },
   { id: 'sun', name: 'Sunnies', price: 70, color: 0x1a1a1a },
@@ -818,19 +809,19 @@ export const GLASSES: SimpleCosmetic<GlassesId>[
   { id: 'lensMirror', name: 'Mirror Shades', price: 145, color: 0xcaf0f8 },
   { id: 'framesCatMint', name: 'Mint Cat-Eye', price: 128, color: 0x98d8c8 },
   { id: 'gogglePixel', name: 'Pixel Goggles', price: 150, color: 0x00ff88 },
-  { id: 'specsRoundMint', name: 'Mint Rounds', price: 112, color: 0x80ed99 },,
+  { id: 'specsRoundMint', name: 'Mint Rounds', price: 112, color: 0x80ed99 },
+
+  { id: 'lensAurora', name: 'Aurora Lenses', price: 120, color: 0x56cfe1 },
+  { id: 'goggleBee', name: 'Bee Goggles', price: 110, color: 0xffbe0b },
+  { id: 'specsCherry', name: 'Cherry Specs', price: 115, color: 0xff4d6d },
+  { id: 'visorNightSoft', name: 'Night Visor', price: 130, color: 0x240046 },
+  { id: 'framesRoundBerry', name: 'Berry Rounds', price: 105, color: 0x9b5de5 },
+  { id: 'lensLeaf', name: 'Leaf Lenses', price: 100, color: 0x4caf7a },
+  { id: 'goggleCloud', name: 'Cloud Goggles', price: 125, color: 0xffffff },
+  { id: 'specsWave', name: 'Wave Specs', price: 118, color: 0x77b6 },
 ]
 
-export const SCARVES: SimpleCosmetic<ScarfId>[
-  { id: 'scarfMelon', name: 'Melon Scarf', price: 90, color: 0x80ed99 },
-  { id: 'capeCandy', name: 'Candy Cape', price: 130, color: 0xff85a1 },
-  { id: 'scarfRocket', name: 'Rocket Scarf', price: 120, color: 0xe63946 },
-  { id: 'collarPixel', name: 'Pixel Collar', price: 95, color: 0xff88 },
-  { id: 'scarfTulip', name: 'Tulip Scarf', price: 100, color: 0xffc8dd },
-  { id: 'bowtieBee', name: 'Bee Bowtie', price: 110, color: 0xffbe0b },
-  { id: 'scarfOceanSoft', name: 'Soft Ocean Scarf', price: 115, color: 0x77b6 },
-  { id: 'capeAuroraSoft', name: 'Aurora Cape', price: 140, color: 0x56cfe1 },
-] = [
+export const SCARVES: SimpleCosmetic<ScarfId>[] = [
   { id: 'none', name: 'No Scarf', price: 0, color: 0x000000 },
   { id: 'red', name: 'Red', price: 40, color: 0xe63946 },
   { id: 'striped', name: 'Striped', price: 55, color: 0x457b9d },
@@ -894,23 +885,19 @@ export const SCARVES: SimpleCosmetic<ScarfId>[
   { id: 'scarfStripeBlue', name: 'Blue Stripe', price: 90, color: 0x4cc9f0 },
   { id: 'bowtieNeon', name: 'Neon Bowtie', price: 125, color: 0x00f5d4 },
   { id: 'scarfPaw', name: 'Paw Scarf', price: 105, color: 0xf4a261 },
-  { id: 'capeFrost', name: 'Frost Cape', price: 160, color: 0xcaf0f8 },,
+  { id: 'capeFrost', name: 'Frost Cape', price: 160, color: 0xcaf0f8 },
+
+  { id: 'scarfMelon', name: 'Melon Scarf', price: 90, color: 0x80ed99 },
+  { id: 'capeCandy', name: 'Candy Cape', price: 130, color: 0xff85a1 },
+  { id: 'scarfRocket', name: 'Rocket Scarf', price: 120, color: 0xe63946 },
+  { id: 'collarPixel', name: 'Pixel Collar', price: 95, color: 0xff88 },
+  { id: 'scarfTulip', name: 'Tulip Scarf', price: 100, color: 0xffc8dd },
+  { id: 'bowtieBee', name: 'Bee Bowtie', price: 110, color: 0xffbe0b },
+  { id: 'scarfOceanSoft', name: 'Soft Ocean Scarf', price: 115, color: 0x77b6 },
+  { id: 'capeAuroraSoft', name: 'Aurora Cape', price: 140, color: 0x56cfe1 },
 ]
 
-export const SHIRTS: SimpleCosmetic<ShirtId>[
-  { id: 'teeMelon', name: 'Melon Tee', price: 100, color: 0x80ed99 },
-  { id: 'hoodieRocket', name: 'Rocket Hoodie', price: 145, color: 0xe63946 },
-  { id: 'shirtCandy', name: 'Candy Shirt', price: 120, color: 0xff85a1 },
-  { id: 'onesieOwl', name: 'Owl Onesie', price: 150, color: 0xb56b45 },
-  { id: 'vestSurf', name: 'Surf Vest', price: 125, color: 0x4cc9f0 },
-  { id: 'coatGalaxySoft', name: 'Soft Galaxy Coat', price: 160, color: 0x240046 },
-  { id: 'teeBee', name: 'Bee Tee', price: 110, color: 0xffbe0b },
-  { id: 'hoodieTulip', name: 'Tulip Hoodie', price: 135, color: 0xffc8dd },
-  { id: 'shirtPixelSoft', name: 'Pixel Soft Shirt', price: 130, color: 0xff88 },
-  { id: 'jacketWave', name: 'Wave Jacket', price: 140, color: 0x77b6 },
-  { id: 'onesieStarPop', name: 'Star Pop Onesie', price: 155, color: 0xf4d35e },
-  { id: 'coatLeaf', name: 'Leaf Coat', price: 145, color: 0x4caf7a },
-] = [
+export const SHIRTS: SimpleCosmetic<ShirtId>[] = [
   { id: 'none', name: 'No Shirt', price: 0, color: 0x000000 },
   { id: 'tee', name: 'Tee', price: 50, color: 0x4cc9f0 },
   { id: 'hoodie', name: 'Hoodie', price: 80, color: 0xe76f51 },
@@ -997,21 +984,23 @@ export const SHIRTS: SimpleCosmetic<ShirtId>[
   { id: 'jacketDenimSoft', name: 'Soft Denim', price: 135, color: 0x4a6fa5 },
   { id: 'hoodieSunset', name: 'Sunset Hoodie', price: 145, color: 0xff6b35 },
   { id: 'teeConfetti', name: 'Confetti Tee', price: 100, color: 0xff85a1 },
-  { id: 'coatFrost', name: 'Frost Coat', price: 165, color: 0xcaf0f8 },,
+  { id: 'coatFrost', name: 'Frost Coat', price: 165, color: 0xcaf0f8 },
+
+  { id: 'teeMelon', name: 'Melon Tee', price: 100, color: 0x80ed99 },
+  { id: 'hoodieRocket', name: 'Rocket Hoodie', price: 145, color: 0xe63946 },
+  { id: 'shirtCandy', name: 'Candy Shirt', price: 120, color: 0xff85a1 },
+  { id: 'onesieOwl', name: 'Owl Onesie', price: 150, color: 0xb56b45 },
+  { id: 'vestSurf', name: 'Surf Vest', price: 125, color: 0x4cc9f0 },
+  { id: 'coatGalaxySoft', name: 'Soft Galaxy Coat', price: 160, color: 0x240046 },
+  { id: 'teeBee', name: 'Bee Tee', price: 110, color: 0xffbe0b },
+  { id: 'hoodieTulip', name: 'Tulip Hoodie', price: 135, color: 0xffc8dd },
+  { id: 'shirtPixelSoft', name: 'Pixel Soft Shirt', price: 130, color: 0xff88 },
+  { id: 'jacketWave', name: 'Wave Jacket', price: 140, color: 0x77b6 },
+  { id: 'onesieStarPop', name: 'Star Pop Onesie', price: 155, color: 0xf4d35e },
+  { id: 'coatLeaf', name: 'Leaf Coat', price: 145, color: 0x4caf7a },
 ]
 
-export const SHOES: SimpleCosmetic<ShoesId>[
-  { id: 'sneakerMelon', name: 'Melon Kicks', price: 110, color: 0x80ed99 },
-  { id: 'bootRocket', name: 'Rocket Boots', price: 150, color: 0xe63946 },
-  { id: 'sandalCandy', name: 'Candy Sandals', price: 95, color: 0xff85a1 },
-  { id: 'shoeOwl', name: 'Owl Shoes', price: 120, color: 0xb56b45 },
-  { id: 'sneakerSurf', name: 'Surf Kicks', price: 125, color: 0x4cc9f0 },
-  { id: 'bootGalaxySoft', name: 'Soft Galaxy Boots', price: 155, color: 0x240046 },
-  { id: 'slipperBee', name: 'Bee Slippers', price: 90, color: 0xffbe0b },
-  { id: 'shoeTulip', name: 'Tulip Flats', price: 100, color: 0xffc8dd },
-  { id: 'sneakerPixelSoft', name: 'Soft Pixel Kicks', price: 140, color: 0xff88 },
-  { id: 'bootWave', name: 'Wave Boots', price: 135, color: 0x77b6 },
-] = [
+export const SHOES: SimpleCosmetic<ShoesId>[] = [
   { id: 'none', name: 'Bare Paws', price: 0, color: 0x000000 },
   { id: 'sneakers', name: 'Sneakers', price: 60, color: 0xffffff },
   { id: 'boots', name: 'Boots', price: 85, color: 0x6b4428 },
@@ -1077,6 +1066,17 @@ export const SHOES: SimpleCosmetic<ShoesId>[
   { id: 'shoeArcade', name: 'Arcade Shoes', price: 145, color: 0x00f5d4 },
   { id: 'bootPanda', name: 'Panda Boots', price: 135, color: 0x1a1a1a },
   { id: 'sneakerWave', name: 'Wave Kicks', price: 130, color: 0x4cc9f0 },
+
+  { id: 'sneakerMelon', name: 'Melon Kicks', price: 110, color: 0x80ed99 },
+  { id: 'bootRocket', name: 'Rocket Boots', price: 150, color: 0xe63946 },
+  { id: 'sandalCandy', name: 'Candy Sandals', price: 95, color: 0xff85a1 },
+  { id: 'shoeOwl', name: 'Owl Shoes', price: 120, color: 0xb56b45 },
+  { id: 'sneakerSurf', name: 'Surf Kicks', price: 125, color: 0x4cc9f0 },
+  { id: 'bootGalaxySoft', name: 'Soft Galaxy Boots', price: 155, color: 0x240046 },
+  { id: 'slipperBee', name: 'Bee Slippers', price: 90, color: 0xffbe0b },
+  { id: 'shoeTulip', name: 'Tulip Flats', price: 100, color: 0xffc8dd },
+  { id: 'sneakerPixelSoft', name: 'Soft Pixel Kicks', price: 140, color: 0xff88 },
+  { id: 'bootWave', name: 'Wave Boots', price: 135, color: 0x77b6 },
 ]
 
 export function getBodyColor(id: BodyColorId): BodyColorOption {

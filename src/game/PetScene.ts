@@ -108,7 +108,6 @@ export class PetScene {
   private swingPulseT = 0
   private tvPulseT = 0
   private sleepPulseT = 0
-  private lastPulseOrigin = { x: 0, y: 0 }
   private lookTarget = { x: 0, y: 0 }
   private idleClock = 0
   private idleCycle = 0
@@ -1954,7 +1953,6 @@ export class PetScene {
       sleep: { x: w * 0.22, y: h * 0.38, color: 0xffe066, n: 8 },
     }
     const o = origins[kind]
-    this.lastPulseOrigin = { x: o.x, y: o.y }
     if (kind === 'cook') this.cookT = 1.8
     else if (kind === 'fountain') this.fountainT = 1.6
     else if (kind === 'bath') this.bathPulseT = 1.5
