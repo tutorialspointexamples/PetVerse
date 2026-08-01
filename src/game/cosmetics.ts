@@ -57,6 +57,8 @@ export type BodyColorId =
   | 'indigo'
   | 'toffee'
   | 'mintChip'
+  | 'buttercream'
+  | 'slateRose'
 
 export type HatId =
   | 'none'
@@ -513,6 +515,8 @@ export const BODY_COLORS: BodyColorOption[] = [
   { id: 'indigo', name: 'Indigo', fill: 0x3f37c9, belly: 0xcddafd, ear: 0x2a2590, price: 146 },
   { id: 'toffee', name: 'Toffee', fill: 0xc68642, belly: 0xffe8c8, ear: 0x8d5524, price: 124 },
   { id: 'mintChip', name: 'Mint Chip', fill: 0x98d8c8, belly: 0xf0fff8, ear: 0x56ab91, price: 130 },
+  { id: 'buttercream', name: 'Buttercream', fill: 0xffe5b4, belly: 0xfffaf0, ear: 0xf4c27a, price: 122 },
+  { id: 'slateRose', name: 'Slate Rose', fill: 0xa98a9c, belly: 0xf5e6ef, ear: 0x7d6474, price: 128 },
 ]
 
 export const HATS: HatOption[] = [
