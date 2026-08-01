@@ -983,6 +983,10 @@ export function RewardedPanel() {
   const setOverlay = useGameStore((s) => s.setOverlay)
   const applyRewardedBoost = useGameStore((s) => s.applyRewardedBoost)
   const addCoins = useGameStore((s) => s.addCoins)
+  const addFuel = useGameStore((s) => s.addFuel)
+  const unlockAdFree = useGameStore((s) => s.unlockAdFree)
+  const adFree = useGameStore((s) => s.adFree)
+  const { t } = useLocale()
 
   if (overlay !== 'rewarded') return null
 
@@ -991,12 +995,12 @@ export function RewardedPanel() {
     if (result.watched) applyRewardedBoost()
   }
 
-  const buy = async (id: string, coins: number) => {
+  const buy = async (id: string, coins: number, fuel: number, kind: string) => {
     const result = await purchaseIap(id)
-    if (result.ok && coins > 0) addCoins(coins)
-    if (result.ok && id === 'outfit_pack') {
-      addCoins(50)
-    }
+    if (!result.ok) return
+    if (coins > 0) addCoins(coins)
+    if (fuel > 0) addFuel(fuel)
+    if (kind === 'adfree') unlockAdFree()
     setOverlay('none')
   }
 
@@ -1004,27 +1008,37 @@ export function RewardedPanel() {
     <div className="shop-overlay" role="dialog" aria-label="Rewards">
       <div className="shop-panel">
         <div className="shop-header">
-          <h2>Boosts</h2>
+          <h2>{t('boost.title')}</h2>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
           </button>
         </div>
-        <p className="panel-note">Optional. Everything in PetVerse stays playable without spending.</p>
+        <p className="panel-note">{t('boost.note')}</p>
+        {adFree ? <p className="panel-note">{t('boost.adfree.on')}</p> : null}
         <button type="button" className="hub-card" onClick={() => void watch()}>
-          <strong>Watch rewarded (mock)</strong>
-          <span>+15 coins · +2 fuel</span>
+          <strong>{adFree ? t('boost.reward.adfree') : t('boost.reward')}</strong>
+          <span>{t('boost.reward.blurb')}</span>
         </button>
         {IAP_PRODUCTS.map((p) => (
           <button
             key={p.id}
             type="button"
             className="hub-card"
-            onClick={() => void buy(p.id, p.coins)}
+            disabled={p.kind === 'adfree' && adFree}
+            onClick={() => void buy(p.id, p.coins, p.fuel, p.kind)}
           >
             <strong>
-              {p.title} · {p.priceLabel}
+              {t(`boost.iap.${p.id}`)} · {p.priceLabel}
             </strong>
-            <span>{p.coins ? `+${p.coins} coins (mock IAP)` : 'Style pack (mock IAP)'}</span>
+            <span>
+              {p.kind === 'adfree'
+                ? t('boost.iap.ad_free.blurb')
+                : p.kind === 'fuel'
+                  ? t('boost.iap.fuel.blurb').replace('{n}', String(p.fuel))
+                  : p.kind === 'style'
+                    ? t('boost.iap.style.blurb')
+                    : t('boost.iap.coins.blurb').replace('{n}', String(p.coins))}
+            </span>
           </button>
         ))}
       </div>

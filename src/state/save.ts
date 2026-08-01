@@ -60,6 +60,8 @@ export interface SaveData {
   missionDate: string | null
   missionProgress: Record<string, number>
   claimedMissions: string[]
+  /** Persist MTT2-style optional remove-ads purchase (mock IAP). */
+  adFree: boolean
   lastSavedAt: number
 }
 
@@ -102,6 +104,7 @@ export function defaultSave(): SaveData {
     missionDate: null,
     missionProgress: {},
     claimedMissions: [],
+    adFree: false,
     lastSavedAt: Date.now(),
   }
 }
@@ -142,6 +145,7 @@ export function loadSave(): SaveData {
       missionDate: parsed.missionDate ?? base.missionDate,
       missionProgress: parsed.missionProgress ?? base.missionProgress,
       claimedMissions: parsed.claimedMissions ?? base.claimedMissions,
+      adFree: parsed.adFree ?? base.adFree,
     }
   } catch {
     return defaultSave()

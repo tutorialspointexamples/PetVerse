@@ -906,13 +906,47 @@ export class PetScene {
           g.rect(w * 0.72, floorY + 4, 6, 12)
           g.fill(item.accent)
         } else {
-          // Distinct generic floor props by color bands so new SKUs don't share one blob
-          g.ellipse(w * 0.55, floorY + 8, 30, 12)
-          g.fill(item.color)
-          g.roundRect(w * 0.48, floorY - 16, 28, 22, 8)
-          g.fill(item.accent)
-          g.circle(w * 0.62, floorY - 10, 8)
-          g.fill({ color: item.color, alpha: 0.85 })
+          // Hash-based floor SKU silhouettes so catalog extras look distinct
+          const hash = [...id].reduce((a, c) => a + c.charCodeAt(0), 0)
+          const v = hash % 5
+          const fx = w * (0.42 + (hash % 7) * 0.03)
+          if (v === 0) {
+            g.ellipse(fx, floorY + 8, 32, 14)
+            g.fill(item.color)
+            g.roundRect(fx - 16, floorY - 20, 32, 26, 8)
+            g.fill(item.accent)
+          } else if (v === 1) {
+            g.circle(fx, floorY - 6, 18)
+            g.fill(item.color)
+            g.circle(fx + 14, floorY + 2, 12)
+            g.fill(item.accent)
+            g.circle(fx - 12, floorY + 4, 10)
+            g.fill({ color: item.color, alpha: 0.8 })
+          } else if (v === 2) {
+            g.roundRect(fx - 24, floorY - 8, 48, 16, 4)
+            g.fill(item.color)
+            g.rect(fx - 18, floorY + 6, 6, 10)
+            g.fill(item.accent)
+            g.rect(fx + 12, floorY + 6, 6, 10)
+            g.fill(item.accent)
+            g.circle(fx, floorY - 16, 8)
+            g.fill(item.accent)
+          } else if (v === 3) {
+            g.moveTo(fx, floorY - 28)
+            g.lineTo(fx - 22, floorY + 10)
+            g.lineTo(fx + 22, floorY + 10)
+            g.closePath()
+            g.fill(item.color)
+            g.ellipse(fx, floorY + 8, 20, 8)
+            g.fill(item.accent)
+          } else {
+            g.ellipse(fx, floorY + 6, 36, 12)
+            g.fill(item.color)
+            for (let i = 0; i < 3; i++) {
+              g.circle(fx - 14 + i * 14, floorY - 8, 7)
+              g.fill(i === 1 ? item.accent : item.color)
+            }
+          }
         }
       } else if (item.slot === 'wall') {
         const x = id.includes('moon') || id === 'pirate_flag' ? w * 0.18 : w * 0.08
@@ -1118,13 +1152,50 @@ export class PetScene {
           g.circle(x + 8, y - 44, 5)
           g.fill(0x4cc9f0)
         } else {
-          // Generic side prop for expanded catalog SKUs
-          g.roundRect(x - 22, y - 48, 44, 48, 8)
-          g.fill(item.color)
-          g.ellipse(x, y - 54, 16, 10)
-          g.fill(item.accent)
-          g.roundRect(x - 14, y - 20, 28, 10, 3)
-          g.fill({ color: 0xffffff, alpha: 0.35 })
+          // Hash-based side SKU silhouettes (cabinets / speakers / stands / etc.)
+          const hash = [...id].reduce((a, c) => a + c.charCodeAt(0), 0)
+          const v = hash % 5
+          if (v === 0) {
+            g.roundRect(x - 22, y - 48, 44, 48, 8)
+            g.fill(item.color)
+            g.ellipse(x, y - 54, 16, 10)
+            g.fill(item.accent)
+            g.roundRect(x - 14, y - 20, 28, 10, 3)
+            g.fill({ color: 0xffffff, alpha: 0.35 })
+          } else if (v === 1) {
+            g.roundRect(x - 18, y - 64, 36, 64, 6)
+            g.fill(item.color)
+            g.roundRect(x - 12, y - 54, 24, 18, 4)
+            g.fill(item.accent)
+            g.rect(x + 10, y - 40, 4, 14)
+            g.fill(0x333333)
+          } else if (v === 2) {
+            g.ellipse(x, y - 36, 26, 34)
+            g.fill(item.color)
+            g.ellipse(x, y - 36, 12, 16)
+            g.fill(item.accent)
+            g.roundRect(x - 16, y - 8, 32, 10, 3)
+            g.fill(0x8b5e3c)
+          } else if (v === 3) {
+            g.roundRect(x - 26, y - 30, 52, 28, 8)
+            g.fill(item.color)
+            g.circle(x - 10, y - 40, 8)
+            g.fill(item.accent)
+            g.circle(x + 10, y - 40, 8)
+            g.fill(item.accent)
+            g.rect(x - 4, y - 16, 8, 10)
+            g.fill(0xffffff)
+          } else {
+            g.moveTo(x, y - 70)
+            g.lineTo(x - 24, y - 10)
+            g.lineTo(x + 24, y - 10)
+            g.closePath()
+            g.fill(item.color)
+            g.ellipse(x, y - 8, 22, 8)
+            g.fill(item.accent)
+            g.circle(x, y - 48, 5)
+            g.fill(0xffe66d)
+          }
         }
       }
     }

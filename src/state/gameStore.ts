@@ -56,6 +56,7 @@ import {
   type MissionKind,
 } from '../game/missions'
 import { defaultSave, loadSave, writeSave, type SaveData } from './save'
+import { setAdFreeUnlocked } from '../monetization/stubs'
 
 export type Reaction =
   | 'idle'
@@ -156,6 +157,7 @@ export interface GameState extends SaveData {
   doEventActivity: () => boolean
   grantMinigameReward: (coins: number, fuel?: number, keepOpen?: boolean) => void
   applyRewardedBoost: () => void
+  unlockAdFree: () => void
   setRoom: (id: RoomId) => void
   feedFood: (id: FoodId) => boolean
   collectCard: (id: CardId) => boolean
@@ -213,6 +215,7 @@ function sliceSave(state: GameState): SaveData {
     missionDate,
     missionProgress,
     claimedMissions,
+    adFree,
   } = state
   return {
     petName,
@@ -252,6 +255,7 @@ function sliceSave(state: GameState): SaveData {
     missionDate,
     missionProgress,
     claimedMissions,
+    adFree,
     lastSavedAt: Date.now(),
   }
 }
@@ -298,6 +302,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   hydrate: () => {
     const data = loadSave()
+    setAdFreeUnlocked(!!data.adFree)
     set({ ...data, overlay: 'none', reaction: data.sleeping ? 'sleep' : 'idle' })
     get().ensureMissions()
   },
@@ -943,6 +948,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       fuel: Math.min(20, get().fuel + 2),
       overlay: 'none',
     })
+    get().save()
+  },
+
+  unlockAdFree: () => {
+    setAdFreeUnlocked(true)
+    set({ adFree: true })
     get().save()
   },
 
