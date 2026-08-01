@@ -3,9 +3,9 @@ import { Application, Container, Graphics, Text } from 'pixi.js'
 import { useGameStore } from '../state/gameStore'
 
 type Cell = { x: number; y: number }
-type Pickup = Cell & { kind: 'star' | 'comet' }
+type Pickup = Cell & { kind: 'star' | 'comet' | 'boost' }
 
-/** Snake-style trail collector — Space Trails with asteroids, comets, and neon juice. */
+/** Snake-style trail collector — Space Trails with asteroids, comets, boosts, and neon juice. */
 export function SpaceTrailsGame() {
   const hostRef = useRef<HTMLDivElement>(null)
   const grant = useGameStore((s) => s.grantMinigameReward)
@@ -24,6 +24,7 @@ export function SpaceTrailsGame() {
     let scoreLocal = 0
     let comboLocal = 0
     let comboTimer = 0
+    let boostTimer = 0
     let caughtComet = false
     const cell = 24
     let dir = { x: 1, y: 0 }
@@ -35,11 +36,13 @@ export function SpaceTrailsGame() {
     ]
     let pickup: Pickup = { x: 12, y: 6, kind: 'star' }
     let asteroids: Cell[] = []
+    let boostPads: Cell[] = []
     let stepAcc = 0
     let stepEvery = 0.18
     let animTime = 0
     let pointerDown: { x: number; y: number } | null = null
     const bursts: Array<{ x: number; y: number; life: number; color: number }> = []
+    const trailSparks: Array<{ x: number; y: number; life: number; vx: number; vy: number }> = []
 
     const finish = (finalScore: number) => {
       if (!living) return
@@ -57,8 +60,13 @@ export function SpaceTrailsGame() {
       for (let tries = 0; tries < 50; tries++) {
         const x = 1 + Math.floor(Math.random() * (cols - 2))
         const y = 1 + Math.floor(Math.random() * (rows - 2))
-        if (!occupied(x, y)) {
-          pickup = { x, y, kind: Math.random() < 0.22 ? 'comet' : 'star' }
+        if (!occupied(x, y) && !boostPads.some((b) => b.x === x && b.y === y)) {
+          const roll = Math.random()
+          pickup = {
+            x,
+            y,
+            kind: roll < 0.18 ? 'comet' : roll < 0.34 ? 'boost' : 'star',
+          }
           return
         }
       }
@@ -72,6 +80,24 @@ export function SpaceTrailsGame() {
           const y = 1 + Math.floor(Math.random() * (rows - 2))
           if (!occupied(x, y) && !(x === pickup.x && y === pickup.y) && x > 8) {
             asteroids.push({ x, y })
+            break
+          }
+        }
+      }
+    }
+
+    const addBoostPads = (cols: number, rows: number, count: number, reset = false) => {
+      if (reset) boostPads = []
+      for (let n = 0; n < count; n++) {
+        for (let tries = 0; tries < 40; tries++) {
+          const x = 2 + Math.floor(Math.random() * (cols - 4))
+          const y = 2 + Math.floor(Math.random() * (rows - 4))
+          if (
+            !occupied(x, y) &&
+            !(x === pickup.x && y === pickup.y) &&
+            !boostPads.some((b) => b.x === x && b.y === y)
+          ) {
+            boostPads.push({ x, y })
             break
           }
         }
@@ -126,6 +152,7 @@ export function SpaceTrailsGame() {
       const cols0 = Math.max(10, Math.floor(app.screen.width / cell))
       const rows0 = Math.max(10, Math.floor(app.screen.height / cell))
       seedAsteroids(cols0, rows0, 5)
+      addBoostPads(cols0, rows0, 3, true)
       placePickup(cols0, rows0)
 
       const onPointerDown = (e: PointerEvent) => {
@@ -179,13 +206,15 @@ export function SpaceTrailsGame() {
         const dt = t.deltaMS / 1000
         animTime += dt
         comboTimer = Math.max(0, comboTimer - dt)
+        boostTimer = Math.max(0, boostTimer - dt)
         if (comboTimer <= 0 && comboLocal > 0) {
           comboLocal = 0
           setCombo(0)
         }
         const cols = Math.max(10, Math.floor(app.screen.width / cell))
         const rows = Math.max(10, Math.floor(app.screen.height / cell))
-        stepEvery = Math.max(0.1, 0.18 - scoreLocal * 0.0035)
+        const boosted = boostTimer > 0
+        stepEvery = Math.max(0.07, (boosted ? 0.11 : 0.18) - scoreLocal * 0.0035)
         stepAcc += dt
         while (stepAcc >= stepEvery) {
           stepAcc -= stepEvery
@@ -207,9 +236,34 @@ export function SpaceTrailsGame() {
             return
           }
           snake.unshift(head)
+          // Trail sparks behind the head
+          trailSparks.push({
+            x: head.x * cell + cell / 2,
+            y: head.y * cell + cell / 2,
+            life: boosted ? 0.55 : 0.35,
+            vx: -dir.x * 20 + (Math.random() - 0.5) * 18,
+            vy: -dir.y * 20 + (Math.random() - 0.5) * 18,
+          })
+          // Floor boost pads
+          const padIdx = boostPads.findIndex((b) => b.x === head.x && b.y === head.y)
+          if (padIdx >= 0) {
+            boostTimer = Math.max(boostTimer, 2.2)
+            comboLocal += 1
+            comboTimer = 2.4
+            setCombo(comboLocal)
+            bursts.push({
+              x: head.x * cell + cell / 2,
+              y: head.y * cell + cell / 2,
+              life: 0.5,
+              color: 0xff006e,
+            })
+            boostPads.splice(padIdx, 1)
+            if (boostPads.length < 2) addBoostPads(cols, rows, 1)
+          }
           if (head.x === pickup.x && head.y === pickup.y) {
-            const gain = pickup.kind === 'comet' ? 3 : 1
+            const gain = pickup.kind === 'comet' ? 3 : pickup.kind === 'boost' ? 2 : 1
             if (pickup.kind === 'comet') caughtComet = true
+            if (pickup.kind === 'boost') boostTimer = Math.max(boostTimer, 2.8)
             const mult = 1 + Math.min(4, Math.floor(comboLocal / 3))
             scoreLocal += gain * mult
             comboLocal += 1
@@ -220,7 +274,8 @@ export function SpaceTrailsGame() {
               x: head.x * cell + cell / 2,
               y: head.y * cell + cell / 2,
               life: 0.45,
-              color: pickup.kind === 'comet' ? 0x00f5d4 : 0xf4d35e,
+              color:
+                pickup.kind === 'comet' ? 0x00f5d4 : pickup.kind === 'boost' ? 0xff006e : 0xf4d35e,
             })
             placePickup(cols, rows)
             if (scoreLocal > 0 && scoreLocal % 8 === 0 && asteroids.length < 12) {
@@ -253,7 +308,9 @@ export function SpaceTrailsGame() {
         }
 
         label.text = String(scoreLocal)
-        comboLabel.text = comboLocal >= 2 ? `Combo x${1 + Math.min(4, Math.floor(comboLocal / 3))}` : ''
+        comboLabel.text =
+          (boosted ? 'BOOST · ' : '') +
+          (comboLocal >= 2 ? `Combo x${1 + Math.min(4, Math.floor(comboLocal / 3))}` : boosted ? 'speed up' : '')
         gfx.clear()
 
         // Nebula bands
@@ -268,6 +325,21 @@ export function SpaceTrailsGame() {
           const sy = (i * 47 + Math.sin(i + scoreLocal) * 8) % app.screen.height
           gfx.circle(sx, sy, i % 5 === 0 ? 2.2 : 1.2)
           gfx.fill({ color: 0xffffff, alpha: 0.28 + (i % 3) * 0.1 })
+        }
+
+        // Floor boost pads
+        for (const pad of boostPads) {
+          const cx = pad.x * cell + cell / 2
+          const cy = pad.y * cell + cell / 2
+          const pulse = 0.35 + Math.abs(Math.sin(animTime * 6 + pad.x)) * 0.45
+          gfx.roundRect(pad.x * cell + 3, pad.y * cell + 3, cell - 6, cell - 6, 6)
+          gfx.fill({ color: 0xff006e, alpha: 0.22 + pulse * 0.2 })
+          gfx.roundRect(pad.x * cell + 3, pad.y * cell + 3, cell - 6, cell - 6, 6)
+          gfx.stroke({ width: 2, color: 0xff85a1, alpha: pulse })
+          gfx.moveTo(cx - 5, cy + 4)
+          gfx.lineTo(cx, cy - 6)
+          gfx.lineTo(cx + 5, cy + 4)
+          gfx.stroke({ width: 2, color: 0xffffff, alpha: 0.8 })
         }
 
         // Asteroids
@@ -285,14 +357,36 @@ export function SpaceTrailsGame() {
         const pcx = pickup.x * cell + cell / 2
         const pcy = pickup.y * cell + cell / 2
         const pulse = 12 + Math.sin(animTime * 8) * 3
+        const pickColor =
+          pickup.kind === 'comet' ? 0x00f5d4 : pickup.kind === 'boost' ? 0xff006e : 0xf4d35e
         gfx.circle(pcx, pcy, pulse + 4)
-        gfx.fill({ color: pickup.kind === 'comet' ? 0x00f5d4 : 0xf4d35e, alpha: 0.18 })
+        gfx.fill({ color: pickColor, alpha: 0.18 })
         gfx.circle(pcx, pcy, 8)
-        gfx.fill(pickup.kind === 'comet' ? 0x00f5d4 : 0xf4d35e)
+        gfx.fill(pickColor)
         if (pickup.kind === 'comet') {
           gfx.moveTo(pcx - 10, pcy)
           gfx.lineTo(pcx - 22, pcy + 4)
           gfx.stroke({ width: 3, color: 0x80ffdb, alpha: 0.7 })
+        } else if (pickup.kind === 'boost') {
+          gfx.moveTo(pcx - 5, pcy + 4)
+          gfx.lineTo(pcx, pcy - 6)
+          gfx.lineTo(pcx + 5, pcy + 4)
+          gfx.stroke({ width: 2.5, color: 0xffffff, alpha: 0.9 })
+        }
+
+        // Trail sparks
+        for (let i = trailSparks.length - 1; i >= 0; i--) {
+          const s = trailSparks[i]
+          s.life -= dt
+          s.x += s.vx * dt
+          s.y += s.vy * dt
+          if (s.life <= 0) {
+            trailSparks.splice(i, 1)
+            continue
+          }
+          const a = s.life / 0.55
+          gfx.circle(s.x, s.y, boosted ? 3.2 : 2.2)
+          gfx.fill({ color: boosted ? 0xff006e : 0xffbe0b, alpha: a })
         }
 
         // Neon trail
@@ -301,11 +395,24 @@ export function SpaceTrailsGame() {
           const cx = s.x * cell + cell / 2
           const cy = s.y * cell + cell / 2
           if (i === 0) {
-            gfx.circle(cx, cy, 12)
-            gfx.fill({ color: 0xf4a261, alpha: 0.35 })
+            gfx.circle(cx, cy, boosted ? 15 : 12)
+            gfx.fill({ color: boosted ? 0xff006e : 0xf4a261, alpha: 0.35 })
           }
           gfx.roundRect(s.x * cell + 2, s.y * cell + 2, cell - 4, cell - 4, 7)
-          gfx.fill({ color: i === 0 ? 0xffbe0b : i % 2 ? 0xe76f51 : 0xf4a261, alpha })
+          gfx.fill({
+            color: boosted
+              ? i === 0
+                ? 0xff006e
+                : i % 2
+                  ? 0xff85a1
+                  : 0xffbe0b
+              : i === 0
+                ? 0xffbe0b
+                : i % 2
+                  ? 0xe76f51
+                  : 0xf4a261,
+            alpha,
+          })
           if (i === 0) {
             gfx.circle(cx + dir.x * 6, cy + dir.y * 6, 3.5)
             gfx.fill(0xffffff)
@@ -352,7 +459,7 @@ export function SpaceTrailsGame() {
           <h2>Space Trails</h2>
           <p>
             Stars {score}
-            {combo >= 2 ? ` · Combo ${combo}` : ''} · Swipe/arrows · Wrap edges · Dodge rocks
+            {combo >= 2 ? ` · Combo ${combo}` : ''} · Boost pads · Wrap edges · Dodge rocks
           </p>
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×

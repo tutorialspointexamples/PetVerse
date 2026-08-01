@@ -39,8 +39,9 @@ export function GameCanvas() {
       else if (zone === 'kitchen_food') a.setOverlay('food')
       else if (zone === 'kitchen_stove') {
         if (a.doCare('feed')) a.collectCard('stove_spark')
-      } else if (zone === 'bath_tub') a.doCare('bath')
+      }       else if (zone === 'bath_tub') a.doCare('bath')
       else if (zone === 'bath_sink') a.doCare('brush')
+      else if (zone === 'bath_potty') a.doCare('potty')
       else if (zone === 'bed_sleep') a.doCare('sleep')
       else if (zone === 'bedroom_lamp') {
         a.poke('head')

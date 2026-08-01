@@ -188,6 +188,13 @@ input {
   border-radius: 6px;
 }
 
+.care-tool-mark.potty {
+  background:
+    radial-gradient(ellipse at 50% 70%, #90e0ef 0 45%, transparent 46%),
+    linear-gradient(180deg, #f8f9fa 0 55%, #caf0f8 56%);
+  border-radius: 10px 10px 14px 14px;
+}
+
 .care-tool-mark.pillow {
   background: radial-gradient(circle at 40% 40%, #fff8ee, #ffc8dd);
   border-radius: 40% 40% 45% 45%;

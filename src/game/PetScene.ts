@@ -44,6 +44,7 @@ export type PokeZone =
   | 'kitchen_stove'
   | 'bath_tub'
   | 'bath_sink'
+  | 'bath_potty'
   | 'bed_sleep'
   | 'bedroom_lamp'
   | 'yard_play'
@@ -59,6 +60,7 @@ export class PetScene {
   private roomFront = new Graphics()
   private roomPropHit = new Graphics()
   private roomPropHitB = new Graphics()
+  private roomPropHitC = new Graphics()
   private roomPropHint = new Graphics()
   private pet = new Container()
   private shadow = new Graphics()
@@ -146,6 +148,7 @@ export class PetScene {
       this.roomPropHint,
       this.roomPropHit,
       this.roomPropHitB,
+      this.roomPropHitC,
       this.pet,
       this.companionGfx,
       this.companionHit,
@@ -180,6 +183,8 @@ export class PetScene {
     this.roomPropHit.cursor = 'pointer'
     this.roomPropHitB.eventMode = 'none'
     this.roomPropHitB.cursor = 'pointer'
+    this.roomPropHitC.eventMode = 'none'
+    this.roomPropHitC.cursor = 'pointer'
     this.headHit.on('pointertap', () => this.onPoke('head'))
     this.bellyHit.on('pointertap', () => this.onPoke('belly'))
     this.companionHit.on('pointertap', () => this.onPoke('companion'))
@@ -198,6 +203,9 @@ export class PetScene {
       else if (room === 'bedroom') this.onPoke('bedroom_lamp')
       else if (room === 'yard') this.onPoke('yard_swing')
       else if (room === 'living') this.onPoke('living_sofa')
+    })
+    this.roomPropHitC.on('pointertap', () => {
+      if (this.props.room === 'bathroom') this.onPoke('bath_potty')
     })
 
     parent.addEventListener('pointermove', this.onPointerMove)
@@ -244,12 +252,27 @@ export class PetScene {
       back.roundRect(w * 0.62, h * 0.36, w * 0.28, h * 0.2, 6)
       back.fill(0xe76f51)
     } else if (this.props.room === 'bathroom') {
+      // Sink vanity
       back.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
       back.fill(0xffffff)
+      back.ellipse(w * 0.79, h * 0.38, 28, 12)
+      back.fill(0x90e0ef)
+      back.roundRect(w * 0.77, h * 0.3, 10, 14, 3)
+      back.fill(0x4cc9f0)
+      // Tub
       back.ellipse(w * 0.2, h * 0.5, 40, 28)
       back.fill(0x48cae4)
       back.roundRect(w * 0.12, h * 0.48, 16, 40, 4)
       back.fill(0x0077b6)
+      // Toilet / potty (MTT2 bathroom routine prop)
+      back.roundRect(w * 0.42, h * 0.36, w * 0.16, h * 0.22, 10)
+      back.fill(0xffffff)
+      back.ellipse(w * 0.5, h * 0.52, 28, 14)
+      back.fill(0xcaf0f8)
+      back.roundRect(w * 0.46, h * 0.3, w * 0.08, h * 0.08, 6)
+      back.fill(0xf8f9fa)
+      back.circle(w * 0.54, h * 0.33, 4)
+      back.fill(0x4cc9f0)
     } else if (this.props.room === 'bedroom') {
       back.roundRect(w * 0.08, h * 0.34, w * 0.32, h * 0.24, 10)
       back.fill(0x4a90a4)
@@ -332,12 +355,15 @@ export class PetScene {
   private drawRoomProps(w: number, h: number) {
     const hit = this.roomPropHit
     const hitB = this.roomPropHitB
+    const hitC = this.roomPropHitC
     const hint = this.roomPropHint
     hit.clear()
     hitB.clear()
+    hitC.clear()
     hint.clear()
     hit.eventMode = 'none'
     hitB.eventMode = 'none'
+    hitC.eventMode = 'none'
     const pulse = 0.35 + Math.abs(Math.sin(this.time * 2.4)) * 0.35
     const room = this.props.room
 
@@ -376,6 +402,14 @@ export class PetScene {
       hitB.eventMode = 'static'
       hint.roundRect(w * 0.68, h * 0.28, w * 0.22, h * 0.28, 10)
       hint.stroke({ width: 3, color: 0x4cc9f0, alpha: pulse })
+      // Toilet → potty routine
+      hitC.roundRect(w * 0.4, h * 0.28, w * 0.2, h * 0.3, 10)
+      hitC.fill({ color: 0xffffff, alpha: 0.001 })
+      hitC.eventMode = 'static'
+      hint.roundRect(w * 0.42, h * 0.3, w * 0.16, h * 0.28, 10)
+      hint.stroke({ width: 3, color: 0x90e0ef, alpha: pulse })
+      hint.ellipse(w * 0.5, h * 0.52, 26, 12)
+      hint.fill({ color: 0x4cc9f0, alpha: 0.2 + pulse * 0.2 })
     } else if (room === 'bedroom') {
       // Bed → sleep
       hit.roundRect(w * 0.08, h * 0.28, w * 0.32, h * 0.3, 10)
@@ -1134,13 +1168,20 @@ export class PetScene {
     g.fill(fill)
     g.circle(0, headY + talkBob, 64)
     g.fill(fill)
+    // Soft “3D” volume bands (rim light + cheek planes)
     g.circle(16, headY + 6 + talkBob, 40)
-    g.fill({ color: 0x000000, alpha: 0.05 })
-    g.ellipse(-18, headY - 10 + talkBob, 16, 12)
-    g.fill({ color: 0xffffff, alpha: 0.08 })
-    // Muzzle plate
+    g.fill({ color: 0x000000, alpha: 0.06 })
+    g.ellipse(-22, headY - 12 + talkBob, 18, 14)
+    g.fill({ color: 0xffffff, alpha: 0.1 })
+    g.ellipse(28, headY + 20 + talkBob, 14, 18)
+    g.fill({ color: 0x000000, alpha: 0.04 })
+    g.ellipse(-40, headY + 8 + talkBob, 10, 14)
+    g.fill({ color: 0xffffff, alpha: 0.07 })
+    // Muzzle plate with slight depth
     g.ellipse(0, headY + 22 + talkBob, 28, 20)
     g.fill({ color: 0xffe8c8, alpha: 0.55 })
+    g.ellipse(0, headY + 26 + talkBob, 20, 10)
+    g.fill({ color: 0x000000, alpha: 0.04 })
 
     g.moveTo(-48, headY - 42 + talkBob)
     g.lineTo(-68 - earWiggle, headY - 98 + talkBob)
@@ -1326,20 +1367,51 @@ export class PetScene {
     }
 
     if (reaction === 'brush') {
-      g.roundRect(30, headY - 10, 36, 10, 4)
+      // Toothbrush sweeps left↔right along the mouth (MTT2 brush path)
+      const sweep = Math.sin(this.time * 12) * 18
+      const brushX = sweep
+      const brushY = mouthY - 6 + Math.sin(this.time * 24) * 2
+      g.roundRect(brushX - 6, brushY - 4, 34, 9, 4)
       g.fill(0xffffff)
-      g.roundRect(58, headY - 14, 8, 18, 3)
+      g.roundRect(brushX + 24, brushY - 8, 8, 16, 3)
       g.fill(0x4cc9f0)
-      g.moveTo(-10, mouthY - 4)
-      g.lineTo(10, mouthY - 4)
-      g.stroke({ width: 3, color: 0xffffff, alpha: 0.85 })
+      g.roundRect(brushX - 10, brushY - 2, 8, 6, 2)
+      g.fill(0xff85a1)
+      // Foam trail along the brush path
+      g.circle(brushX - 4, brushY + 2, 3 + Math.abs(Math.sin(this.time * 16)))
+      g.fill({ color: 0xffffff, alpha: 0.7 })
+      g.circle(brushX + 10, brushY - 2, 2.5)
+      g.fill({ color: 0xffffff, alpha: 0.55 })
+      g.circle(brushX + 18, brushY + 3, 2)
+      g.fill({ color: 0xcaf0f8, alpha: 0.65 })
+      g.moveTo(-14, mouthY - 2)
+      g.lineTo(14, mouthY - 2)
+      g.stroke({ width: 3, color: 0xffffff, alpha: 0.9 })
+      // Sparkle teeth shine
+      const spark = 0.4 + Math.abs(Math.sin(this.time * 10)) * 0.5
+      g.circle(-8, mouthY - 8, 2)
+      g.fill({ color: 0xffffff, alpha: spark })
+      g.circle(8, mouthY - 6, 1.5)
+      g.fill({ color: 0xffffff, alpha: spark * 0.8 })
     }
 
     if (reaction === 'potty') {
-      g.roundRect(-24, 95 + b, 48, 18, 6)
-      g.fill(0x90e0ef)
-      g.ellipse(0, 95 + b, 20, 6)
+      // Animated toilet bowl under the pet
+      const flush = Math.abs(Math.sin(this.time * 6)) * 4
+      g.roundRect(-30, 88 + b, 60, 36, 10)
       g.fill(0xffffff)
+      g.ellipse(0, 108 + b + flush * 0.2, 22, 10)
+      g.fill(0x90e0ef)
+      g.ellipse(0, 108 + b + flush * 0.2, 14, 5)
+      g.fill({ color: 0x4cc9f0, alpha: 0.55 + flush * 0.05 })
+      g.roundRect(18, 78 + b, 16, 22, 5)
+      g.fill(0xf8f9fa)
+      g.circle(26, 84 + b, 3.5)
+      g.fill(0x4cc9f0)
+      g.circle(-10 + flush, 100 + b, 2)
+      g.fill({ color: 0xffffff, alpha: 0.5 })
+      g.circle(8 - flush, 104 + b, 1.5)
+      g.fill({ color: 0xffffff, alpha: 0.4 })
     }
 
     if (reaction === 'skill_drums') {

@@ -149,6 +149,36 @@ export type FurnitureId =
   | 'table_craft'
   | 'chair_egg'
   | 'fountain_mini'
+  | 'rug_checker'
+  | 'rug_candy'
+  | 'bed_rocket'
+  | 'sofa_cinema'
+  | 'lamp_bubble'
+  | 'poster_game'
+  | 'plant_orchid'
+  | 'shelf_candy'
+  | 'table_tea'
+  | 'chair_bean'
+  | 'mirror_heart'
+  | 'clock_cat'
+  | 'toy_dino'
+  | 'cushion_cloud'
+  | 'wall_banner'
+  | 'lamp_jellyfish'
+  | 'rug_pixel'
+  | 'bed_flower'
+  | 'sofa_stripe'
+  | 'plant_lemon'
+  | 'poster_sunset'
+  | 'cabinet_toy'
+  | 'fountain_candy'
+  | 'desk_gamer'
+  | 'ottoman_star'
+  | 'shelf_planet'
+  | 'rug_forest'
+  | 'lamp_candy'
+  | 'chair_moon'
+  | 'wall_art_paw'
 
 export type FurnitureSlot = 'floor' | 'wall' | 'side'
 
@@ -312,6 +342,36 @@ export const FURNITURE: FurnitureItem[] = [
   { id: 'table_craft', name: 'Craft Table', price: 150, slot: 'floor', color: 0xe9c46a, accent: 0x4cc9f0 },
   { id: 'chair_egg', name: 'Egg Chair', price: 180, slot: 'side', color: 0xffffff, accent: 0xff85a1 },
   { id: 'fountain_mini', name: 'Mini Fountain', price: 160, slot: 'floor', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'rug_checker', name: 'Checker Rug', price: 115, slot: 'floor', color: 0x1a1a1a, accent: 0xffffff },
+  { id: 'rug_candy', name: 'Candy Rug', price: 125, slot: 'floor', color: 0xff85a1, accent: 0xffe066 },
+  { id: 'bed_rocket', name: 'Rocket Bed', price: 245, slot: 'side', color: 0xe63946, accent: 0xd8e2dc },
+  { id: 'sofa_cinema', name: 'Cinema Sofa', price: 205, slot: 'side', color: 0x1a1a1a, accent: 0xe63946 },
+  { id: 'lamp_bubble', name: 'Bubble Lamp', price: 120, slot: 'side', color: 0x90e0ef, accent: 0xffffff },
+  { id: 'poster_game', name: 'Game Poster', price: 58, slot: 'wall', color: 0x00f5d4, accent: 0x240046 },
+  { id: 'plant_orchid', name: 'Orchid Pot', price: 110, slot: 'side', color: 0xb8a0d8, accent: 0xffffff },
+  { id: 'shelf_candy', name: 'Candy Shelf', price: 140, slot: 'wall', color: 0xff85a1, accent: 0xffe066 },
+  { id: 'table_tea', name: 'Tea Table', price: 130, slot: 'floor', color: 0xb56b45, accent: 0xffe8c8 },
+  { id: 'chair_bean', name: 'Bean Chair', price: 145, slot: 'side', color: 0x4cc9f0, accent: 0xffffff },
+  { id: 'mirror_heart', name: 'Heart Mirror', price: 150, slot: 'wall', color: 0xff85a1, accent: 0xffffff },
+  { id: 'clock_cat', name: 'Cat Clock', price: 105, slot: 'wall', color: 0xf4a261, accent: 0xffffff },
+  { id: 'toy_dino', name: 'Dino Plush', price: 95, slot: 'floor', color: 0x4caf7a, accent: 0xffe066 },
+  { id: 'cushion_cloud', name: 'Cloud Cushion', price: 85, slot: 'floor', color: 0xffffff, accent: 0x90e0ef },
+  { id: 'wall_banner', name: 'Party Banner', price: 70, slot: 'wall', color: 0xff006e, accent: 0xffbe0b },
+  { id: 'lamp_jellyfish', name: 'Jelly Lamp', price: 145, slot: 'side', color: 0x9b5de5, accent: 0x00f5d4 },
+  { id: 'rug_pixel', name: 'Pixel Rug', price: 130, slot: 'floor', color: 0x00ff88, accent: 0x1a1a1a },
+  { id: 'bed_flower', name: 'Flower Bed', price: 220, slot: 'side', color: 0xff85a1, accent: 0xffffff },
+  { id: 'sofa_stripe', name: 'Stripe Sofa', price: 190, slot: 'side', color: 0x457b9d, accent: 0xffe066 },
+  { id: 'plant_lemon', name: 'Lemon Tree', price: 115, slot: 'side', color: 0x4caf7a, accent: 0xffe066 },
+  { id: 'poster_sunset', name: 'Sunset Poster', price: 55, slot: 'wall', color: 0xff6b35, accent: 0xffbe0b },
+  { id: 'cabinet_toy', name: 'Toy Cabinet', price: 160, slot: 'side', color: 0xe76f51, accent: 0x4cc9f0 },
+  { id: 'fountain_candy', name: 'Candy Fountain', price: 175, slot: 'floor', color: 0xff85a1, accent: 0xffffff },
+  { id: 'desk_gamer', name: 'Gamer Desk', price: 185, slot: 'side', color: 0x1a1a1a, accent: 0x00f5d4 },
+  { id: 'ottoman_star', name: 'Star Ottoman', price: 100, slot: 'floor', color: 0xf4d35e, accent: 0xffffff },
+  { id: 'shelf_planet', name: 'Planet Shelf', price: 150, slot: 'wall', color: 0x3a86ff, accent: 0xffbe0b },
+  { id: 'rug_forest', name: 'Forest Rug', price: 120, slot: 'floor', color: 0x2a9d8f, accent: 0x606c38 },
+  { id: 'lamp_candy', name: 'Candy Lamp', price: 125, slot: 'side', color: 0xff006e, accent: 0xffe066 },
+  { id: 'chair_moon', name: 'Moon Chair', price: 170, slot: 'side', color: 0xffe066, accent: 0x3a86ff },
+  { id: 'wall_art_paw', name: 'Paw Art', price: 65, slot: 'wall', color: 0xf4a261, accent: 0xffffff },
 ]
 
 export function getFurniture(id: FurnitureId): FurnitureItem {

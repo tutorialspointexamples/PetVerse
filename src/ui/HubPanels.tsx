@@ -213,7 +213,7 @@ export function RoomsPanel() {
                 {r.id === 'kitchen'
                   ? ' · fridge=menu, stove=snack'
                   : r.id === 'bathroom'
-                    ? ' · tub=bath, sink=brush'
+                    ? ' · tub=bath, sink=brush, toilet=potty'
                     : r.id === 'bedroom'
                       ? ' · bed=sleep, lamp=poke'
                       : r.id === 'yard'

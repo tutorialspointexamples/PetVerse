@@ -13,6 +13,7 @@ const TOOLS: CareTool[] = [
   { id: 'feed', label: 'Spoon', mark: 'spoon', hint: 'Drag food onto pet' },
   { id: 'bath', label: 'Soap', mark: 'soap', hint: 'Drag soap onto pet' },
   { id: 'brush', label: 'Brush', mark: 'brush', hint: 'Drag toothbrush onto pet' },
+  { id: 'potty', label: 'Potty', mark: 'potty', hint: 'Drag potty onto pet' },
   { id: 'sleep', label: 'Pillow', mark: 'pillow', hint: 'Drag pillow onto pet' },
   { id: 'play', label: 'Ball', mark: 'ball', hint: 'Drag ball onto pet' },
 ]
