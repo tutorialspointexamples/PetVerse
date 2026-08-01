@@ -35,6 +35,7 @@ export function SpaceTrailsGame() {
   const [skinName, setSkinName] = useState<SnakeSkin>('solar')
   const [status, setStatus] = useState('Shield · Magnet · Waves · Boss')
   const [runKey, setRunKey] = useState(0)
+  const steerRef = useRef<((nx: number, ny: number) => void) | null>(null)
 
   useEffect(() => {
     const host = hostRef.current
@@ -228,12 +229,15 @@ export function SpaceTrailsGame() {
       if (!living) return
       if (nx === 0 && ny === 0) return
       const base = dirQueue.length ? dirQueue[dirQueue.length - 1] : nextDir
+      // Also block 180° against the currently committed travel dir (feels less "wonky")
       if (nx === -base.x && ny === -base.y) return
+      if (nx === -dir.x && ny === -dir.y && dirQueue.length === 0) return
       if (nx === base.x && ny === base.y) return
       if (dirQueue.length >= 2) dirQueue.shift()
       dirQueue.push({ x: nx, y: ny })
       if (dirQueue.length === 1) nextDir = dirQueue[0]
     }
+    steerRef.current = queueDir
 
     void (async () => {
       await app.init({
@@ -280,22 +284,29 @@ export function SpaceTrailsGame() {
       placePickup(cols0, rows0)
       setStatus(`Wave 1 — goal ${WAVE_GOALS[0]} stars`)
 
-      const applySwipe = (dx: number, dy: number, x: number, y: number) => {
+      // Axis-locked swipe with a clear deadzone so diagonals don't feel "wonky"
+      const applySwipe = (dx: number, dy: number, x: number, y: number, forceTap = false) => {
         const absX = Math.abs(dx)
         const absY = Math.abs(dy)
         let nx = 0
         let ny = 0
-        if (absX > 12 || absY > 12) {
-          if (absX > absY) nx = dx > 0 ? 1 : -1
+        const dominant = Math.max(absX, absY)
+        const ratio = dominant > 0 ? Math.min(absX, absY) / dominant : 1
+        if (dominant >= 10 && ratio < 0.72) {
+          if (absX >= absY) nx = dx > 0 ? 1 : -1
           else ny = dy > 0 ? 1 : -1
-        } else {
+        } else if (forceTap || dominant < 10) {
+          // Tap-to-steer toward the cell under the pointer (relative to head)
           const head = snake[0]
           const gx = Math.floor(x / cell)
           const gy = Math.floor(y / cell)
           const tdx = gx - head.x
           const tdy = gy - head.y
+          if (Math.abs(tdx) === 0 && Math.abs(tdy) === 0) return
           if (Math.abs(tdx) > Math.abs(tdy)) nx = tdx > 0 ? 1 : -1
-          else if (tdy !== 0) ny = tdy > 0 ? 1 : -1
+          else ny = tdy > 0 ? 1 : -1
+        } else {
+          return
         }
         if (nx || ny) {
           queueDir(nx, ny)
@@ -321,7 +332,7 @@ export function SpaceTrailsGame() {
         const rect = app.canvas.getBoundingClientRect()
         const x = e.clientX - rect.left
         const y = e.clientY - rect.top
-        applySwipe(x - pointerDown.x, y - pointerDown.y, x, y)
+        applySwipe(x - pointerDown.x, y - pointerDown.y, x, y, true)
         pointerDown = null
       }
 
@@ -332,7 +343,8 @@ export function SpaceTrailsGame() {
         const y = e.clientY - rect.top
         const dx = x - pointerDown.x
         const dy = y - pointerDown.y
-        if (Math.abs(dx) > 28 || Math.abs(dy) > 28) {
+        // Lower threshold + commit early so trail turns feel responsive
+        if (Math.abs(dx) > 16 || Math.abs(dy) > 16) {
           applySwipe(dx, dy, x, y)
           pointerDown = { x, y }
         }
@@ -961,6 +973,22 @@ export function SpaceTrailsGame() {
           </button>
         </div>
         <div className="minigame-canvas" ref={hostRef} />
+        {alive ? (
+          <div className="space-pad" aria-label="Steer">
+            <button type="button" className="space-pad-btn up" onClick={() => steerRef.current?.(0, -1)}>
+              ▲
+            </button>
+            <button type="button" className="space-pad-btn left" onClick={() => steerRef.current?.(-1, 0)}>
+              ◀
+            </button>
+            <button type="button" className="space-pad-btn right" onClick={() => steerRef.current?.(1, 0)}>
+              ▶
+            </button>
+            <button type="button" className="space-pad-btn down" onClick={() => steerRef.current?.(0, 1)}>
+              ▼
+            </button>
+          </div>
+        ) : null}
         {!alive ? (
           <div className={`minigame-end ${stageClear ? 'clear' : ''}`}>
             <p>{endSummary || (stageClear ? 'Stage clear — rewards saved' : 'Trail ended — rewards saved')}</p>
