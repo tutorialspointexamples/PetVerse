@@ -1,8 +1,35 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useSyncExternalStore } from 'react'
 import { isRtl, loadLocale, saveLocale, t, type LocaleId } from './strings'
 
+type Listener = () => void
+
+let currentLocale: LocaleId = loadLocale()
+const listeners = new Set<Listener>()
+
+function emit() {
+  for (const listener of listeners) listener()
+}
+
+function subscribe(listener: Listener) {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+function getLocaleSnapshot() {
+  return currentLocale
+}
+
+function setGlobalLocale(id: LocaleId) {
+  if (currentLocale === id) return
+  currentLocale = id
+  saveLocale(id)
+  emit()
+}
+
 export function useLocale() {
-  const [locale, setLocaleState] = useState<LocaleId>(() => loadLocale())
+  const locale = useSyncExternalStore(subscribe, getLocaleSnapshot, getLocaleSnapshot)
 
   useEffect(() => {
     document.documentElement.lang = locale
@@ -10,8 +37,7 @@ export function useLocale() {
   }, [locale])
 
   const setLocale = useCallback((id: LocaleId) => {
-    saveLocale(id)
-    setLocaleState(id)
+    setGlobalLocale(id)
   }, [])
 
   const tr = useCallback((key: string) => t(locale, key), [locale])
