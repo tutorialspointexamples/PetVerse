@@ -1,5 +1,6 @@
 import { NEED_KEYS, NEED_LABELS, type NeedKey } from '../game/needs'
 import { getActiveEvent } from '../game/events'
+import { getRoom } from '../game/rooms'
 import { useGameStore } from '../state/gameStore'
 
 function barClass(value: number): string {
@@ -15,10 +16,12 @@ export function NeedsHud() {
   const stars = useGameStore((s) => s.stars)
   const petName = useGameStore((s) => s.petName)
   const sleeping = useGameStore((s) => s.sleeping)
+  const room = useGameStore((s) => s.room)
   const xp = useGameStore((s) => s.xp)
   const level = Math.max(1, Math.floor(xp / 50) + 1)
   const setOverlay = useGameStore((s) => s.setOverlay)
   const event = getActiveEvent()
+  const roomLabel = getRoom(room).name
 
   return (
     <header className="hud">
@@ -27,7 +30,7 @@ export function NeedsHud() {
           <p className="brand">PetVerse</p>
           <p className="pet-label">
             {petName || 'Your pet'} · Lv {level}
-            {sleeping ? ' · sleeping' : ''}
+            {sleeping ? ' · sleeping' : ''} · {roomLabel}
           </p>
         </div>
         <div className="hud-stats">
