@@ -143,7 +143,14 @@ export interface GameState extends SaveData {
   setCompanion: (id: CompanionId) => void
   practiceSkill: (
     id: SkillId,
-    score?: { perfects: number; goods: number; misses: number; bestStreak: number },
+    score?: {
+      perfects: number
+      goods: number
+      misses: number
+      bestStreak: number
+      duoHits?: number
+      difficulty?: 'easy' | 'normal' | 'hard'
+    },
   ) => boolean
   claimEventBonus: () => boolean
   doEventActivity: () => boolean
@@ -791,31 +798,37 @@ export const useGameStore = create<GameState>((set, get) => ({
     const goods = score?.goods ?? 0
     const misses = score?.misses ?? 0
     const bestStreak = score?.bestStreak ?? 0
+    const duoHits = score?.duoHits ?? 0
+    const difficulty = score?.difficulty ?? 'normal'
+    const diffMult = difficulty === 'hard' ? 1.35 : difficulty === 'easy' ? 0.8 : 1
     const totalBeats = perfects + goods + misses
     // Rhythm QTE quality scales coin/XP like MTT2 skill performances.
     const accuracy =
       totalBeats <= 0 ? 1 : (perfects * 1.25 + goods * 1) / Math.max(1, totalBeats)
-    const mult = Math.min(1.85, Math.max(0.45, accuracy + bestStreak * 0.06))
+    const mult = Math.min(
+      2.1,
+      Math.max(0.45, (accuracy + bestStreak * 0.06 + duoHits * 0.08) * diffMult),
+    )
     const coinGain = Math.round(skill.coinReward * mult)
     const xpGain = Math.round(skill.xpReward * mult)
-    const happyBoost = Math.round(8 + perfects * 2 + goods)
+    const happyBoost = Math.round(8 + perfects * 2 + goods + duoHits)
     playSkillSfx(id)
-    if (companionJoins) playCompanionVoice(state.companion)
+    if (companionJoins || duoHits > 0) playCompanionVoice(state.companion)
     set({
       unlockedSkills: unlocked,
       coins: state.coins + coinGain,
       xp: state.xp + xpGain,
       reaction: reactionMap[id],
-      skillPracticeUntil: now + 5500,
+      skillPracticeUntil: now + (difficulty === 'hard' ? 6500 : 5500),
       sleeping: false,
       needs: {
         ...state.needs,
         happiness: Math.min(100, state.needs.happiness + happyBoost),
-        energy: Math.max(0, state.needs.energy - 5),
+        energy: Math.max(0, state.needs.energy - (difficulty === 'hard' ? 7 : 5)),
       },
       companionCare: companionJoins
         ? withCompanionCare(state.companionCare, state.companion, {
-            happiness: 10 + perfects * 2,
+            happiness: 10 + perfects * 2 + duoHits * 3,
             hunger: -2,
           })
         : state.companionCare,

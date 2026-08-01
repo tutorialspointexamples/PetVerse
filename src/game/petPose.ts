@@ -25,6 +25,12 @@ export interface PetPose {
   armLift: number
   earFlop: number
   mouthOpen: number
+  /** Radians — spring-bone targets for soft-puppet limbs */
+  earL: number
+  earR: number
+  armL: number
+  armR: number
+  jaw: number
 }
 
 export function derivePose(input: PetPoseInput): PetPose {
@@ -103,6 +109,18 @@ export function derivePose(input: PetPoseInput): PetPose {
                 ? 0.35 + Math.abs(Math.sin(time * 10)) * 0.4
                 : 0.05
 
+  const earFlop = earFlopT > 0 ? Math.sin(earFlopT * 18) * 12 : Math.sin(time * 2.4) * 2
+  const armBase =
+    (armLift * 0.012 +
+      (reaction === 'skill_boxing'
+        ? limbPhase * 0.02
+        : reaction === 'skill_drums'
+          ? limbPhase * 0.015
+          : reaction === 'play' || reaction === 'laugh'
+            ? limbPhase * 0.012
+            : 0)) *
+    (Math.PI / 3)
+
   return {
     bounce,
     sx,
@@ -112,7 +130,12 @@ export function derivePose(input: PetPoseInput): PetPose {
     limbPhase,
     headBob: sleeping ? Math.sin(time * 1.2) * 2 : bounce * 0.35,
     armLift,
-    earFlop: earFlopT > 0 ? Math.sin(earFlopT * 18) * 12 : Math.sin(time * 2.4) * 2,
+    earFlop,
     mouthOpen,
+    earL: (-earFlop * Math.PI) / 180,
+    earR: (earFlop * Math.PI) / 180,
+    armL: -armBase + Math.sin(time * 2.2) * 0.04,
+    armR: armBase - Math.sin(time * 2.2) * 0.04,
+    jaw: mouthOpen * 0.18 + (yawnT > 0 ? 0.12 : 0),
   }
 }

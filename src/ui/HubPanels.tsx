@@ -14,7 +14,17 @@ import { LOCALES } from '../i18n/strings'
 import { useLocale } from '../i18n/useLocale'
 import { WorldSpotActivity } from './WorldSpotActivity'
 
-const SKILL_BEATS = 4
+type SkillDifficulty = 'easy' | 'normal' | 'hard'
+
+const SKILL_DIFF: Record<
+  SkillDifficulty,
+  { beats: number; speed: number; perfectPad: number; goodPad: number; labelKey: string }
+> = {
+  easy: { beats: 3, speed: 1.05, perfectPad: 0.12, goodPad: 0.28, labelKey: 'skills.diff.easy' },
+  normal: { beats: 4, speed: 1.35, perfectPad: 0.08, goodPad: 0.22, labelKey: 'skills.diff.normal' },
+  hard: { beats: 6, speed: 1.75, perfectPad: 0.05, goodPad: 0.14, labelKey: 'skills.diff.hard' },
+}
+
 const SKILL_REACTION: Record<SkillId, 'skill_drums' | 'skill_hoop' | 'skill_boxing'> = {
   drums: 'skill_drums',
   hoop: 'skill_hoop',
@@ -425,6 +435,7 @@ export function SkillsPanel() {
   const companionCare = useGameStore((s) => s.companionCare)
   const level = levelFromXp(xp)
   const { t } = useLocale()
+  const [difficulty, setDifficulty] = useState<SkillDifficulty>('normal')
   const [activeSkill, setActiveSkill] = useState<SkillId | null>(null)
   const [beatIndex, setBeatIndex] = useState(0)
   const [meter, setMeter] = useState(0)
@@ -432,6 +443,7 @@ export function SkillsPanel() {
   const [perfects, setPerfects] = useState(0)
   const [goods, setGoods] = useState(0)
   const [misses, setMisses] = useState(0)
+  const [duoHits, setDuoHits] = useState(0)
   const [streak, setStreak] = useState(0)
   const [bestStreak, setBestStreak] = useState(0)
   const [popup, setPopup] = useState<string | null>(null)
@@ -439,6 +451,9 @@ export function SkillsPanel() {
   const running = useRef(true)
   const companionJoins =
     companion !== 'none' && getCompanionCare(companionCare, companion).happiness > 40
+  const diff = SKILL_DIFF[difficulty]
+  // Companion co-op beats on even indices when a happy pet is active
+  const isDuoBeat = companionJoins && activeSkill != null && beatIndex % 2 === 1
 
   useEffect(() => {
     running.current = true
@@ -456,7 +471,7 @@ export function SkillsPanel() {
       const dt = (now - last) / 1000
       last = now
       setMeter((m) => {
-        const speed = 1.35 + beatIndex * 0.12 + streak * 0.05
+        const speed = diff.speed + beatIndex * 0.1 + streak * 0.04
         let next = m + dir * dt * speed
         if (next >= 1) {
           next = 1
@@ -471,11 +486,17 @@ export function SkillsPanel() {
     }
     frame = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(frame)
-  }, [activeSkill, beatIndex, dir, streak, resultMsg])
+  }, [activeSkill, beatIndex, dir, streak, resultMsg, diff.speed])
 
   if (overlay !== 'skills') return null
   const cooling = skillPracticeUntil > Date.now()
   const performing = reaction.startsWith('skill_')
+  const perfectLo = 0.5 - diff.perfectPad
+  const perfectHi = 0.5 + diff.perfectPad
+  const goodLo = 0.5 - diff.goodPad
+  const goodHi = 0.5 + diff.goodPad
+  // Duo beats shift the sweet spot slightly so companion timing feels distinct
+  const zoneShift = isDuoBeat ? 0.08 : 0
 
   const startRhythm = (id: SkillId) => {
     if (cooling || level < (SKILLS.find((s) => s.id === id)?.unlockLevel ?? 99)) return
@@ -486,6 +507,7 @@ export function SkillsPanel() {
     setPerfects(0)
     setGoods(0)
     setMisses(0)
+    setDuoHits(0)
     setStreak(0)
     setBestStreak(0)
     setPopup(null)
@@ -495,29 +517,41 @@ export function SkillsPanel() {
 
   const hitBeat = () => {
     if (!activeSkill || resultMsg) return
-    const perfect = meter > 0.42 && meter < 0.58
-    const good = !perfect && meter > 0.28 && meter < 0.74
+    const center = meter - zoneShift
+    const perfect = center > perfectLo && center < perfectHi
+    const good = !perfect && center > goodLo && center < goodHi
     let nextPerfects = perfects
     let nextGoods = goods
     let nextMisses = misses
+    let nextDuo = duoHits
     let nextStreak = streak
     let quality: 'perfect' | 'good' | 'miss' = 'miss'
     if (perfect) {
       nextPerfects += 1
       nextStreak += 1
       quality = 'perfect'
+      if (isDuoBeat) nextDuo += 1
       setPopup(
-        nextStreak >= 3
-          ? t('skills.fire').replace('{n}', String(nextStreak))
-          : nextStreak >= 2
-            ? t('skills.combo').replace('{n}', String(nextStreak))
-            : t('skills.perfect'),
+        isDuoBeat
+          ? t('skills.duo')
+          : nextStreak >= 3
+            ? t('skills.fire').replace('{n}', String(nextStreak))
+            : nextStreak >= 2
+              ? t('skills.combo').replace('{n}', String(nextStreak))
+              : t('skills.perfect'),
       )
     } else if (good) {
       nextGoods += 1
       nextStreak += 1
       quality = 'good'
-      setPopup(nextStreak >= 2 ? t('skills.combo').replace('{n}', String(nextStreak)) : t('skills.good'))
+      if (isDuoBeat) nextDuo += 1
+      setPopup(
+        isDuoBeat
+          ? t('skills.duo')
+          : nextStreak >= 2
+            ? t('skills.combo').replace('{n}', String(nextStreak))
+            : t('skills.good'),
+      )
     } else {
       nextMisses += 1
       nextStreak = 0
@@ -529,25 +563,33 @@ export function SkillsPanel() {
     setPerfects(nextPerfects)
     setGoods(nextGoods)
     setMisses(nextMisses)
+    setDuoHits(nextDuo)
     setStreak(nextStreak)
     setBestStreak(nextBest)
     const nextBeat = beatIndex + 1
-    if (nextBeat >= SKILL_BEATS) {
+    if (nextBeat >= diff.beats) {
       const ok = practiceSkill(activeSkill, {
         perfects: nextPerfects,
         goods: nextGoods,
         misses: nextMisses,
         bestStreak: nextBest,
+        duoHits: nextDuo,
+        difficulty,
       })
       if (ok) {
         const stars =
-          nextPerfects >= 3 ? '★★★' : nextPerfects + nextGoods >= 3 ? '★★☆' : nextGoods >= 1 ? '★☆☆' : '☆☆☆'
-        setResultMsg(
-          t('skills.result')
-            .replace('{stars}', stars)
-            .replace('{p}', String(nextPerfects))
-            .replace('{g}', String(nextGoods)),
-        )
+          nextPerfects >= Math.ceil(diff.beats * 0.75)
+            ? '★★★'
+            : nextPerfects + nextGoods >= Math.ceil(diff.beats * 0.6)
+              ? '★★☆'
+              : nextGoods >= 1
+                ? '★☆☆'
+                : '☆☆☆'
+        const base = t('skills.result')
+          .replace('{stars}', stars)
+          .replace('{p}', String(nextPerfects))
+          .replace('{g}', String(nextGoods))
+        setResultMsg(nextDuo > 0 ? `${base} · ${t('skills.duo.result').replace('{n}', String(nextDuo))}` : base)
       } else {
         setResultMsg(t('skills.cool'))
         setReaction('idle')
@@ -592,48 +634,85 @@ export function SkillsPanel() {
             ×
           </button>
         </div>
+        {!activeSkill ? (
+          <div className="skill-diff-row" role="group" aria-label={t('skills.diff')}>
+            {(['easy', 'normal', 'hard'] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={`skill-diff-btn ${difficulty === id ? 'active' : ''}`}
+                disabled={cooling || (id === 'hard' && level < 3)}
+                onClick={() => setDifficulty(id)}
+              >
+                {t(SKILL_DIFF[id].labelKey)}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <p className="panel-note">
           {activeSkill
-            ? companionJoins
-              ? t('skills.performing.cheer')
-              : t('skills.performing')
+            ? isDuoBeat
+              ? t('skills.performing.duo')
+              : companionJoins
+                ? t('skills.performing.cheer')
+                : t('skills.performing')
             : performing
               ? companion !== 'none'
                 ? t('skills.performing.cheer')
                 : t('skills.performing')
               : cooling
                 ? t('skills.cool')
-                : t('skills.hint')}
+                : companionJoins
+                  ? t('skills.hint.duo')
+                  : t('skills.hint')}
         </p>
         {activeSkill ? (
-          <div className="skill-rhythm" aria-label={t('skills.rhythm')}>
+          <div className={`skill-rhythm ${isDuoBeat ? 'duo' : ''}`} aria-label={t('skills.rhythm')}>
             <div className="skill-rhythm-top">
-              <strong>{SKILLS.find((s) => s.id === activeSkill)?.name}</strong>
+              <strong>
+                {SKILLS.find((s) => s.id === activeSkill)?.name} · {t(diff.labelKey)}
+              </strong>
               <span>
-                {t('skills.beat')} {Math.min(beatIndex + 1, SKILL_BEATS)}/{SKILL_BEATS}
+                {t('skills.beat')} {Math.min(beatIndex + 1, diff.beats)}/{diff.beats}
               </span>
             </div>
             <div className="skill-meter" role="meter" aria-valuenow={Math.round(meter * 100)}>
-              <div className="skill-meter-zone" />
-              <div className="skill-meter-perfect" />
+              <div
+                className="skill-meter-zone"
+                style={{
+                  left: `${(goodLo + zoneShift) * 100}%`,
+                  width: `${(goodHi - goodLo) * 100}%`,
+                }}
+              />
+              <div
+                className="skill-meter-perfect"
+                style={{
+                  left: `${(perfectLo + zoneShift) * 100}%`,
+                  width: `${(perfectHi - perfectLo) * 100}%`,
+                }}
+              />
               <div className="skill-meter-needle" style={{ left: `${meter * 100}%` }} />
             </div>
             <div className="skill-beat-dots">
-              {Array.from({ length: SKILL_BEATS }, (_, i) => (
+              {Array.from({ length: diff.beats }, (_, i) => (
                 <span
                   key={i}
-                  className={`skill-beat-dot ${i < beatIndex ? 'done' : i === beatIndex ? 'active' : ''}`}
+                  className={`skill-beat-dot ${i < beatIndex ? 'done' : i === beatIndex ? 'active' : ''} ${
+                    companionJoins && i % 2 === 1 ? 'duo' : ''
+                  }`}
                 />
               ))}
             </div>
             {popup ? <p className="skill-popup">{popup}</p> : null}
             {resultMsg ? <p className="skill-result">{resultMsg}</p> : null}
             <button type="button" className="skill-hit-btn" disabled={!!resultMsg} onClick={hitBeat}>
-              {activeSkill === 'drums'
-                ? t('skills.hit.drums')
-                : activeSkill === 'hoop'
-                  ? t('skills.hit.hoop')
-                  : t('skills.hit.boxing')}
+              {isDuoBeat
+                ? t('skills.hit.duo')
+                : activeSkill === 'drums'
+                  ? t('skills.hit.drums')
+                  : activeSkill === 'hoop'
+                    ? t('skills.hit.hoop')
+                    : t('skills.hit.boxing')}
             </button>
             <button type="button" className="hub-card skill-cancel" onClick={cancelRhythm}>
               <strong>{t('skills.cancel')}</strong>

@@ -1109,10 +1109,45 @@ input {
   opacity: 0.8;
 }
 
+.skill-diff-row {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.skill-diff-btn {
+  flex: 1;
+  border: 0;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #122820;
+  background: rgba(18, 40, 32, 0.08);
+}
+
+.skill-diff-btn.active {
+  background: linear-gradient(180deg, #ffe66d, #f4d35e);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.skill-diff-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .skill-rhythm {
   display: grid;
   gap: 12px;
   margin-top: 4px;
+}
+
+.skill-rhythm.duo {
+  outline: 2px solid rgba(155, 93, 229, 0.35);
+  outline-offset: 6px;
+  border-radius: 16px;
 }
 
 .skill-rhythm-top {
@@ -1185,6 +1220,14 @@ input {
 
 .skill-beat-dot.done {
   background: #2ec480;
+}
+
+.skill-beat-dot.duo {
+  box-shadow: 0 0 0 2px rgba(155, 93, 229, 0.55);
+}
+
+.skill-beat-dot.duo.active {
+  background: #9b5de5;
 }
 
 .skill-popup,

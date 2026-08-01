@@ -19,6 +19,7 @@ import { deriveMood, type Needs } from './needs'
 import type { Reaction } from '../state/gameStore'
 import { getRoom, type RoomId } from './rooms'
 import { derivePose } from './petPose'
+import { createBoneSet, impulseBone, stepBoneSet } from './petBones'
 
 export interface PetSceneProps {
   needs: Needs
@@ -78,12 +79,22 @@ export class PetScene {
   private shoesGfx = new Graphics()
   private body = new Graphics()
   private shirtGfx = new Graphics()
-  private arms = new Graphics()
+  private armLBone = new Container()
+  private armRBone = new Container()
+  private armLGfx = new Graphics()
+  private armRGfx = new Graphics()
   private head = new Graphics()
+  private earLBone = new Container()
+  private earRBone = new Container()
+  private earLGfx = new Graphics()
+  private earRGfx = new Graphics()
+  private jawBone = new Container()
+  private jawGfx = new Graphics()
   private face = new Graphics()
   private scarfGfx = new Graphics()
   private glassesGfx = new Graphics()
   private hatGfx = new Graphics()
+  private bones = createBoneSet()
   private companionGfx = new Graphics()
   private companionHit = new Graphics()
   private fx = new Graphics()
@@ -182,14 +193,23 @@ export class PetScene {
       this.roomFront,
       this.nameTag,
     )
+    this.armLBone.addChild(this.armLGfx)
+    this.armRBone.addChild(this.armRGfx)
+    this.earLBone.addChild(this.earLGfx)
+    this.earRBone.addChild(this.earRGfx)
+    this.jawBone.addChild(this.jawGfx)
     this.pet.addChild(
       this.shadow,
       this.legs,
       this.shoesGfx,
       this.body,
       this.shirtGfx,
-      this.arms,
+      this.armLBone,
+      this.armRBone,
       this.head,
+      this.earLBone,
+      this.earRBone,
+      this.jawBone,
       this.scarfGfx,
       this.face,
       this.glassesGfx,
@@ -1258,13 +1278,37 @@ export class PetScene {
     this.nameTag.text = petName || 'Your Pet'
     const b = pose.bounce + (this.pokeJiggleT > 0 ? Math.sin(this.pokeJiggleT * 40) * 6 * this.pokeJiggleStrength : 0)
 
+    // Drive spring-bone targets from shared pose (Spine-like secondary motion)
+    this.bones.earL.target = pose.earL
+    this.bones.earR.target = pose.earR
+    this.bones.armL.target = pose.armL
+    this.bones.armR.target = pose.armR
+    this.bones.jaw.target = pose.jaw
+
+    const headY = -78 + b + pose.headBob * 0.15
+    this.earLBone.position.set(-48, headY - 42)
+    this.earRBone.position.set(48, headY - 42)
+    this.earLBone.rotation = this.bones.earL.angle
+    this.earRBone.rotation = this.bones.earR.angle
+    this.armLBone.position.set(-52, 8 + b)
+    this.armRBone.position.set(52, 8 + b)
+    this.armLBone.rotation = this.bones.armL.angle
+    this.armRBone.rotation = this.bones.armR.angle
+    this.jawBone.position.set(0, headY + 18)
+    this.jawBone.rotation = this.bones.jaw.angle
+    this.jawBone.scale.y = 1 + this.bones.jaw.angle * 0.35
+
     this.drawShadow(b)
     this.drawLegs(color.fill, b, pose.limbPhase)
     this.drawShoesLayer(shoes, b)
     this.drawBodyLayer(color.fill, color.belly, color.ear, mood, b, pose.breath)
     this.drawShirtLayer(shirt, b)
-    this.drawArms(color.fill, reaction, b, pose.armLift)
-    this.drawHeadLayer(color.fill, color.ear, b + pose.headBob * 0.15, pose.earFlop)
+    this.drawArmBone('left', color.fill, reaction, pose.armLift)
+    this.drawArmBone('right', color.fill, reaction, pose.armLift)
+    this.drawHeadLayer(color.fill, color.ear, b + pose.headBob * 0.15)
+    this.drawEarBone('left', color.fill, color.ear)
+    this.drawEarBone('right', color.fill, color.ear)
+    this.drawJawBone(color.fill, pose.mouthOpen)
     this.drawFaceLayer(mood, reaction, sleeping, talking, b, pose.mouthOpen)
     this.drawScarfLayer(scarf, b)
     this.drawGlassesLayer(glasses, b)
@@ -1585,149 +1629,124 @@ export class PetScene {
     }
   }
 
-  private drawArms(fill: number, reaction: Reaction, b: number, armLift = 0) {
-    const g = this.arms
+  private drawArmBone(side: 'left' | 'right', fill: number, reaction: Reaction, armLift = 0) {
+    const g = side === 'left' ? this.armLGfx : this.armRGfx
     g.clear()
+    const dir = side === 'left' ? -1 : 1
     const pokeGuard =
       this.pokeZone === 'belly' && this.pokeJiggleT > 0
-        ? Math.sin(this.pokeJiggleT * 22) * 14 * this.pokeJiggleStrength
-        : 0
-    const headRecoil =
-      this.pokeZone === 'head' && this.pokeJiggleT > 0
-        ? Math.sin(this.pokeJiggleT * 26) * 8 * this.pokeJiggleStrength
+        ? Math.sin(this.pokeJiggleT * 22) * 10 * this.pokeJiggleStrength
         : 0
     if (this.stretchT > 0 || (armLift > 10 && reaction === 'idle')) {
       const lift = armLift || 28
-      g.ellipse(-70, -10 + b - lift * 0.3, 20, 40)
+      g.ellipse(dir * 18, -18 - lift * 0.3, 20, 40)
       g.fill(fill)
-      g.ellipse(70, -10 + b - lift * 0.3, 20, 40)
-      g.fill(fill)
-      g.circle(-70, -48 + b - lift * 0.2, 12)
-      g.fill(fill)
-      g.circle(70, -48 + b - lift * 0.2, 12)
+      g.circle(dir * 18, -56 - lift * 0.2, 12)
       g.fill(fill)
       return
     }
     const punchPhase = Math.sin(this.time * 14)
-    const leftPunch = reaction === 'skill_boxing' ? Math.max(0, punchPhase) * 28 : 0
-    const rightPunch = reaction === 'skill_boxing' ? Math.max(0, -punchPhase) * 28 : 0
+    const punch =
+      reaction === 'skill_boxing' ? Math.max(0, side === 'left' ? punchPhase : -punchPhase) * 22 : 0
     const swing =
       reaction === 'skill_boxing'
-        ? punchPhase * 26
+        ? punchPhase * 10 * dir
         : reaction === 'play'
-          ? Math.sin(this.time * 14) * 22
+          ? Math.sin(this.time * 14) * 8
           : reaction === 'skill_drums'
-            ? Math.sin(this.time * 20) * 18
+            ? Math.sin(this.time * 20 + (side === 'right' ? Math.PI : 0)) * 8
             : reaction === 'skill_hoop'
-              ? Math.sin(this.time * 8) * 10
+              ? Math.sin(this.time * 8) * 5
               : reaction === 'laugh'
-                ? Math.sin(this.time * 16) * 12
-                : Math.sin(this.time * 2) * 4
-    const liftBoost = armLift * 0.35 + Math.abs(pokeGuard) * 0.8 + Math.abs(headRecoil) * 0.4
-    const guardIn = Math.abs(pokeGuard) * 0.55
-    // Upper-arm + forearm segments for clearer articulation
-    g.ellipse(
-      -72 - leftPunch * 0.15 + guardIn,
-      6 + b + swing * 0.1 - liftBoost - leftPunch * 0.2 + pokeGuard * 0.2,
-      16,
-      22,
-    )
+                ? Math.sin(this.time * 16) * 6
+                : Math.sin(this.time * 2) * 2
+    const liftBoost = armLift * 0.25 + Math.abs(pokeGuard) * 0.5
+    const guardIn = Math.abs(pokeGuard) * 0.4
+    // Local-space upper arm + forearm (bone rotation handles flail)
+    g.ellipse(dir * (20 + punch * 0.1 - guardIn), 2 + swing * 0.08 - liftBoost - punch * 0.15, 16, 22)
     g.fill(fill)
     g.ellipse(
-      72 + rightPunch * 0.15 - guardIn,
-      6 + b - swing * 0.1 - liftBoost - rightPunch * 0.2 + pokeGuard * 0.2,
-      16,
-      22,
-    )
-    g.fill(fill)
-    g.ellipse(
-      -78 - leftPunch * 0.35 + guardIn * 1.2,
-      20 + b + swing * 0.15 - liftBoost - leftPunch * 0.4 + pokeGuard * 0.35,
+      dir * (28 + punch * 0.3 - guardIn * 1.1),
+      22 + swing * 0.12 - liftBoost - punch * 0.35,
       22,
       36,
     )
     g.fill(fill)
-    g.ellipse(
-      78 + rightPunch * 0.35 - guardIn * 1.2,
-      20 + b - swing * 0.15 - liftBoost - rightPunch * 0.4 + pokeGuard * 0.35,
-      22,
-      36,
-    )
-    g.fill(fill)
-    g.ellipse(-74, 10 + b + swing * 0.08, 6, 8)
+    g.ellipse(dir * 22, 8 + swing * 0.06, 6, 8)
     g.fill({ color: 0xffffff, alpha: 0.12 })
-    g.ellipse(74, 10 + b - swing * 0.08, 6, 8)
-    g.fill({ color: 0xffffff, alpha: 0.12 })
-    // Palm pads for softer cartoon paws
-    g.ellipse(-78 - leftPunch * 0.4, 48 + b + swing * 0.1 - leftPunch * 0.5, 10, 8)
+    g.ellipse(dir * (28 + punch * 0.35), 48 + swing * 0.08 - punch * 0.4, 10, 8)
     g.fill({ color: 0xffb4a2, alpha: 0.72 })
-    g.ellipse(78 + rightPunch * 0.4, 48 + b - swing * 0.1 - rightPunch * 0.5, 10, 8)
-    g.fill({ color: 0xffb4a2, alpha: 0.72 })
-    for (const sx of [-86, -78, -70]) {
-      g.circle(sx - leftPunch * 0.35, 38 + b + swing * 0.08 - leftPunch * 0.4, 2.2)
+    for (const ox of [20, 28, 36]) {
+      g.circle(dir * (ox + punch * 0.3), 38 + swing * 0.06 - punch * 0.3, 2.2)
       g.fill({ color: 0xffb4a2, alpha: 0.65 })
     }
-    for (const sx of [70, 78, 86]) {
-      g.circle(sx + rightPunch * 0.35, 38 + b - swing * 0.08 - rightPunch * 0.4, 2.2)
-      g.fill({ color: 0xffb4a2, alpha: 0.65 })
-    }
-    if (reaction === 'skill_hoop') {
-      // Toss arc: rise → peak → catch
+    if (reaction === 'skill_hoop' && side === 'right') {
       const toss = (Math.sin(this.time * 5) + 1) * 0.5
-      const hoopY = -10 + b - toss * 70
-      const hoopX = Math.sin(this.time * 5) * 18
+      const hoopY = -30 - toss * 70
+      const hoopX = Math.sin(this.time * 5) * 10
       const hoopR = 26 + toss * 6
       g.circle(hoopX, hoopY, hoopR)
       g.stroke({ width: 5, color: 0xf4d35e })
       g.circle(hoopX, hoopY, hoopR - 6)
       g.stroke({ width: 2, color: 0xffffff, alpha: 0.35 })
-      if (toss > 0.85) {
-        g.ellipse(0, 55 + b, 36, 10)
-        g.fill({ color: 0xf4d35e, alpha: 0.25 })
-      }
     }
     if (reaction === 'skill_drums') {
-      // Alternating drum sticks
-      const stickL = Math.sin(this.time * 20) * 10
-      const stickR = Math.sin(this.time * 20 + Math.PI) * 10
-      g.moveTo(-48, 30 + b)
-      g.lineTo(-36, 55 + b + stickL)
+      const stick = Math.sin(this.time * 20 + (side === 'right' ? Math.PI : 0)) * 10
+      g.moveTo(dir * 8, 18)
+      g.lineTo(dir * 18, 42 + stick)
       g.stroke({ width: 3, color: 0xb56b45 })
-      g.moveTo(48, 30 + b)
-      g.lineTo(36, 55 + b + stickR)
-      g.stroke({ width: 3, color: 0xb56b45 })
-      g.circle(-36, 58 + b + stickL, 3)
-      g.fill(0x333333)
-      g.circle(36, 58 + b + stickR, 3)
+      g.circle(dir * 18, 46 + stick, 3)
       g.fill(0x333333)
     }
     if (reaction === 'skill_boxing') {
-      const lx = -90 - leftPunch * 0.5
-      const ly = 10 + b + swing - leftPunch * 0.6
-      const rx = 90 + rightPunch * 0.5
-      const ry = 10 + b - swing - rightPunch * 0.6
-      g.circle(lx, ly, 14)
+      const bx = dir * (42 + punch * 0.45)
+      const by = 18 - punch * 0.5 + swing
+      g.circle(bx, by, 14)
       g.fill(0xe63946)
-      g.circle(rx, ry, 14)
-      g.fill(0xe63946)
-      g.circle(lx, ly, 7)
+      g.circle(bx, by, 7)
       g.fill({ color: 0xffffff, alpha: 0.35 })
-      g.circle(rx, ry, 7)
-      g.fill({ color: 0xffffff, alpha: 0.35 })
-      // Impact stars on punch peaks
-      if (leftPunch > 20 || rightPunch > 20) {
-        const ix = leftPunch > rightPunch ? lx - 18 : rx + 18
-        const iy = leftPunch > rightPunch ? ly : ry
+      if (punch > 16) {
         for (let i = 0; i < 4; i++) {
           const ang = (i / 4) * Math.PI * 2 + this.time * 8
-          g.circle(ix + Math.cos(ang) * 12, iy + Math.sin(ang) * 10, 2.5)
+          g.circle(bx + dir * 14 + Math.cos(ang) * 10, by + Math.sin(ang) * 8, 2.5)
           g.fill({ color: 0xf4d35e, alpha: 0.7 })
         }
       }
     }
   }
 
-  private drawHeadLayer(fill: number, ear: number, b: number, earFlop = 0) {
+  private drawEarBone(side: 'left' | 'right', fill: number, inner: number) {
+    const g = side === 'left' ? this.earLGfx : this.earRGfx
+    g.clear()
+    const dir = side === 'left' ? -1 : 1
+    // Local coords: pivot at ear base; tip points up/out
+    g.moveTo(0, 0)
+    g.lineTo(dir * 20, -56)
+    g.lineTo(dir * -30, -16)
+    g.closePath()
+    g.fill(fill)
+    g.moveTo(dir * 2, -6)
+    g.lineTo(dir * 12, -42)
+    g.lineTo(dir * -16, -16)
+    g.closePath()
+    g.fill(inner)
+    g.ellipse(dir * 4, -18, 5, 8)
+    g.fill({ color: 0xffffff, alpha: 0.12 })
+  }
+
+  private drawJawBone(fill: number, mouthOpen: number) {
+    const g = this.jawGfx
+    g.clear()
+    // Soft lower muzzle plate — rotates with jaw spring for talk/laugh
+    g.ellipse(0, 8 + mouthOpen * 4, 30, 18)
+    g.fill({ color: 0xffe8c8, alpha: 0.7 })
+    g.ellipse(0, 14 + mouthOpen * 5, 18, 10)
+    g.fill({ color: fill, alpha: 0.18 })
+    g.ellipse(-10, 6, 6, 4)
+    g.fill({ color: 0xffffff, alpha: 0.15 })
+  }
+
+  private drawHeadLayer(fill: number, ear: number, b: number) {
     const g = this.head
     g.clear()
     const headPoke =
@@ -1737,8 +1756,6 @@ export class PetScene {
     const cheekSquash = Math.abs(headPoke) * 8
     const headSquashY = Math.abs(headPoke) * 5
     const headY = -78 + b + headPoke * 3
-    const earWiggle =
-      (earFlop || Math.sin(this.time * 2.6) * 4) + Math.abs(headPoke) * 10 * this.pokeJiggleDir
     const talkBob = this.props.talking ? Math.sin(this.time * 14) * 2 : 0
     const browLift =
       this.props.reaction === 'laugh'
@@ -1770,43 +1787,12 @@ export class PetScene {
     g.fill({ color: 0x000000, alpha: 0.08 })
     g.ellipse(22, headY - 18 + talkBob + browLift, 16, 5)
     g.fill({ color: 0x000000, alpha: 0.08 })
-    // Muzzle plate with slight depth
-    g.ellipse(0, headY + 22 + talkBob, 28, 20)
-    g.fill({ color: 0xffe8c8, alpha: 0.55 })
-    g.ellipse(0, headY + 26 + talkBob, 20, 10)
-    g.fill({ color: 0x000000, alpha: 0.04 })
-
-    g.moveTo(-48, headY - 42 + talkBob)
-    g.lineTo(-68 - earWiggle, headY - 98 + talkBob)
-    g.lineTo(-18, headY - 58 + talkBob)
-    g.closePath()
-    g.fill(fill)
-    g.moveTo(-48, headY - 48 + talkBob)
-    g.lineTo(-58 - earWiggle * 0.6, headY - 84 + talkBob)
-    g.lineTo(-30, headY - 58 + talkBob)
-    g.closePath()
-    g.fill(ear)
-
-    g.moveTo(48, headY - 42 + talkBob)
-    g.lineTo(68 + earWiggle, headY - 98 + talkBob)
-    g.lineTo(18, headY - 58 + talkBob)
-    g.closePath()
-    g.fill(fill)
-    g.moveTo(48, headY - 48 + talkBob)
-    g.lineTo(58 + earWiggle * 0.6, headY - 84 + talkBob)
-    g.lineTo(30, headY - 58 + talkBob)
-    g.closePath()
-    g.fill(ear)
-
-    // Ear tufts
-    g.moveTo(-58, headY - 88 + talkBob)
-    g.lineTo(-62 - earWiggle, headY - 104 + talkBob)
-    g.lineTo(-50, headY - 90 + talkBob)
-    g.stroke({ width: 3, color: fill, cap: 'round' })
-    g.moveTo(58, headY - 88 + talkBob)
-    g.lineTo(62 + earWiggle, headY - 104 + talkBob)
-    g.lineTo(50, headY - 90 + talkBob)
-    g.stroke({ width: 3, color: fill, cap: 'round' })
+    // Upper muzzle stays on skull; lower plate lives on jaw bone
+    g.ellipse(0, headY + 16 + talkBob, 26, 12)
+    g.fill({ color: 0xffe8c8, alpha: 0.35 })
+    // Chin rim accent using ear tint for subtle coat continuity
+    g.ellipse(0, headY + 50 + talkBob, 20, 8)
+    g.fill({ color: ear, alpha: 0.08 })
   }
 
   private drawFaceLayer(
@@ -2387,11 +2373,83 @@ export class PetScene {
       g.fill(0xffffff)
       g.circle(0, y - 28, 7)
       g.fill(0xffffff)
+    } else if (style === 'visor' || hat.includes('visor') || hat.includes('Visor')) {
+      g.ellipse(0, y + 20, 46, 12)
+      g.fill(col)
+      g.roundRect(-40, y + 4, 80, 14, 6)
+      g.fill({ color: 0x4cc9f0, alpha: 0.55 })
+      g.rect(-40, y + 10, 80, 4)
+      g.fill(col)
+    } else if (style === 'beret' || hat.includes('beret') || hat.includes('Beret')) {
+      g.ellipse(0, y + 14, 42, 18)
+      g.fill(col)
+      g.ellipse(18, y + 6, 14, 10)
+      g.fill(col)
+      g.circle(22, y + 2, 4)
+      g.fill(0xf4d35e)
+    } else if (style === 'tiara' || hat.includes('tiara') || hat.includes('Tiara')) {
+      g.moveTo(-30, y + 18)
+      g.quadraticCurveTo(0, y - 8, 30, y + 18)
+      g.stroke({ width: 4, color: col })
+      for (const x of [-18, 0, 18]) {
+        g.circle(x, y + (x === 0 ? 0 : 10), 4)
+        g.fill(0xffe66d)
+      }
+    } else if (hat.includes('cat') || hat.includes('Cat') || hat.includes('ear')) {
+      g.ellipse(0, y + 22, 40, 12)
+      g.fill(col)
+      g.moveTo(-28, y + 10)
+      g.lineTo(-36, y - 18)
+      g.lineTo(-12, y + 8)
+      g.closePath()
+      g.fill(col)
+      g.moveTo(28, y + 10)
+      g.lineTo(36, y - 18)
+      g.lineTo(12, y + 8)
+      g.closePath()
+      g.fill(col)
+    } else if (hat.includes('horn') || hat.includes('Horn') || hat.includes('unicorn')) {
+      g.moveTo(0, y + 16)
+      g.lineTo(-8, y - 28)
+      g.lineTo(8, y - 28)
+      g.closePath()
+      g.fill(0xffe66d)
+      g.ellipse(0, y + 20, 36, 10)
+      g.fill(col)
     } else {
-      g.ellipse(0, y + 18, 44, 14)
-      g.fill(col)
-      g.roundRect(-36, y - 6, 72, 28, 12)
-      g.fill(col)
+      // Deterministic variety for remaining catalog hats
+      const hash = [...hat].reduce((a, c) => a + c.charCodeAt(0), 0)
+      const variant = hash % 4
+      if (variant === 0) {
+        g.ellipse(0, y + 18, 44, 14)
+        g.fill(col)
+        g.roundRect(-36, y - 6, 72, 28, 12)
+        g.fill(col)
+        g.circle(0, y - 10, 6)
+        g.fill(0xffe66d)
+      } else if (variant === 1) {
+        g.moveTo(0, y - 24)
+        g.lineTo(-32, y + 20)
+        g.lineTo(32, y + 20)
+        g.closePath()
+        g.fill(col)
+        g.ellipse(0, y + 22, 34, 8)
+        g.fill({ color: 0xffffff, alpha: 0.35 })
+      } else if (variant === 2) {
+        g.ellipse(0, y + 16, 48, 16)
+        g.fill(col)
+        g.roundRect(-20, y - 8, 40, 26, 8)
+        g.fill(col)
+        g.rect(-20, y + 6, 40, 5)
+        g.fill(0x1d3557)
+      } else {
+        g.ellipse(0, y + 20, 40, 12)
+        g.fill(col)
+        for (let i = 0; i < 3; i++) {
+          g.circle(-16 + i * 16, y + 4, 7)
+          g.fill(i === 1 ? 0xffe66d : col)
+        }
+      }
     }
   }
 
@@ -2466,6 +2524,22 @@ export class PetScene {
     this.pokeJiggleStrength = detail?.strength ?? 1
     this.pokeZone = detail?.zone === 'belly' ? 'belly' : 'head'
     this.pokeJiggleDir = this.pokeZone === 'belly' ? -1 : 1
+    const s = this.pokeJiggleStrength
+    // Multi-bone ragdoll impulse — ears/jaw on head poke, arms on belly poke
+    if (this.pokeZone === 'head') {
+      impulseBone(this.bones.earL, -2.8 * s)
+      impulseBone(this.bones.earR, 2.8 * s)
+      impulseBone(this.bones.jaw, 1.4 * s)
+      impulseBone(this.bones.armL, -0.6 * s)
+      impulseBone(this.bones.armR, 0.6 * s)
+      this.earFlopT = Math.max(this.earFlopT, 0.55)
+    } else {
+      impulseBone(this.bones.armL, 3.2 * s)
+      impulseBone(this.bones.armR, -3.2 * s)
+      impulseBone(this.bones.jaw, 0.7 * s)
+      impulseBone(this.bones.earL, -0.8 * s)
+      impulseBone(this.bones.earR, 0.8 * s)
+    }
     // Localized spark burst at poke site (soft-puppet feel).
     const y = this.pokeZone === 'belly' ? 36 : -72
     for (let i = 0; i < 8; i++) {
@@ -2482,7 +2556,6 @@ export class PetScene {
         kind: 'spark',
       })
     }
-    if (this.pokeZone === 'head') this.earFlopT = Math.max(this.earFlopT, 0.55)
   }
 
   private spawnReactionFx(reaction: Reaction) {
@@ -2563,6 +2636,7 @@ export class PetScene {
     this.time += dt
     this.blinkT += dt
     if (this.blinkT > 3.4) this.blinkT = 0
+    stepBoneSet(this.bones, Math.min(dt, 0.05))
 
     if (this.yawnT > 0) this.yawnT = Math.max(0, this.yawnT - dt)
     if (this.stretchT > 0) this.stretchT = Math.max(0, this.stretchT - dt)
