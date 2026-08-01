@@ -13,6 +13,7 @@ import type {
   HatId,
   ScarfId,
   ShirtId,
+  ShoesId,
 } from '../game/cosmetics'
 import {
   getBodyColor,
@@ -20,14 +21,40 @@ import {
   getHat,
   getScarf,
   getShirt,
+  getShoes,
 } from '../game/cosmetics'
+import { playCompanionVoice } from '../audio/companionVoice'
+import { playSkillSfx } from '../audio/skillSfx'
 import type { FurnitureId } from '../game/furniture'
 import { getFurniture } from '../game/furniture'
 import type { WorldId } from '../game/worlds'
-import { getWorld } from '../game/worlds'
+import { getWorld, getWorldSpots } from '../game/worlds'
 import type { CompanionId, SkillId } from '../game/progress'
 import { getCompanion, getSkill, levelFromXp } from '../game/progress'
+import {
+  decayCompanionCare,
+  getCompanionCare,
+  withCompanionCare,
+} from '../game/companionCare'
 import { getActiveEvent } from '../game/events'
+import type { RoomId } from '../game/rooms'
+import type { FoodId, FoodTag } from '../game/foods'
+import { eatReactionForTag, getFood } from '../game/foods'
+import { clampNeed } from '../game/needs'
+import {
+  getCardSet,
+  MINIGAME_CARDS,
+  setProgress,
+  WORLD_CARDS,
+  type CardId,
+  type CardSetId,
+} from '../game/cards'
+import {
+  emptyMissionProgress,
+  missionsForDay,
+  todayKey,
+  type MissionKind,
+} from '../game/missions'
 import { defaultSave, loadSave, writeSave, type SaveData } from './save'
 
 export type Reaction =
@@ -35,7 +62,14 @@ export type Reaction =
   | 'laugh'
   | 'annoyed'
   | 'eat'
+  | 'eat_spicy'
+  | 'eat_sweet'
+  | 'eat_messy'
+  | 'eat_healthy'
   | 'bath'
+  | 'brush'
+  | 'potty'
+  | 'cure'
   | 'sleep'
   | 'talk'
   | 'play'
@@ -53,8 +87,19 @@ export type Overlay =
   | 'event'
   | 'skyDash'
   | 'dunkToss'
+  | 'spaceTrails'
+  | 'buildPlane'
   | 'worldVisit'
+  | 'flight'
+  | 'food'
+  | 'rooms'
+  | 'cards'
   | 'rewarded'
+  | 'lang'
+  | 'photo'
+  | 'missions'
+
+const MINIGAME_OVERLAYS: Overlay[] = ['skyDash', 'dunkToss', 'spaceTrails', 'buildPlane']
 
 export interface GameState extends SaveData {
   reaction: Reaction
@@ -63,7 +108,11 @@ export interface GameState extends SaveData {
   micError: string | null
   talking: boolean
   activeWorld: WorldId | null
+  /** Spot ids collected during the current world visit (session-only). */
+  worldVisitCollected: string[]
   lastMinigameReward: number
+  /** Last snack tag for pet eat VFX (session-only). */
+  lastFoodTag: FoodTag | null
   hydrate: () => void
   save: () => void
   setPetName: (name: string) => void
@@ -80,23 +129,42 @@ export interface GameState extends SaveData {
   buyGlasses: (id: GlassesId) => boolean
   buyScarf: (id: ScarfId) => boolean
   buyShirt: (id: ShirtId) => boolean
+  buyShoes: (id: ShoesId) => boolean
   buyFurniture: (id: FurnitureId) => boolean
   togglePlaceFurniture: (id: FurnitureId) => void
   addCoins: (n: number) => void
   addFuel: (n: number) => void
   addXp: (n: number) => void
   travelTo: (id: WorldId) => boolean
+  finishFlight: () => void
+  collectWorldSpot: (spotId: string) => boolean
   clearWorldVisit: () => void
   unlockCompanion: (id: CompanionId) => boolean
   setCompanion: (id: CompanionId) => void
-  practiceSkill: (id: SkillId) => boolean
+  practiceSkill: (
+    id: SkillId,
+    score?: { perfects: number; goods: number; misses: number; bestStreak: number },
+  ) => boolean
   claimEventBonus: () => boolean
-  grantMinigameReward: (coins: number, fuel?: number) => void
+  doEventActivity: () => boolean
+  grantMinigameReward: (coins: number, fuel?: number, keepOpen?: boolean) => void
   applyRewardedBoost: () => void
+  setRoom: (id: RoomId) => void
+  feedFood: (id: FoodId) => boolean
+  collectCard: (id: CardId) => boolean
+  claimCardSet: (id: CardSetId) => boolean
+  playWithCompanion: () => boolean
+  feedCompanion: () => boolean
+  trackMission: (kind: MissionKind, amount?: number) => void
+  claimMission: (id: string) => boolean
+  ensureMissions: () => void
   level: () => number
   mood: () => Mood
   shopOpen: boolean
   toggleShop: () => void
+  companionPlayUntil: number
+  /** Session cooldown gate for skill performances (ms timestamp). */
+  skillPracticeUntil: number
 }
 
 function sliceSave(state: GameState): SaveData {
@@ -113,20 +181,31 @@ function sliceSave(state: GameState): SaveData {
     glasses,
     scarf,
     shirt,
+    shoes,
     ownedColors,
     ownedHats,
     ownedGlasses,
     ownedScarves,
     ownedShirts,
+    ownedShoes,
     ownedFurniture,
     placedFurniture,
     visitedWorlds,
     companion,
     ownedCompanions,
+    companionCare,
     unlockedSkills,
     eventClaimDate,
     claimedEventIds,
+    eventActivityDate,
     sleeping,
+    room,
+    favoriteFood,
+    ownedCards,
+    claimedCardSets,
+    missionDate,
+    missionProgress,
+    claimedMissions,
   } = state
   return {
     petName,
@@ -141,20 +220,31 @@ function sliceSave(state: GameState): SaveData {
     glasses,
     scarf,
     shirt,
+    shoes,
     ownedColors,
     ownedHats,
     ownedGlasses,
     ownedScarves,
     ownedShirts,
+    ownedShoes,
     ownedFurniture,
     placedFurniture,
     visitedWorlds,
     companion,
     ownedCompanions,
+    companionCare,
     unlockedSkills,
     eventClaimDate,
     claimedEventIds,
+    eventActivityDate,
     sleeping,
+    room,
+    favoriteFood,
+    ownedCards,
+    claimedCardSets,
+    missionDate,
+    missionProgress,
+    claimedMissions,
     lastSavedAt: Date.now(),
   }
 }
@@ -192,12 +282,73 @@ export const useGameStore = create<GameState>((set, get) => ({
   micError: null,
   talking: false,
   activeWorld: null,
+  worldVisitCollected: [],
   lastMinigameReward: 0,
+  lastFoodTag: null,
   shopOpen: false,
+  companionPlayUntil: 0,
+  skillPracticeUntil: 0,
 
   hydrate: () => {
     const data = loadSave()
     set({ ...data, overlay: 'none', reaction: data.sleeping ? 'sleep' : 'idle' })
+    get().ensureMissions()
+  },
+
+  ensureMissions: () => {
+    const today = todayKey()
+    const state = get()
+    if (state.missionDate === today) return
+    set({
+      missionDate: today,
+      missionProgress: emptyMissionProgress(),
+      claimedMissions: [],
+    })
+    get().save()
+  },
+
+  trackMission: (kind, amount = 1) => {
+    get().ensureMissions()
+    const state = get()
+    const today = todayKey()
+    const defs = missionsForDay(today)
+    const progress = { ...state.missionProgress }
+    let changed = false
+    for (const m of defs) {
+      if (m.kind !== kind) continue
+      if (state.claimedMissions.includes(m.id)) continue
+      const prev = progress[m.id] ?? 0
+      if (prev >= m.target) continue
+      progress[m.id] = Math.min(m.target, prev + amount)
+      changed = true
+    }
+    if (!changed) return
+    set({ missionProgress: progress })
+    get().save()
+  },
+
+  claimMission: (id) => {
+    get().ensureMissions()
+    const state = get()
+    const today = todayKey()
+    const def = missionsForDay(today).find((m) => m.id === id)
+    if (!def) return false
+    if (state.claimedMissions.includes(id)) return false
+    const progress = state.missionProgress[id] ?? 0
+    if (progress < def.target) return false
+    const claimedMissions = [...state.claimedMissions, id]
+    const ownedCards = state.ownedCards.includes('mission_ribbon')
+      ? state.ownedCards
+      : [...state.ownedCards, 'mission_ribbon' as CardId]
+    set({
+      coins: state.coins + def.rewardCoins,
+      fuel: Math.min(20, state.fuel + def.rewardFuel),
+      xp: state.xp + 8,
+      claimedMissions,
+      ownedCards,
+    })
+    get().save()
+    return true
   },
 
   save: () => writeSave(sliceSave(get())),
@@ -210,15 +361,23 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   tick: (dtSec) => {
-    const { needs, sleeping, cooldowns, overlay } = get()
-    if (overlay === 'skyDash' || overlay === 'dunkToss') return
+    const { needs, sleeping, cooldowns, overlay, companion, companionCare } = get()
+    if (MINIGAME_OVERLAYS.includes(overlay)) return
     const nextNeeds = applyDecay(needs, dtSec, sleeping)
     const now = Date.now()
     const nextCooldowns: Partial<Record<CareAction, number>> = {}
     for (const [key, until] of Object.entries(cooldowns)) {
       if (until && until > now) nextCooldowns[key as CareAction] = until
     }
-    set({ needs: nextNeeds, cooldowns: nextCooldowns })
+    let nextCompanionCare = companionCare
+    if (companion !== 'none') {
+      const cur = getCompanionCare(companionCare, companion)
+      nextCompanionCare = {
+        ...companionCare,
+        [companion]: decayCompanionCare(cur, dtSec),
+      }
+    }
+    set({ needs: nextNeeds, cooldowns: nextCooldowns, companionCare: nextCompanionCare })
   },
 
   doCare: (action) => {
@@ -246,21 +405,45 @@ export const useGameStore = create<GameState>((set, get) => ({
       feed: 'eat',
       bath: 'bath',
       play: 'play',
+      brush: 'brush',
+      potty: 'potty',
+      cure: 'cure',
     }
 
+    const nextXp = state.xp + 3
+    let ownedCards = state.ownedCards
+    if (action === 'brush' && !ownedCards.includes('brush_sparkle')) {
+      ownedCards = [...ownedCards, 'brush_sparkle']
+    }
+    if (nextXp >= 120 && !ownedCards.includes('golden_paw')) {
+      ownedCards = [...ownedCards, 'golden_paw']
+    }
+    if (nextXp >= 200 && !ownedCards.includes('midnight_star')) {
+      ownedCards = [...ownedCards, 'midnight_star']
+    }
     set({
       needs: applyCare(state.needs, action),
       coins: state.coins + effect.coins,
       fuel: Math.min(20, state.fuel + (action === 'play' ? 1 : 0)),
-      xp: state.xp + 3,
+      xp: nextXp,
       reaction: reactionMap[action],
       cooldowns: { ...state.cooldowns, [action]: now + effect.cooldownMs },
       sleeping: false,
+      ownedCards,
     })
     get().save()
+    if (
+      action === 'feed' ||
+      action === 'bath' ||
+      action === 'play' ||
+      action === 'brush' ||
+      action === 'cure'
+    ) {
+      get().trackMission(action)
+    }
     window.setTimeout(() => {
       if (get().reaction === reactionMap[action]) set({ reaction: 'idle' })
-    }, 1200)
+    }, action === 'cure' ? 1600 : 1200)
     return true
   },
 
@@ -277,24 +460,92 @@ export const useGameStore = create<GameState>((set, get) => ({
       xp: state.xp + 1,
     })
     get().save()
+    get().trackMission('poke')
+    // Soft ragdoll-style jiggle impulse on the live scene (session-only visual).
+    window.dispatchEvent(
+      new CustomEvent('petverse-poke-impulse', {
+        detail: { zone, strength: zone === 'belly' ? 1.2 : 0.85 },
+      }),
+    )
     window.setTimeout(() => {
       if (get().reaction === 'laugh' || get().reaction === 'annoyed') {
         set({ reaction: get().sleeping ? 'sleep' : 'idle' })
       }
-    }, 900)
+    }, 1600)
   },
 
   pokeCompanion: () => {
     const state = get()
     if (state.companion === 'none') return
+    playCompanionVoice(state.companion)
     set({
       needs: {
         ...state.needs,
         happiness: Math.min(100, state.needs.happiness + 8),
       },
+      companionCare: withCompanionCare(state.companionCare, state.companion, {
+        happiness: 10,
+      }),
       coins: state.coins + 2,
     })
     get().save()
+  },
+
+  playWithCompanion: () => {
+    const state = get()
+    if (state.companion === 'none') return false
+    const now = Date.now()
+    if (state.companionPlayUntil > now) return false
+    playCompanionVoice(state.companion)
+    set({
+      companionPlayUntil: now + 8000,
+      sleeping: false,
+      reaction: 'play',
+      needs: {
+        ...state.needs,
+        happiness: Math.min(100, state.needs.happiness + 16),
+        energy: Math.max(0, state.needs.energy - 4),
+      },
+      companionCare: withCompanionCare(state.companionCare, state.companion, {
+        happiness: 22,
+        hunger: -4,
+      }),
+      coins: state.coins + 6,
+      xp: state.xp + 4,
+      fuel: Math.min(20, state.fuel + 1),
+    })
+    get().save()
+    get().trackMission('play')
+    window.setTimeout(() => {
+      if (get().reaction === 'play') set({ reaction: 'idle' })
+    }, 1600)
+    return true
+  },
+
+  feedCompanion: () => {
+    const state = get()
+    if (state.companion === 'none') return false
+    if (state.coins < 3) return false
+    playCompanionVoice(state.companion)
+    set({
+      coins: state.coins - 3 + 2,
+      companionCare: withCompanionCare(state.companionCare, state.companion, {
+        hunger: 28,
+        happiness: 8,
+      }),
+      needs: {
+        ...state.needs,
+        happiness: Math.min(100, state.needs.happiness + 4),
+      },
+      xp: state.xp + 2,
+      reaction: 'laugh',
+      sleeping: false,
+    })
+    get().save()
+    window.setTimeout(() => {
+      if (get().reaction === 'laugh') set({ reaction: 'idle' })
+    }, 1200)
+    return true
   },
 
   setTalking: (talking) => {
@@ -315,6 +566,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   buyGlasses: (id) => buyOwned(get, set, 'ownedGlasses', 'glasses', id, getGlasses(id).price),
   buyScarf: (id) => buyOwned(get, set, 'ownedScarves', 'scarf', id, getScarf(id).price),
   buyShirt: (id) => buyOwned(get, set, 'ownedShirts', 'shirt', id, getShirt(id).price),
+  buyShoes: (id) => buyOwned(get, set, 'ownedShoes', 'shoes', id, getShoes(id).price),
 
   buyFurniture: (id) => {
     const state = get()
@@ -373,6 +625,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (world.unlockHat && !ownedHats.includes(world.unlockHat as HatId)) {
       ownedHats = [...ownedHats, world.unlockHat as HatId]
     }
+    const cardId = WORLD_CARDS[id]
+    const ownedCards =
+      cardId && !state.ownedCards.includes(cardId)
+        ? [...state.ownedCards, cardId]
+        : state.ownedCards
     set({
       fuel: state.fuel - world.fuelCost,
       coins: state.coins + world.rewardCoins,
@@ -381,14 +638,108 @@ export const useGameStore = create<GameState>((set, get) => ({
       visitedWorlds: visited,
       ownedFurniture,
       ownedHats,
+      ownedCards,
       activeWorld: id,
-      overlay: 'worldVisit',
+      worldVisitCollected: [],
+      overlay: 'flight',
     })
     get().save()
+    get().trackMission('travel')
     return true
   },
 
-  clearWorldVisit: () => set({ activeWorld: null, overlay: 'none' }),
+  finishFlight: () => {
+    if (!get().activeWorld) {
+      set({ overlay: 'none' })
+      return
+    }
+    set({ overlay: 'worldVisit', worldVisitCollected: [] })
+  },
+
+  collectWorldSpot: (spotId) => {
+    const state = get()
+    const worldId = state.activeWorld
+    if (!worldId || state.overlay !== 'worldVisit') return false
+    if (state.worldVisitCollected.includes(spotId)) return false
+    const spot = getWorldSpots(worldId).find((s) => s.id === spotId)
+    if (!spot) return false
+    const collected = [...state.worldVisitCollected, spotId]
+    const allSpots = getWorldSpots(worldId)
+    const cleared = collected.length >= allSpots.length
+    const bonus = cleared ? 15 : 0
+    set({
+      worldVisitCollected: collected,
+      coins: state.coins + spot.rewardCoins + bonus,
+      stars: state.stars + (cleared ? 1 : 0),
+      xp: state.xp + (cleared ? 8 : 3),
+      needs: {
+        ...state.needs,
+        happiness: clampNeed(state.needs.happiness + spot.happiness + (cleared ? 6 : 0)),
+        energy: clampNeed(state.needs.energy - 2),
+      },
+      reaction: 'play',
+    })
+    window.setTimeout(() => {
+      if (get().reaction === 'play') get().setReaction('idle')
+    }, 900)
+    get().save()
+    get().trackMission('play')
+    return true
+  },
+
+  clearWorldVisit: () => set({ activeWorld: null, worldVisitCollected: [], overlay: 'none' }),
+
+  setRoom: (id) => {
+    const state = get()
+    let ownedCards = state.ownedCards
+    if (id === 'yard' && !ownedCards.includes('yard_balloon')) {
+      ownedCards = [...ownedCards, 'yard_balloon' as CardId]
+    }
+    if (id === 'cinema' && !ownedCards.includes('cinema_ticket')) {
+      ownedCards = [...ownedCards, 'cinema_ticket' as CardId]
+    }
+    set({ room: id, overlay: 'none', ownedCards })
+    get().save()
+  },
+
+  feedFood: (id) => {
+    const state = get()
+    if (state.sleeping) return false
+    const now = Date.now()
+    const until = state.cooldowns.feed
+    if (until && until > now) return false
+    const food = getFood(id)
+    if (food.price > 0 && state.coins < food.price) return false
+    const happyBonus = state.favoriteFood === id ? 6 : 0
+    const reaction = eatReactionForTag(food.tag)
+    const messyClean = food.tag === 'messy' || food.tag === 'junk' ? -4 : 0
+    const healthyEnergy = food.tag === 'healthy' ? 4 : 0
+    set({
+      coins: state.coins - food.price + food.coins,
+      needs: {
+        ...state.needs,
+        hunger: clampNeed(state.needs.hunger + food.hunger),
+        happiness: clampNeed(state.needs.happiness + food.happiness + happyBonus),
+        health: clampNeed(state.needs.health + food.healthDelta),
+        cleanliness: clampNeed(state.needs.cleanliness + messyClean),
+        energy: clampNeed(state.needs.energy + healthyEnergy),
+      },
+      xp: state.xp + 3,
+      reaction,
+      lastFoodTag: food.tag,
+      favoriteFood: id,
+      cooldowns: { ...state.cooldowns, feed: now + CARE_EFFECTS.feed.cooldownMs },
+      overlay: 'none',
+      sleeping: false,
+    })
+    get().save()
+    get().trackMission('feed')
+    window.setTimeout(() => {
+      const r = get().reaction
+      if (r === reaction || r.startsWith('eat')) set({ reaction: 'idle' })
+    }, 1400)
+    return true
+  },
 
   unlockCompanion: (id) => {
     const state = get()
@@ -403,6 +754,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       coins: state.coins - def.unlockCost,
       ownedCompanions: [...state.ownedCompanions, id],
       companion: id,
+      companionCare: withCompanionCare(state.companionCare, id, {
+        hunger: 0,
+        happiness: 0,
+      }),
     })
     get().save()
     return true
@@ -414,11 +769,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().save()
   },
 
-  practiceSkill: (id) => {
+  practiceSkill: (id, score) => {
     const state = get()
     const level = levelFromXp(state.xp)
     const skill = getSkill(id)
     if (level < skill.unlockLevel) return false
+    const now = Date.now()
+    if (state.skillPracticeUntil > now) return false
     const unlocked = state.unlockedSkills.includes(id)
       ? state.unlockedSkills
       : [...state.unlockedSkills, id]
@@ -427,59 +784,144 @@ export const useGameStore = create<GameState>((set, get) => ({
       hoop: 'skill_hoop',
       boxing: 'skill_boxing',
     }
+    const companionHappy = getCompanionCare(state.companionCare, state.companion).happiness
+    const companionJoins =
+      state.companion !== 'none' && companionHappy > 40
+    const perfects = score?.perfects ?? 0
+    const goods = score?.goods ?? 0
+    const misses = score?.misses ?? 0
+    const bestStreak = score?.bestStreak ?? 0
+    const totalBeats = perfects + goods + misses
+    // Rhythm QTE quality scales coin/XP like MTT2 skill performances.
+    const accuracy =
+      totalBeats <= 0 ? 1 : (perfects * 1.25 + goods * 1) / Math.max(1, totalBeats)
+    const mult = Math.min(1.85, Math.max(0.45, accuracy + bestStreak * 0.06))
+    const coinGain = Math.round(skill.coinReward * mult)
+    const xpGain = Math.round(skill.xpReward * mult)
+    const happyBoost = Math.round(8 + perfects * 2 + goods)
+    playSkillSfx(id)
+    if (companionJoins) playCompanionVoice(state.companion)
     set({
       unlockedSkills: unlocked,
-      coins: state.coins + skill.coinReward,
-      xp: state.xp + skill.xpReward,
+      coins: state.coins + coinGain,
+      xp: state.xp + xpGain,
       reaction: reactionMap[id],
+      skillPracticeUntil: now + 5500,
+      sleeping: false,
       needs: {
         ...state.needs,
-        happiness: Math.min(100, state.needs.happiness + 10),
+        happiness: Math.min(100, state.needs.happiness + happyBoost),
         energy: Math.max(0, state.needs.energy - 5),
       },
+      companionCare: companionJoins
+        ? withCompanionCare(state.companionCare, state.companion, {
+            happiness: 10 + perfects * 2,
+            hunger: -2,
+          })
+        : state.companionCare,
     })
     get().save()
+    get().trackMission('skill')
     window.setTimeout(() => {
       if (get().reaction === reactionMap[id]) set({ reaction: 'idle' })
-    }, 1400)
+    }, 3600)
     return true
   },
 
   claimEventBonus: () => {
     const event = getActiveEvent()
     if (!event) return false
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayKey()
     const state = get()
     if (state.eventClaimDate === today) return false
     const claimed = state.claimedEventIds.includes(event.id)
       ? state.claimedEventIds
       : [...state.claimedEventIds, event.id]
     let ownedColors = state.ownedColors
+    let ownedHats = state.ownedHats
     if (event.shopColorBonus && !ownedColors.includes(event.shopColorBonus as BodyColorId)) {
       ownedColors = [...ownedColors, event.shopColorBonus as BodyColorId]
     }
+    if (event.hatBonus && !ownedHats.includes(event.hatBonus as HatId)) {
+      ownedHats = [...ownedHats, event.hatBonus as HatId]
+    }
+    const ownedCards = state.ownedCards.includes('event_badge')
+      ? state.ownedCards
+      : [...state.ownedCards, 'event_badge' as CardId]
     set({
       coins: state.coins + event.loginBonus,
       eventClaimDate: today,
       claimedEventIds: claimed,
       ownedColors,
-      overlay: 'none',
+      ownedHats,
+      ownedCards,
+      // Keep event panel open so daily activity can still be played.
+      overlay: 'event',
     })
     get().save()
     return true
   },
 
-  grantMinigameReward: (coins, fuel = 1) => {
+  doEventActivity: () => {
+    const event = getActiveEvent()
+    if (!event?.activityKind) return false
+    const today = todayKey()
+    if (get().eventActivityDate === today) return false
+    if (!get().doCare(event.activityKind)) return false
+    const bonus = event.activityBonus ?? 10
+    set({
+      coins: get().coins + bonus,
+      xp: get().xp + 5,
+      eventActivityDate: today,
+      overlay: 'event',
+    })
+    get().save()
+    return true
+  },
+
+  grantMinigameReward: (coins, fuel = 1, keepOpen = false) => {
     const state = get()
+    const cardId = MINIGAME_CARDS[state.overlay]
+    const ownedCards =
+      cardId && !state.ownedCards.includes(cardId)
+        ? [...state.ownedCards, cardId]
+        : state.ownedCards
     set({
       coins: state.coins + coins,
       fuel: Math.min(20, state.fuel + fuel),
       stars: state.stars + (coins >= 15 ? 1 : 0),
       xp: state.xp + Math.max(5, Math.floor(coins / 2)),
       lastMinigameReward: coins,
-      overlay: 'none',
+      ownedCards,
+      overlay: keepOpen ? state.overlay : 'none',
     })
     get().save()
+    get().trackMission('minigame')
+  },
+
+  collectCard: (id) => {
+    const state = get()
+    if (state.ownedCards.includes(id)) return false
+    set({ ownedCards: [...state.ownedCards, id] })
+    get().save()
+    return true
+  },
+
+  claimCardSet: (id) => {
+    const state = get()
+    if (state.claimedCardSets.includes(id)) return false
+    const cardSet = getCardSet(id)
+    const progress = setProgress(state.ownedCards, cardSet)
+    if (!progress.complete) return false
+    set({
+      claimedCardSets: [...state.claimedCardSets, id],
+      coins: state.coins + cardSet.rewardCoins,
+      stars: state.stars + cardSet.rewardStars,
+      fuel: Math.min(20, state.fuel + cardSet.rewardFuel),
+      xp: state.xp + 12,
+    })
+    get().save()
+    return true
   },
 
   applyRewardedBoost: () => {
