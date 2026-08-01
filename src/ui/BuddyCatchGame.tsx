@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { Application, Container, Graphics, Text } from 'pixi.js'
 import { getCompanion } from '../game/progress'
 import { playCompanionVoice } from '../audio/companionVoice'
 import { useGameStore } from '../state/gameStore'
 import { useLocale } from '../i18n/useLocale'
 
-type Treat = { x: number; y: number; vy: number; r: number; color: number; caught: boolean }
+type Treat = { x: number; y: number; vy: number; r: number; color: string; caught: boolean }
+
+function hex(n: number) {
+  return `#${n.toString(16).padStart(6, '0')}`
+}
 
 /** MTT2-style companion co-op: catch falling treats with your pet while the buddy helps. */
 export function BuddyCatchGame() {
-  const hostRef = useRef<HTMLDivElement>(null)
+  const hostRef = useRef<HTMLCanvasElement>(null)
   const companion = useGameStore((s) => s.companion)
   const finishBuddyCatch = useGameStore((s) => s.finishBuddyCatch)
   const setOverlay = useGameStore((s) => s.setOverlay)
@@ -26,10 +29,12 @@ export function BuddyCatchGame() {
       setOverlay('companions')
       return
     }
-    const host = hostRef.current
-    if (!host) return
+    const canvas = hostRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
     let disposed = false
-    const app = new Application()
     let living = true
     let playerX = 0.5
     let buddyX = 0.35
@@ -42,6 +47,24 @@ export function BuddyCatchGame() {
     const treats: Treat[] = []
     const def = getCompanion(companion)
     playCompanionVoice(companion)
+    let last = performance.now()
+    let frame = 0
+
+    const resize = () => {
+      const parent = canvas.parentElement
+      if (!parent) return
+      const dpr = Math.min(devicePixelRatio || 1, 2)
+      const w = parent.clientWidth
+      const h = Math.max(280, parent.clientHeight)
+      canvas.width = Math.floor(w * dpr)
+      canvas.height = Math.floor(h * dpr)
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+    resize()
+    const ro = new ResizeObserver(resize)
+    if (canvas.parentElement) ro.observe(canvas.parentElement)
 
     const finish = () => {
       if (!living) return
@@ -59,82 +82,66 @@ export function BuddyCatchGame() {
       )
     }
 
-    void (async () => {
-      await app.init({
-        resizeTo: host,
-        background: 0x1b4332,
-        antialias: true,
-        resolution: Math.min(devicePixelRatio || 1, 2),
-        autoDensity: true,
-      })
-      if (disposed) {
-        app.destroy(true)
-        return
-      }
-      host.appendChild(app.canvas)
-      const root = new Container()
-      app.stage.addChild(root)
-      const gfx = new Graphics()
-      const hud = new Text({
-        text: '',
-        style: {
-          fill: 0xffffff,
-          fontSize: 18,
-          fontFamily: 'Fredoka, Nunito, sans-serif',
-          fontWeight: '700',
-        },
-      })
-      hud.position.set(12, 10)
-      root.addChild(gfx, hud)
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true
+    }
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false
+    }
+    const pointerPos = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      pointerX = (e.clientX - rect.left) / Math.max(1, rect.width)
+    }
 
-      const onKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true
-        if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true
-      }
-      const onKeyUp = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false
-        if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false
-      }
-      const onPointerMove = (e: PointerEvent) => {
-        const rect = app.canvas.getBoundingClientRect()
-        pointerX = (e.clientX - rect.left) / Math.max(1, rect.width)
-      }
-      const onPointerDown = (e: PointerEvent) => {
-        const rect = app.canvas.getBoundingClientRect()
-        pointerX = (e.clientX - rect.left) / Math.max(1, rect.width)
-        try {
-          app.canvas.setPointerCapture(e.pointerId)
-        } catch {
-          /* ignore */
-        }
-      }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    canvas.addEventListener('pointermove', pointerPos)
+    canvas.addEventListener('pointerdown', pointerPos)
 
-      window.addEventListener('keydown', onKeyDown)
-      window.addEventListener('keyup', onKeyUp)
-      app.canvas.addEventListener('pointermove', onPointerMove)
-      app.canvas.addEventListener('pointerdown', onPointerDown)
+    const drawCatcher = (x: number, y: number, fill: string, accent: string, scale = 1) => {
+      ctx.fillStyle = 'rgba(26,42,34,0.2)'
+      ctx.beginPath()
+      ctx.ellipse(x, y + 18 * scale, 28 * scale, 12 * scale, 0, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = fill
+      roundRect(ctx, x - 22 * scale, y - 10 * scale, 44 * scale, 36 * scale, 16 * scale)
+      ctx.fill()
+      ctx.beginPath()
+      ctx.arc(x, y - 28 * scale, 20 * scale, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = '#1a2a22'
+      ctx.beginPath()
+      ctx.arc(x - 7 * scale, y - 30 * scale, 3.2 * scale, 0, Math.PI * 2)
+      ctx.arc(x + 7 * scale, y - 30 * scale, 3.2 * scale, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = accent
+      ctx.globalAlpha = 0.55
+      ctx.beginPath()
+      ctx.ellipse(x, y + 6 * scale, 14 * scale, 10 * scale, 0, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = 1
+    }
 
-      app.ticker.add((tick) => {
-        if (!living || disposed) return
-        const dt = tick.deltaMS / 1000
-        const w = app.screen.width
-        const h = app.screen.height
+    const loop = (now: number) => {
+      if (disposed) return
+      const dt = Math.min(0.05, (now - last) / 1000)
+      last = now
+      const w = canvas.clientWidth
+      const h = canvas.clientHeight
+
+      if (living) {
         timer -= dt
         setTimeLeft(Math.max(0, Math.ceil(timer)))
-        if (timer <= 0) {
-          finish()
-          return
-        }
+        if (timer <= 0) finish()
 
         const speed = 1.35
         if (keys.left) playerX -= speed * dt
         if (keys.right) playerX += speed * dt
-        if (pointerX !== null) {
-          playerX += (pointerX - playerX) * Math.min(1, dt * 10)
-        }
+        if (pointerX !== null) playerX += (pointerX - playerX) * Math.min(1, dt * 10)
         playerX = Math.max(0.08, Math.min(0.92, playerX))
 
-        // Buddy AI: chase nearest falling treat in upper half, stay clear of player
         let target = buddyX
         let bestDist = 999
         for (const tr of treats) {
@@ -151,14 +158,14 @@ export function BuddyCatchGame() {
 
         spawnAcc += dt
         const spawnEvery = Math.max(0.35, 0.85 - scoreLocal * 0.02)
-        if (spawnAcc >= spawnEvery) {
+        if (living && spawnAcc >= spawnEvery) {
           spawnAcc = 0
           treats.push({
             x: (0.1 + Math.random() * 0.8) * w,
             y: -20,
             vy: 140 + Math.random() * 90 + scoreLocal * 3,
             r: 12 + Math.random() * 6,
-            color: Math.random() > 0.55 ? def.accent : 0xffbe0b,
+            color: Math.random() > 0.55 ? hex(def.accent) : '#ffbe0b',
             caught: false,
           })
         }
@@ -170,12 +177,11 @@ export function BuddyCatchGame() {
           const px = playerX * w
           const bx = buddyX * w
           const py = h * 0.78
-          const by = h * 0.78
           if (Math.hypot(tr.x - px, tr.y - py) < catchR + tr.r * 0.3) {
             tr.caught = true
             scoreLocal += 1
             setScore(scoreLocal)
-          } else if (Math.hypot(tr.x - bx, tr.y - by) < catchR * 0.9 + tr.r * 0.3) {
+          } else if (Math.hypot(tr.x - bx, tr.y - py) < catchR * 0.9 + tr.r * 0.3) {
             tr.caught = true
             buddyLocal += 1
             setBuddyScore(buddyLocal)
@@ -185,60 +191,46 @@ export function BuddyCatchGame() {
         for (let i = treats.length - 1; i >= 0; i--) {
           if (treats[i].caught || treats[i].y > h + 40) treats.splice(i, 1)
         }
-
-        hud.text = `${t('buddy.you')} ${scoreLocal} · ${def.name} ${buddyLocal} · ${Math.ceil(timer)}s`
-
-        gfx.clear()
-        // Soft yard gradient blocks
-        gfx.rect(0, 0, w, h)
-        gfx.fill(0x2d6a4f)
-        gfx.ellipse(w * 0.5, h * 0.95, w * 0.55, 40)
-        gfx.fill({ color: 0x95d5b2, alpha: 0.35 })
-
-        for (const tr of treats) {
-          gfx.circle(tr.x, tr.y, tr.r)
-          gfx.fill(tr.color)
-          gfx.circle(tr.x - 3, tr.y - 3, tr.r * 0.28)
-          gfx.fill({ color: 0xffffff, alpha: 0.45 })
-        }
-
-        const drawCatcher = (x: number, y: number, fill: number, accent: number, scale = 1) => {
-          gfx.ellipse(x, y + 18 * scale, 28 * scale, 12 * scale)
-          gfx.fill({ color: 0x1a2a22, alpha: 0.2 })
-          gfx.roundRect(x - 22 * scale, y - 10 * scale, 44 * scale, 36 * scale, 16 * scale)
-          gfx.fill(fill)
-          gfx.circle(x, y - 28 * scale, 20 * scale)
-          gfx.fill(fill)
-          gfx.circle(x - 7 * scale, y - 30 * scale, 3.2 * scale)
-          gfx.fill(0x1a2a22)
-          gfx.circle(x + 7 * scale, y - 30 * scale, 3.2 * scale)
-          gfx.fill(0x1a2a22)
-          gfx.ellipse(x, y + 6 * scale, 14 * scale, 10 * scale)
-          gfx.fill({ color: accent, alpha: 0.55 })
-        }
-
-        drawCatcher(buddyX * w, h * 0.78, def.fill, def.accent, 0.78)
-        drawCatcher(playerX * w, h * 0.78, 0xf4a261, 0xffe066, 1)
-      })
-
-      ;(app as Application & { __cleanup?: () => void }).__cleanup = () => {
-        window.removeEventListener('keydown', onKeyDown)
-        window.removeEventListener('keyup', onKeyUp)
-        app.canvas.removeEventListener('pointermove', onPointerMove)
-        app.canvas.removeEventListener('pointerdown', onPointerDown)
       }
-    })()
+
+      const g = ctx.createLinearGradient(0, 0, 0, h)
+      g.addColorStop(0, '#1b4332')
+      g.addColorStop(0.55, '#2d6a4f')
+      g.addColorStop(1, '#95d5b2')
+      ctx.fillStyle = g
+      ctx.fillRect(0, 0, w, h)
+      ctx.fillStyle = 'rgba(149,213,178,0.35)'
+      ctx.beginPath()
+      ctx.ellipse(w * 0.5, h * 0.95, w * 0.55, 40, 0, 0, Math.PI * 2)
+      ctx.fill()
+
+      for (const tr of treats) {
+        ctx.fillStyle = tr.color
+        ctx.beginPath()
+        ctx.arc(tr.x, tr.y, tr.r, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = 'rgba(255,255,255,0.45)'
+        ctx.beginPath()
+        ctx.arc(tr.x - 3, tr.y - 3, tr.r * 0.28, 0, Math.PI * 2)
+        ctx.fill()
+      }
+
+      drawCatcher(buddyX * w, h * 0.78, hex(def.fill), hex(def.accent), 0.78)
+      drawCatcher(playerX * w, h * 0.78, '#f4a261', '#ffe066', 1)
+
+      frame = requestAnimationFrame(loop)
+    }
+    frame = requestAnimationFrame(loop)
 
     return () => {
       disposed = true
       living = false
-      try {
-        const cleanup = (app as Application & { __cleanup?: () => void }).__cleanup
-        cleanup?.()
-        app.destroy(true, { children: true })
-      } catch {
-        /* ignore */
-      }
+      cancelAnimationFrame(frame)
+      ro.disconnect()
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+      canvas.removeEventListener('pointermove', pointerPos)
+      canvas.removeEventListener('pointerdown', pointerPos)
     }
   }, [companion, finishBuddyCatch, setOverlay, t, runKey])
 
@@ -255,9 +247,11 @@ export function BuddyCatchGame() {
           <button type="button" className="close-btn" onClick={() => setOverlay('none')}>
             ×
           </button>
+          <p className="buddy-hint">{t('buddy.hint')}</p>
         </div>
-        <p className="buddy-hint">{t('buddy.hint')}</p>
-        <div className="minigame-canvas" ref={hostRef} />
+        <div className="minigame-canvas">
+          <canvas ref={hostRef} />
+        </div>
         {done ? (
           <div className="minigame-end">
             <p>{summary || t('minigame.rewards')}</p>
@@ -285,4 +279,22 @@ export function BuddyCatchGame() {
       </div>
     </div>
   )
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  const rr = Math.min(r, w / 2, h / 2)
+  ctx.beginPath()
+  ctx.moveTo(x + rr, y)
+  ctx.arcTo(x + w, y, x + w, y + h, rr)
+  ctx.arcTo(x + w, y + h, x, y + h, rr)
+  ctx.arcTo(x, y + h, x, y, rr)
+  ctx.arcTo(x, y, x + w, y, rr)
+  ctx.closePath()
 }
